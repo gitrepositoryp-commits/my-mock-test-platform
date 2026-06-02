@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Exam Results - Mock Test Platform</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <nav>
+    <div class="container nav-container">
+      <a href="dashboard.html" class="logo">MockExam Pro</a>
+    </div>
+  </nav>
+
+  <main class="container auth-wrapper">
+    <div class="auth-card" style="max-width: 550px; text-align: center;">
+      <div style="font-size: 4rem; margin-bottom: 10px;">🎉</div>
+      <h2>Test Completed!</h2>
+      <p>Your responses have been processed and graded securely.</p>
+      
+      <div style="background: var(--background); padding: 25px; border-radius: 10px; margin: 25px 0; border: 1px solid var(--border);">
+        <p style="font-size: 0.9rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px;">Your Final Score</p>
+        <h1 style="font-size: 3.5rem; color: var(--primary); margin: 5px 0;"><span id="correctAnswersDisplay">0</span> / <span id="totalQuestionsDisplay">0</span></h1>
+        <p style="font-weight: 600; font-size: 1.2rem;">Percentage: <span id="percentageDisplay">0%</span></p>
+      </div>
+      
+      <div style="display: flex; gap: 15px;">
+        <button id="goToReviewBtn" class="btn">Review Answers</button>
+        <button onclick="window.location.href='dashboard.html'" class="btn btn-secondary" style="margin-top: 0;">Dashboard</button>
+      </div>
+    </div>
+  </main>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      // Extract target metadata details cached from the exam submission event
+      const score = localStorage.getItem('last_score');
+      const total = localStorage.getItem('last_total');
+      const percent = localStorage.getItem('last_percentage');
+      const resultId = localStorage.getItem('last_result_id');
+
+      if (!resultId) {
+        alert('No recent test submission history discovered.');
+        window.location.href = 'dashboard.html';
+        return;
+      }
+
+      document.getElementById('correctAnswersDisplay').textContent = score || 0;
+      document.getElementById('totalQuestionsDisplay').textContent = total || 0;
+      document.getElementById('percentageDisplay').textContent = (percent || 0) + '%';
+
+      document.getElementById('goToReviewBtn').addEventListener('click', () => {
+        window.location.href = `review.html?id=${resultId}`;
+      });
+    });
+  </script>
+</body>
+</html>

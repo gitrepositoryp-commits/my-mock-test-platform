@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Global Leaderboard - Mock Test Platform</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <nav>
+    <div class="container nav-container">
+      <a href="dashboard.html" class="logo">MockExam Pro</a>
+      <div class="nav-links">
+        <button onclick="window.location.href='dashboard.html'">Back to Dashboard</button>
+      </div>
+    </div>
+  </nav>
+
+  <main class="container" style="max-width: 900px; margin-top: 40px;">
+    <div class="panel-card">
+      <div style="text-align: center; margin-bottom: 30px;">
+        <span style="font-size: 3rem;">🏆</span>
+        <h2>Global Candidate Leaderboard</h2>
+        <p style="color: var(--text-muted);">Real-time tracking of top high-percentage scores achieved across our network.</p>
+      </div>
+
+      <table class="leaderboard-table">
+        <thead>
+          <tr>
+            <th>Rank</th>
+            <th>Candidate Username</th>
+            <th>Score Achieved</th>
+            <th>Accuracy</th>
+            <th>Exam Date</th>
+          </tr>
+        </thead>
+        <tbody id="leaderboardRowsContainer">
+          <tr>
+            <td colspan="5" style="text-align: center; color: var(--text-muted);">Querying live global standings...</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </main>
+
+  <script src="script.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', async () => {
+      try {
+        const response = await fetch('http://localhost:5000/api/tests/leaderboard');
+        const rankings = await response.json();
+
+        if (response.ok) {
+          const tbody = document.getElementById('leaderboardRowsContainer');
+          tbody.innerHTML = ''; // Reset placeholder elements
+
+          if (rankings.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="5" style="text-align: center; color: var(--text-muted);">No entries recorded yet. Be the first!</td></tr>`;
+            return;
+          }
+
+          rankings.forEach(row => {
+            const tr = document.createElement('tr');
+            const examDate = new Date(row.date).toLocaleDateString(undefined, {month: 'short', day: 'numeric', year: 'numeric'});
+            
+            // Highlight top 3 spots stylistically
+            let rankBadge = row.rank;
+            if(row.rank === 1) rankBadge = '🥇 1';
+            if(row.rank === 2) rankBadge = '🥈 2';
+            if(row.rank === 3) rankBadge = '🥉 3';
+
+            tr.innerHTML = `
+              <td style="font-weight: bold; color: var(--primary);">${rankBadge}</td>
+              <td style="font-weight: 600;">${row.username}</td>
+              <td>${row.score} / ${row.totalQuestions}</td>
+              <td style="font-weight: bold; color: var(--success);">${row.percentage}%</td>
+              <td style="color: var(--text-muted); font-size: 0.9rem;">${examDate}</td>
+            `;
+            tbody.appendChild(tr);
+          });
+        }
+      } catch (err) {
+        console.error(err);
+      }
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Review Performance - Mock Test Platform</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <nav>
+    <div class="container nav-container">
+      <a href="dashboard.html" class="logo">MockExam Pro</a>
+      <div class="nav-links">
+        <button onclick="window.location.href='dashboard.html'" style="color: var(--primary);">Return to Dashboard</button>
+      </div>
+    </div>
+  </nav>
+
+  <main class="container" style="max-width: 800px; margin-top: 40px;">
+    <header style="margin-bottom: 30px;">
+      <h2>Detailed Performance Review</h2>
+      <p style="color: var(--text-muted);">Analyze your individual answer selections against correct solutions.</p>
+    </header>
+
+    <div id="reviewAssessmentContainer">
+      <p>Loading evaluation logs dynamically...</p>
+      </div>
+  </main>
+
+  <script src="script.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', async () => {
+      const urlParams = new URLSearchParams(window.location.search);
+      const resultId = urlParams.get('id');
+      const token = localStorage.getItem('mock_test_token');
+
+      if (!resultId || !token) {
+        window.location.href = 'dashboard.html';
+        return;
+      }
+
+      try {
+        // Fetch detailed results directly from the backend API
+        const response = await fetch(`http://localhost:5000/api/tests/result/${resultId}`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        const data = await response.json();
+
+        if (response.ok) {
+          const container = document.getElementById('reviewAssessmentContainer');
+          container.innerHTML = ''; // Reset loading text
+
+          data.answersBreakdown.forEach((item, index) => {
+            const card = document.createElement('div');
+            card.className = `review-item ${item.isCorrect ? 'correct-bg' : 'incorrect-bg'}`;
+
+            card.innerHTML = `
+              <div class="status-pill ${item.isCorrect ? 'pill-success' : 'pill-error'}">
+                ${item.isCorrect ? 'Correct Answer' : 'Incorrect Answer'}
+              </div>
+              <h4 style="font-size: 1.15rem; margin-bottom: 15px;">Q${index + 1}. ${item.questionText}</h4>
+              <p style="margin-bottom: 5px;"><strong>Your Selection:</strong> <span style="color: ${item.isCorrect ? 'var(--success)' : 'var(--error)'};">${item.selectedAnswer || 'Not Answered'}</span></p>
+              <p><strong>Correct Solution:</strong> <span style="color: var(--success); font-weight: 600;">${item.correctAnswer}</span></p>
+            `;
+            container.appendChild(card);
+          });
+        } else {
+          alert('Failed to extract target review configuration logs.');
+        }
+      } catch (err) {
+        console.error(err);
+        alert('An unexpected network processing fault occurred.');
+      }
+    });
+  </script>
+</body>
+</html>

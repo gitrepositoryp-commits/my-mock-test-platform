@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Panel - Add Questions</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <nav>
+    <div class="container nav-container">
+      <a href="dashboard.html" class="logo">MockExam Pro (Admin)</a>
+      <button onclick="window.location.href='dashboard.html'" class="btn" style="width:auto; padding: 5px 15px;">Student Dashboard</button>
+    </div>
+  </nav>
+
+  <main class="container auth-wrapper" style="min-height: 70vh;">
+    <div class="auth-card" style="max-width: 600px;">
+      <h2>Add New Mock Question</h2>
+      <p>This form injects real-time questions securely into your MongoDB Atlas cloud database.</p>
+
+      <form id="adminQuestionForm">
+        <div class="form-group">
+          <label>Question Text</label>
+          <input type="text" id="adminQText" placeholder="e.g., What is the capital of France?" required>
+        </div>
+
+        <div class="form-group">
+          <label>Option A</label>
+          <input type="text" id="optA" placeholder="Option A" required>
+        </div>
+        <div class="form-group">
+          <label>Option B</label>
+          <input type="text" id="optB" placeholder="Option B" required>
+        </div>
+        <div class="form-group">
+          <label>Option C</label>
+          <input type="text" id="optC" placeholder="Option C" required>
+        </div>
+        <div class="form-group">
+          <label>Option D</label>
+          <input type="text" id="optD" placeholder="Option D" required>
+        </div>
+
+        <div class="form-group">
+          <label>Exact Correct Answer String</label>
+          <input type="text" id="correctAnswer" placeholder="Must exactly match one of the options written above" required>
+        </div>
+
+        <button type="submit" class="btn" style="background-color: var(--primary);">Save Question to Database</button>
+      </form>
+    </div>
+  </main>
+
+  <script>
+    document.getElementById('adminQuestionForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      const question = document.getElementById('adminQText').value.trim();
+      const options = [
+        document.getElementById('optA').value.trim(),
+        document.getElementById('optB').value.trim(),
+        document.getElementById('optC').value.trim(),
+        document.getElementById('optD').value.trim()
+      ];
+      const correct = document.getElementById('correctAnswer').value.trim();
+
+      if (!options.includes(correct)) {
+        alert("Error: The exact correct answer string must perfectly match one of your 4 options!");
+        return;
+      }
+
+      try {
+        const response = await fetch('http://localhost:5000/api/tests/add-question', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ question, options, correct })
+        });
+
+        const data = await response.json();
+        if (response.ok) {
+          alert(data.message);
+          document.getElementById('adminQuestionForm').reset();
+        } else {
+          alert("Database saving failed.");
+        }
+      } catch (err) {
+        console.error(err);
+        alert("Network processing error linking to local backend.");
+      }
+    });
+  </script>
+</body>
+</html>

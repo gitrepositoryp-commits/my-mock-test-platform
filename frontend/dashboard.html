@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Student Dashboard - Mock Test Platform</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <nav>
+    <div class="container nav-container">
+      <a href="dashboard.html" class="logo">MockExam Pro</a>
+      <div class="nav-links">
+        <button onclick="window.location.href='leaderboard.html'">Leaderboard</button>
+        <button id="logoutBtn">Logout</button>
+      </div>
+    </div>
+  </nav>
+
+  <main class="container">
+    <header class="dashboard-header">
+      <div class="welcome-box">
+        <h1>Welcome Back, <span id="studentName">Student</span>!</h1>
+        <p>Track your assessment workspace and jump into active practice exams.</p>
+      </div>
+    </header>
+
+    <div class="grid-layout">
+      <section class="main-content">
+        <div class="panel-card">
+          <h3>Available Live Mock Exams</h3>
+          <p style="color: var(--text-muted); margin-bottom: 20px;">Complete the comprehensive exam below to test your technical aptitude.</p>
+          
+          <div style="padding: 20px; border: 1px solid var(--border); border-radius: 8px; display: flex; justify-content: space-between; align-items: center; background: var(--surface);">
+            <div>
+              <h4 style="font-size: 1.1rem; color: var(--text);">Full Stack Web Development Mock Test</h4>
+              <p style="font-size: 0.9rem; color: var(--text-muted);">5 Questions • Duration: 5 Minutes</p>
+            </div>
+            <button onclick="window.location.href='test.html'" class="btn" style="width: auto; padding: 10px 24px;">Start Test</button>
+          </div>
+        </div>
+      </section>
+
+      <aside class="sidebar">
+        <div class="panel-card">
+          <h3>Your Profile Summary</h3>
+          <div style="margin-top: 15px;">
+            <p style="font-size: 0.9rem; color: var(--text-muted);">Registered Email:</p>
+            <p id="studentEmail" style="font-weight: 600; margin-bottom: 15px; word-break: break-all;">-</p>
+            
+            <p style="font-size: 0.9rem; color: var(--text-muted);">Status Tier:</p>
+            <p style="font-weight: 600; color: var(--success);">Active Candidate</p>
+          </div>
+        </div>
+      </aside>
+    </div>
+  </main>
+
+  <script src="script.js"></script>
+  <script>
+    // Immediate Route Protection Check
+    document.addEventListener('DOMContentLoaded', () => {
+      const token = localStorage.getItem('mock_test_token');
+      const user = JSON.parse(localStorage.getItem('mock_test_user'));
+      
+      if (!token || !user) {
+        alert('Session missing or expired. Please login.');
+        window.location.href = 'login.html';
+        return;
+      }
+      
+      // Populate Profile Fields Dynamically
+      document.getElementById('studentName').textContent = user.username;
+      document.getElementById('studentEmail').textContent = user.email;
+    });
+  </script>
+</body>
+</html>
