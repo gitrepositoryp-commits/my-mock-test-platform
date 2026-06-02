@@ -72,7 +72,8 @@
       }
 
       try {
-      const response = await fetch('https://my-mock-test-platform.onrender.com/api/tests/bulk-upload', {
+      // Ensure your fetch paths look exactly like this inside admin.html:
+const response = await fetch('https://my-mock-test-platform.onrender.com/api/tests/bulk-upload',  {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ question, options, correct })
