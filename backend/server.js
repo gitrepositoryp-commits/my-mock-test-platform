@@ -9,7 +9,15 @@ dotenv.config();
 const app = express();
 
 // Middleware
-app.use(cors());
+// Update your CORS settings in backend/server.js
+app.use(cors({
+  origin: [
+    'http://127.0.0.1:5500',                    // Allows your local Live Server
+    'http://localhost:5500',                    // Allows local host testing
+    'https://my-mock-test-platform.vercel.app'  // Allows your live Vercel website
+  ],
+  credentials: true
+}));
 app.use(express.json());
 
 // Database Connection
