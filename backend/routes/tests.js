@@ -21,9 +21,11 @@ const protect = async (req, res, next) => {
 };
 
 // 1. ADMIN ROUTE: Post a new question to the database
-router.post('/question', async (req, res) => {
+// FIXED: Changed endpoint to '/questions' (plural) to perfectly eliminate the frontend 404
+router.post('/questions', async (req, res) => {
   try {
-    const { question, options, correct } = req.body;
+    // FIXED: Destructured 'correctAnswer' to match the frontend payload object exactly
+    const { question, options, correctAnswer } = req.body; 
     
     // Auto-increment simple ID system based on current count
     const count = await Question.countDocuments();
@@ -32,7 +34,7 @@ router.post('/question', async (req, res) => {
       id: count + 1,
       question,
       options,
-      correct
+      correctAnswer // FIXED: Mapping aligned variables to your schema object structure
     });
 
     await newQuestion.save();
@@ -42,10 +44,11 @@ router.post('/question', async (req, res) => {
   }
 });
 
-// 2. STUDENT ROUTE: Fetch questions (hiding the 'correct' answer field)
+// 2. STUDENT ROUTE: Fetch questions (hiding the 'correctAnswer' field)
+// FIXED: Adjusted exclusion filter criteria string to match your variable key layout
 router.get('/questions', protect, async (req, res) => {
   try {
-    const dbQuestions = await Question.find({}, '-correct'); // Excludes the correct answer field for safety
+    const dbQuestions = await Question.find({}, '-correctAnswer'); // Excludes the correct answer field for safety
     res.json(dbQuestions);
   } catch (err) {
     res.status(500).json({ error: "Failed to fetch questions" });
@@ -63,7 +66,8 @@ router.post('/submit', protect, async (req, res) => {
 
     masterQuestions.forEach((q) => {
       const selected = answers[q.id] || null;
-      const isCorrect = selected === q.correct;
+      // FIXED: Pointed verification hook to q.correctAnswer
+      const isCorrect = selected === q.correctAnswer;
       if (isCorrect) score++;
 
       answersBreakdown.push({
@@ -71,7 +75,7 @@ router.post('/submit', protect, async (req, res) => {
         questionText: q.question,
         options: q.options,
         selectedAnswer: selected,
-        correctAnswer: q.correct,
+        correctAnswer: q.correctAnswer,
         isCorrect
       });
     });
