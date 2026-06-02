@@ -21,7 +21,7 @@ const protect = async (req, res, next) => {
 };
 
 // 1. ADMIN ROUTE: Post a new question to the database
-router.post('/add-question', async (req, res) => {
+router.post('/question', async (req, res) => {
   try {
     const { question, options, correct } = req.body;
     
