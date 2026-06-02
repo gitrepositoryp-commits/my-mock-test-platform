@@ -13,7 +13,9 @@ app.use(cors());
 app.use(express.json());
 
 // Database Connection
-mongoose.connect(process.env.MONGO_URI)
+mongoose.connect(process.env.MONGO_URI, {
+    serverSelectionTimeoutMS: 5000 // Forces an error if connection takes longer than 5 seconds
+})
   .then(() => console.log('MongoDB Cloud Database Connected Successfully.'))
   .catch(err => {
     console.error('Database connection error:', err.message);
