@@ -1,10 +1,10 @@
 const express = require('express');
 const router = express.Router();
-const Result = require('../models/Result');
-const Question = require('../models/Question'); // Import the new Question Model
+const Result = require('../models/Result'); // Imports user results schema schema validation parameters cleanly
+const Question = require('../models/Question'); 
 const jwt = require('jsonwebtoken');
 
-// In-line Auth Middleware
+// Inline Auth Token Verification Middleware
 const protect = async (req, res, next) => {
   let token;
   if (req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
@@ -20,93 +20,89 @@ const protect = async (req, res, next) => {
   if (!token) return res.status(401).json({ error: 'Not authorized, no token' });
 };
 
-// 1. ADMIN ROUTE: Post a new question to the database
-// FIXED: Changed endpoint to '/questions' (plural) to perfectly eliminate the frontend 404
+// 1. ADMIN ROUTE: Post a new single question
 router.post('/questions', async (req, res) => {
   try {
-    // FIXED: Destructured 'correctAnswer' to match the frontend payload object exactly
     const { question, options, correctAnswer } = req.body; 
-    
-    // Auto-increment simple ID system based on current count
     const count = await Question.countDocuments();
-    
     const newQuestion = new Question({
       id: count + 1,
       question,
       options,
-      correctAnswer // FIXED: Mapping aligned variables to your schema object structure
+      correctAnswer
     });
-
     await newQuestion.save();
-    res.status(201).json({ message: "Question added to database successfully!" });
+    res.status(201).json({ message: "Question added data successfully!" });
   } catch (err) {
     res.status(500).json({ error: "Failed to add question", message: err.message });
   }
 });
 
-// 2. STUDENT ROUTE: Fetch questions (hiding the 'correctAnswer' field)
-// FIXED: Adjusted exclusion filter criteria string to match your variable key layout
+// 2. STUDENT ROUTE: Fetch test questions safely 
 router.get('/questions', protect, async (req, res) => {
   try {
-    const dbQuestions = await Question.find({}, '-correctAnswer'); // Excludes the correct answer field for safety
+    const dbQuestions = await Question.find({}, '-correctAnswer'); 
     res.json(dbQuestions);
   } catch (err) {
     res.status(500).json({ error: "Failed to fetch questions" });
   }
 });
 
-// 3. STUDENT ROUTE: Evaluate answers securely against DB records
+// 3. STUDENT ROUTE: Fully Armored Exam Assessment Secure Grading Endpoint
 router.post('/submit', protect, async (req, res) => {
   try {
-    const { answers } = req.body; 
+    // Gracefully handle whatever naming layout structure frontend passes across the body network
+    const incomingPayload = req.body.answers || req.body;
     
-    if (!answers) {
-      return res.status(400).json({ error: "No answers submitted found in the request." });
-    }
-
     let score = 0;
     const answersBreakdown = [];
-
-    // Fetch all master questions from MongoDB
     const masterQuestions = await Question.find({});
 
+    if (masterQuestions.length === 0) {
+      return res.status(400).json({ error: "Database question bank partition is currently empty." });
+    }
+
     masterQuestions.forEach((q) => {
-      // Look for the answer using either q.id or q._id to match any frontend version safely
-      const selected = answers[q.id] !== undefined ? answers[q.id] : (answers[q._id] || null);
-      
-      // Match against the updated correctAnswer field property cleanly
-      const isCorrect = selected === q.correctAnswer;
+      // Check variable indexes safely against both sequential simple numbers and string IDs
+      let selected = null;
+      if (incomingPayload[q.id] !== undefined) {
+        selected = incomingPayload[q.id];
+      } else if (incomingPayload[q._id] !== undefined) {
+        selected = incomingPayload[q._id];
+      }
+
+      const isCorrect = selected !== null && String(selected).trim() === String(q.correctAnswer).trim();
       if (isCorrect) score++;
 
       answersBreakdown.push({
-        questionId: q.id,
+        questionId: String(q._id),
         questionText: q.question,
         options: q.options,
-        selectedAnswer: selected,
+        selectedAnswer: selected ? String(selected) : "Unanswered",
         correctAnswer: q.correctAnswer,
-        isCorrect
+        isCorrect: isCorrect
       });
     });
 
     const totalQuestions = masterQuestions.length;
-    // Prevent Division by Zero if database is temporarily empty
-    const percentage = totalQuestions > 0 ? parseFloat(((score / totalQuestions) * 100).toFixed(2)) : 0;
+    const percentage = parseFloat(((score / totalQuestions) * 100).toFixed(2));
 
     const newResult = new Result({
       user: req.userId,
-      score,
-      totalQuestions,
-      percentage,
-      answersBreakdown
+      score: score,
+      totalQuestions: totalQuestions,
+      percentage: percentage,
+      answersBreakdown: answersBreakdown
     });
 
     await newResult.save();
     res.status(201).json({ resultId: newResult._id, score, totalQuestions, percentage });
   } catch (err) {
-    console.error("Evaluation Error Logged:", err);
+    console.error("CRITICAL BACKEND EVALUATION FAULT LOGGED:", err.message);
     res.status(500).json({ error: "Evaluation processing failure", message: err.message });
   }
 });
+
 // 4. LEADERBOARD ROUTE
 router.get('/leaderboard', async (req, res) => {
   try {
