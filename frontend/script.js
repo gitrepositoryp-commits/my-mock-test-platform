@@ -295,4 +295,4 @@ async function submitMockTestResponses() {
     console.error(err);
     alert('Critical loss of database connection link during submission processing pipeline.');
   }
-}
+} 
