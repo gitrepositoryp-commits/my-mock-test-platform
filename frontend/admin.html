@@ -52,7 +52,8 @@
       </form>
     </div>
   </main>
-<script>
+
+  <script>
     document.getElementById('adminQuestionForm').addEventListener('submit', async (e) => {
       e.preventDefault();
 
@@ -63,7 +64,7 @@
         document.getElementById('optC').value.trim(),
         document.getElementById('optD').value.trim()
       ];
-      const correctAnswer = document.getElementById('correctAnswer').value.trim(); // Fixed variable name matching schema
+      const correctAnswer = document.getElementById('correctAnswer').value.trim();
 
       if (!options.includes(correctAnswer)) {
         alert("Error: The exact correct answer string must perfectly match one of your 4 options!");
@@ -71,11 +72,10 @@
       }
 
       try {
-        // FIXED: Pointing to /questions route instead of /bulk-upload
         const response = await fetch('https://my-mock-test-platform.onrender.com/api/tests/questions', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ question, options, correctAnswer }) // FIXED: sending correctAnswer instead of correct
+          body: JSON.stringify({ question, options, correctAnswer })
         });
 
         const data = await response.json();
@@ -87,10 +87,9 @@
         }
       } catch (err) {
         console.error(err);
-        alert("Network processing error linking to live cloud backend."); // Updated error string context
+        alert("Network processing error linking to live cloud backend.");
       }
     });
   </script>
-
 </body>
 </html>

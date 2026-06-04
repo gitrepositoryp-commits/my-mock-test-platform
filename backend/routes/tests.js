@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const Result = require('../models/Result'); // Imports user results schema schema validation parameters cleanly
+const Result = require('../models/Result'); 
 const Question = require('../models/Question'); 
 const jwt = require('jsonwebtoken');
 
@@ -21,20 +21,29 @@ const protect = async (req, res, next) => {
 };
 
 // 1. ADMIN ROUTE: Post a new single question
+// FIXED: Pluralized path endpoint string to map with admin.html precisely
 router.post('/questions', async (req, res) => {
   try {
     const { question, options, correctAnswer } = req.body; 
+
+    // Validation safety fallback
+    if (!question || !options || !correctAnswer) {
+      return res.status(400).json({ message: "Validation Failed: All question fields are required." });
+    }
+
     const count = await Question.countDocuments();
     const newQuestion = new Question({
       id: count + 1,
       question,
       options,
-      correctAnswer
+      correctAnswer // Maps aligned key parameter names directly to your schema model
     });
+
     await newQuestion.save();
     res.status(201).json({ message: "Question added data successfully!" });
   } catch (err) {
-    res.status(500).json({ error: "Failed to add question", message: err.message });
+    console.error("ADMIN ROUTE ERROR:", err.message);
+    res.status(500).json({ message: "Database saving failed.", error: err.message });
   }
 });
 
@@ -48,12 +57,10 @@ router.get('/questions', protect, async (req, res) => {
   }
 });
 
-// 3. STUDENT ROUTE: Fully Armored Exam Assessment Secure Grading Endpoint
+// 3. STUDENT ROUTE: Secure Exam Assessment Submission Routing
 router.post('/submit', protect, async (req, res) => {
   try {
-    // Gracefully handle whatever naming layout structure frontend passes across the body network
     const incomingPayload = req.body.answers || req.body;
-    
     let score = 0;
     const answersBreakdown = [];
     const masterQuestions = await Question.find({});
@@ -63,7 +70,6 @@ router.post('/submit', protect, async (req, res) => {
     }
 
     masterQuestions.forEach((q) => {
-      // Check variable indexes safely against both sequential simple numbers and string IDs
       let selected = null;
       if (incomingPayload[q.id] !== undefined) {
         selected = incomingPayload[q.id];
@@ -98,7 +104,7 @@ router.post('/submit', protect, async (req, res) => {
     await newResult.save();
     res.status(201).json({ resultId: newResult._id, score, totalQuestions, percentage });
   } catch (err) {
-    console.error("CRITICAL BACKEND EVALUATION FAULT LOGGED:", err.message);
+    console.error("EVALUATION FAULT LOGGED:", err.message);
     res.status(500).json({ error: "Evaluation processing failure", message: err.message });
   }
 });
