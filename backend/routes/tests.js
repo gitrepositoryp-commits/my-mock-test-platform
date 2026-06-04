@@ -59,14 +59,22 @@ router.get('/questions', protect, async (req, res) => {
 router.post('/submit', protect, async (req, res) => {
   try {
     const { answers } = req.body; 
+    
+    if (!answers) {
+      return res.status(400).json({ error: "No answers submitted found in the request." });
+    }
+
     let score = 0;
     const answersBreakdown = [];
 
+    // Fetch all master questions from MongoDB
     const masterQuestions = await Question.find({});
 
     masterQuestions.forEach((q) => {
-      const selected = answers[q.id] || null;
-      // FIXED: Pointed verification hook to q.correctAnswer
+      // Look for the answer using either q.id or q._id to match any frontend version safely
+      const selected = answers[q.id] !== undefined ? answers[q.id] : (answers[q._id] || null);
+      
+      // Match against the updated correctAnswer field property cleanly
       const isCorrect = selected === q.correctAnswer;
       if (isCorrect) score++;
 
@@ -81,7 +89,8 @@ router.post('/submit', protect, async (req, res) => {
     });
 
     const totalQuestions = masterQuestions.length;
-    const percentage = parseFloat(((score / totalQuestions) * 100).toFixed(2));
+    // Prevent Division by Zero if database is temporarily empty
+    const percentage = totalQuestions > 0 ? parseFloat(((score / totalQuestions) * 100).toFixed(2)) : 0;
 
     const newResult = new Result({
       user: req.userId,
@@ -94,10 +103,10 @@ router.post('/submit', protect, async (req, res) => {
     await newResult.save();
     res.status(201).json({ resultId: newResult._id, score, totalQuestions, percentage });
   } catch (err) {
+    console.error("Evaluation Error Logged:", err);
     res.status(500).json({ error: "Evaluation processing failure", message: err.message });
   }
 });
-
 // 4. LEADERBOARD ROUTE
 router.get('/leaderboard', async (req, res) => {
   try {

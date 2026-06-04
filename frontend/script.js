@@ -255,7 +255,7 @@ async function submitMockTestResponses() {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${token}`
       },
-      body: JSON.stringify({ answers: appState.selectedAnswers })
+    body: JSON.stringify({ answers: appState.selectedAnswers || {} })
     });
     
     const data = await response.json();
