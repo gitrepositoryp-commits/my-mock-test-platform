@@ -138,7 +138,9 @@ function startExamTimer() {
     let mins = Math.floor(appState.totalSecondsRemaining / 60);
     let secs = appState.totalSecondsRemaining % 60;
     
-    displayClock.textContent = `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+    if (displayClock) {
+      displayClock.textContent = `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+    }
     
     if (appState.totalSecondsRemaining <= 0) {
       clearInterval(appState.timerInterval);
@@ -153,39 +155,45 @@ function renderActiveQuestionCard() {
   
   const currentQ = appState.questions[appState.currentQuestionIndex];
   
-  document.getElementById('questionNumberIndicator').textContent = `Question ${appState.currentQuestionIndex + 1} of ${appState.questions.length}`;
-  document.getElementById('questionTextDisplay').textContent = currentQ.question;
+  const numIndicator = document.getElementById('questionNumberIndicator');
+  const textDisplay = document.getElementById('questionTextDisplay');
+  if (numIndicator) numIndicator.textContent = `Question ${appState.currentQuestionIndex + 1} of ${appState.questions.length}`;
+  if (textDisplay) textDisplay.textContent = currentQ.question;
   
   const optionsWrapper = document.getElementById('optionsContainer');
+  if (!optionsWrapper) return;
   optionsWrapper.innerHTML = '';
   
   currentQ.options.forEach((option) => {
     const label = document.createElement('label');
     label.className = 'option-label';
     
-    const isChecked = appState.selectedAnswers[currentQ.id] === option ? 'checked' : '';
+    // Look up question options cleanly using standard object parameter strings
+    const currentQuestionId = currentQ.id || currentQ._id;
+    const isChecked = appState.selectedAnswers[currentQuestionId] === option ? 'checked' : '';
     
     label.innerHTML = `
       <input type="radio" name="quizOption" value="${option}" ${isChecked}>
       <span>${option}</span>
     `;
     
-    // Auto-update selection hash map right on click change transitions
     label.querySelector('input').addEventListener('change', (e) => {
-      appState.selectedAnswers[currentQ.id] = e.target.value;
+      appState.selectedAnswers[currentQuestionId] = e.target.value;
       updateNavigationBubbles();
     });
     
     optionsWrapper.appendChild(label);
   });
   
-  // Disable navigation buttons out of range bounds safely
-  document.getElementById('prevBtn').disabled = appState.currentQuestionIndex === 0;
-  document.getElementById('nextBtn').textContent = appState.currentQuestionIndex === appState.questions.length - 1 ? 'End Review View' : 'Next Question';
+  const prevBtn = document.getElementById('prevBtn');
+  const nextBtn = document.getElementById('nextBtn');
+  if (prevBtn) prevBtn.disabled = appState.currentQuestionIndex === 0;
+  if (nextBtn) nextBtn.textContent = appState.currentQuestionIndex === appState.questions.length - 1 ? 'End Exam Review' : 'Next Question';
 }
 
 function generateNavigationGrid() {
   const container = document.getElementById('navigationBubbleContainer');
+  if (!container) return;
   container.innerHTML = '';
   
   appState.questions.forEach((q, index) => {
@@ -210,38 +218,49 @@ function updateNavigationBubbles() {
     const el = document.getElementById(`bubble-nav-${index}`);
     if (!el) return;
     
-    el.className = 'bubble'; // Strip old classes
+    el.className = 'bubble'; 
+    const currentQuestionId = q.id || q._id;
     
     if (index === appState.currentQuestionIndex) {
       el.classList.add('active');
-    } else if (appState.selectedAnswers[q.id]) {
+    } else if (appState.selectedAnswers[currentQuestionId]) {
       el.classList.add('answered');
     }
   });
 }
 
 function initExamActionButtons() {
-  document.getElementById('prevBtn').addEventListener('click', () => {
-    if (appState.currentQuestionIndex > 0) {
-      appState.currentQuestionIndex--;
-      renderActiveQuestionCard();
-      updateNavigationBubbles();
-    }
-  });
+  const prevBtn = document.getElementById('prevBtn');
+  const nextBtn = document.getElementById('nextBtn');
+  const submitExamBtn = document.getElementById('submitExamBtn');
 
-  document.getElementById('nextBtn').addEventListener('click', () => {
-    if (appState.currentQuestionIndex < appState.questions.length - 1) {
-      appState.currentQuestionIndex++;
-      renderActiveQuestionCard();
-      updateNavigationBubbles();
-    }
-  });
+  if (prevBtn) {
+    prevBtn.addEventListener('click', () => {
+      if (appState.currentQuestionIndex > 0) {
+        appState.currentQuestionIndex--;
+        renderActiveQuestionCard();
+        updateNavigationBubbles();
+      }
+    });
+  }
 
-  document.getElementById('submitExamBtn').addEventListener('click', () => {
-    if (confirm('Are you completely sure you want to finish and submit this test?')) {
-      submitMockTestResponses();
-    }
-  });
+  if (nextBtn) {
+    nextBtn.addEventListener('click', () => {
+      if (appState.currentQuestionIndex < appState.questions.length - 1) {
+        appState.currentQuestionIndex++;
+        renderActiveQuestionCard();
+        updateNavigationBubbles();
+      }
+    });
+  }
+
+  if (submitExamBtn) {
+    submitExamBtn.addEventListener('click', () => {
+      if (confirm('Are you completely sure you want to finish and submit this test?')) {
+        submitMockTestResponses();
+      }
+    });
+  }
 }
 
 async function submitMockTestResponses() {
@@ -255,21 +274,22 @@ async function submitMockTestResponses() {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${token}`
       },
-    body: JSON.stringify({ answers: appState.selectedAnswers || {} })
+      body: JSON.stringify({ answers: appState.selectedAnswers || {} })
     });
     
     const data = await response.json();
     
     if (response.ok) {
-      // Store metric summaries to cache for parsing on immediate results layout pages
+      // Store metric summaries to cache cleanly
       localStorage.setItem('last_score', data.score);
       localStorage.setItem('last_total', data.totalQuestions);
       localStorage.setItem('last_percentage', data.percentage);
       localStorage.setItem('last_result_id', data.resultId);
       
-      window.location.href = 'results.html';
+      //  FIXED FORWARDING ROUTE: Appends both parameter tracking strategies for review.html and results.html stability
+      window.location.href = `results.html?id=${data.resultId}`;
     } else {
-      alert('Error saving your assessment evaluation details.');
+      alert(data.error || 'Error saving your assessment evaluation details.');
     }
   } catch (err) {
     console.error(err);
