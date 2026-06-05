@@ -3,11 +3,10 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Exam Results - Mock Test Platform</title>
+  <title>Exam Scorecard</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
-
   <nav>
     <div class="container nav-container">
       <a href="dashboard.html" class="logo">MockExam Pro</a>
@@ -15,44 +14,40 @@
   </nav>
 
   <main class="container auth-wrapper">
-    <div class="auth-card" style="max-width: 550px; text-align: center;">
-      <div style="font-size: 4rem; margin-bottom: 10px;">🎉</div>
-      <h2>Test Completed!</h2>
-      <p>Your responses have been processed and graded securely.</p>
+    <div class="auth-card" style="max-width: 500px; text-align: center;">
+      <h2>Exam Completed! 🎉</h2>
+      <p>Your assessment evaluation details have been compiled securely.</p>
       
-      <div style="background: var(--background); padding: 25px; border-radius: 10px; margin: 25px 0; border: 1px solid var(--border);">
-        <p style="font-size: 0.9rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px;">Your Final Score</p>
-        <h1 style="font-size: 3.5rem; color: var(--primary); margin: 5px 0;"><span id="correctAnswersDisplay">0</span> / <span id="totalQuestionsDisplay">0</span></h1>
-        <p style="font-weight: 600; font-size: 1.2rem;">Percentage: <span id="percentageDisplay">0%</span></p>
+      <div style="margin: 30px 0; padding: 20px; background: #f4f6f9; border-radius: 8px;">
+        <h3 style="margin: 0; color: #333;">Your Score</h3>
+        <p id="scoreDisplay" style="font-size: 36px; font-weight: bold; color: var(--primary); margin: 10px 0;">0 / 0</p>
+        <p id="percentageDisplay" style="font-size: 18px; color: #666; margin: 0;">Percentage: 0%</p>
       </div>
-      
+
       <div style="display: flex; gap: 15px;">
-        <button id="goToReviewBtn" class="btn">Review Answers</button>
-        <button onclick="window.location.href='dashboard.html'" class="btn btn-secondary" style="margin-top: 0;">Dashboard</button>
+        <button id="reviewBtn" class="btn" style="background: #333;">Review Answers</button>
+        <button onclick="window.location.href='dashboard.html'" class="btn">Back to Dashboard</button>
       </div>
     </div>
   </main>
 
   <script>
     document.addEventListener('DOMContentLoaded', () => {
-      // Extract target metadata details cached from the exam submission event
-      const score = localStorage.getItem('last_score');
-      const total = localStorage.getItem('last_total');
-      const percent = localStorage.getItem('last_percentage');
+      // Pull scores cleanly from the verified submission cache
+      const score = localStorage.getItem('last_score') || 0;
+      const total = localStorage.getItem('last_total') || 0;
+      const percentage = localStorage.getItem('last_percentage') || 0;
       const resultId = localStorage.getItem('last_result_id');
 
-      if (!resultId) {
-        alert('No recent test submission history discovered.');
-        window.location.href = 'dashboard.html';
-        return;
-      }
+      document.getElementById('scoreDisplay').textContent = `${score} / ${total}`;
+      document.getElementById('percentageDisplay').textContent = `Percentage: ${percentage}%`;
 
-      document.getElementById('correctAnswersDisplay').textContent = score || 0;
-      document.getElementById('totalQuestionsDisplay').textContent = total || 0;
-      document.getElementById('percentageDisplay').textContent = (percent || 0) + '%';
-
-      document.getElementById('goToReviewBtn').addEventListener('click', () => {
-        window.location.href = `review.html?id=${resultId}`;
+      document.getElementById('reviewBtn').addEventListener('click', () => {
+        if (resultId) {
+          window.location.href = `review.html?id=${resultId}`;
+        } else {
+          window.location.href = 'review.html';
+        }
       });
     });
   </script>

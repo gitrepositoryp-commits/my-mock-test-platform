@@ -3,74 +3,80 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Review Performance - Mock Test Platform</title>
+  <title>Review Test Log</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
-
   <nav>
     <div class="container nav-container">
-      <a href="dashboard.html" class="logo">MockExam Pro</a>
-      <div class="nav-links">
-        <button onclick="window.location.href='dashboard.html'" style="color: var(--primary);">Return to Dashboard</button>
-      </div>
+      <a href="dashboard.html" class="logo">Exam Review Matrix</a>
+      <button onclick="window.location.href='dashboard.html'" class="btn" style="width:auto; padding: 5px 15px;">Exit Review</button>
     </div>
   </nav>
 
-  <main class="container" style="max-width: 800px; margin-top: 40px;">
-    <header style="margin-bottom: 30px;">
-      <h2>Detailed Performance Review</h2>
-      <p style="color: var(--text-muted);">Analyze your individual answer selections against correct solutions.</p>
-    </header>
-
-    <div id="reviewAssessmentContainer">
-      <p>Loading evaluation logs dynamically...</p>
-      </div>
+  <main class="container">
+    <div style="max-width: 800px; margin: 30px auto;">
+      <h2>Question-by-Question Evaluation</h2>
+      <p style="margin-bottom: 20px; color: #666;">Green cards indicate correct answers; red cards reveal mismatched evaluations.</p>
+      <div id="reviewContainer">Loading evaluation data streams...</div>
+    </div>
   </main>
 
-  <script src="script.js"></script>
   <script>
     document.addEventListener('DOMContentLoaded', async () => {
       const urlParams = new URLSearchParams(window.location.search);
-      const resultId = urlParams.get('id');
+      let resultId = urlParams.get('id') || localStorage.getItem('last_result_id');
       const token = localStorage.getItem('mock_test_token');
 
+      const container = document.getElementById('reviewContainer');
+
       if (!resultId || !token) {
-        window.location.href = 'dashboard.html';
+        container.innerHTML = `<p>Error: Review session credentials missing. Please return to dashboard.</p>`;
         return;
       }
 
       try {
-        // Fetch detailed results directly from the backend API
-      const response = await fetch(`https://my-mock-test-platform.onrender.com/api/tests/result/${resultId}`, {
+        const response = await fetch(`https://my-mock-test-platform.onrender.com/api/tests/result/${resultId}`, {
           headers: { 'Authorization': `Bearer ${token}` }
         });
+        
         const data = await response.json();
 
-        if (response.ok) {
-          const container = document.getElementById('reviewAssessmentContainer');
-          container.innerHTML = ''; // Reset loading text
-
-          data.answersBreakdown.forEach((item, index) => {
-            const card = document.createElement('div');
-            card.className = `review-item ${item.isCorrect ? 'correct-bg' : 'incorrect-bg'}`;
-
-            card.innerHTML = `
-              <div class="status-pill ${item.isCorrect ? 'pill-success' : 'pill-error'}">
-                ${item.isCorrect ? 'Correct Answer' : 'Incorrect Answer'}
-              </div>
-              <h4 style="font-size: 1.15rem; margin-bottom: 15px;">Q${index + 1}. ${item.questionText}</h4>
-              <p style="margin-bottom: 5px;"><strong>Your Selection:</strong> <span style="color: ${item.isCorrect ? 'var(--success)' : 'var(--error)'};">${item.selectedAnswer || 'Not Answered'}</span></p>
-              <p><strong>Correct Solution:</strong> <span style="color: var(--success); font-weight: 600;">${item.correctAnswer}</span></p>
-            `;
-            container.appendChild(card);
-          });
-        } else {
-          alert('Failed to extract target review configuration logs.');
+        if (!response.ok || !data) {
+          container.innerHTML = `<p>Failed to load scorecard evaluation breakdown details.</p>`;
+          return;
         }
+
+        container.innerHTML = '';
+        // Map elements directly against your Mongoose schema property layout
+        const breakdown = data.answersBreakdown || [];
+
+        if (breakdown.length === 0) {
+          container.innerHTML = `<p>No response array metrics found for this session record.</p>`;
+          return;
+        }
+
+        breakdown.forEach((item, index) => {
+          const card = document.createElement('div');
+          card.style.padding = '20px';
+          card.style.margin = '15px 0';
+          card.style.borderRadius = '8px';
+          card.style.borderLeft = item.isCorrect ? '8px solid #2ecc71' : '8px solid #e74c3c';
+          card.style.background = item.isCorrect ? '#ebfbee' : '#fdf2f2';
+
+          card.innerHTML = `
+            <h4>Question ${index + 1}: ${item.questionText}</h4>
+            <div style="margin: 10px 0; font-size: 14px;">
+              <p><strong>Your Selection:</strong> <span style="color: ${item.isCorrect ? '#27ae60' : '#c0392b'}">${item.selectedAnswer || 'Unanswered'}</span></p>
+              <p><strong>Correct Target:</strong> <span style="color: #27ae60; font-weight: bold;">${item.correctAnswer}</span></p>
+            </div>
+          `;
+          container.appendChild(card);
+        });
+
       } catch (err) {
         console.error(err);
-        alert('An unexpected network processing fault occurred.');
+        container.innerHTML = `<p>An unexpected structural parsing error occurred rendering scorecard analytics.</p>`;
       }
     });
   </script>
