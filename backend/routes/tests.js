@@ -58,24 +58,25 @@ router.get('/questions', protect, async (req, res) => {
 router.post('/submit', protect, async (req, res) => {
   try {
     const { answers } = req.body; 
-    const studentAnswers = answers || {};
+    const submittedAnswers = answers || {};
 
     const fullQuestionPool = await Question.find({});
-    let computedScore = 0;
-    const computedBreakdown = [];
+    let calculatedScore = 0;
+    const dynamicBreakdown = [];
 
     fullQuestionPool.forEach((q) => {
-      const qIDStr = q._id ? q._id.toString() : "";
-      const studentSelection = studentAnswers[qIDStr] || "";
+      // Handles parsing safely across standard MongoDB ObjectIDs or sequential keys
+      const qIDString = q._id ? q._id.toString() : (q.id ? q.id.toString() : "");
+      const studentSelection = submittedAnswers[qIDString] || "";
       const isCorrectMatch = studentSelection.trim() === q.correctAnswer.trim();
 
       if (isCorrectMatch) {
-        computedScore++;
+        calculatedScore++;
       }
 
-      computedBreakdown.push({
-        questionId: qIDStr,
-        questionText: q.question || "Blank Item",
+      dynamicBreakdown.push({
+        questionId: qIDString,
+        questionText: q.question || "Unknown Question",
         selectedAnswer: studentSelection,
         correctAnswer: q.correctAnswer || "",
         isCorrect: isCorrectMatch
@@ -83,28 +84,29 @@ router.post('/submit', protect, async (req, res) => {
     });
 
     const accuracyPercentage = fullQuestionPool.length > 0 
-      ? parseFloat(((computedScore / fullQuestionPool.length) * 100).toFixed(2)) 
+      ? parseFloat(((calculatedScore / fullQuestionPool.length) * 100).toFixed(2)) 
       : 0;
 
     const resultRecord = new Result({
       userId: req.user.id,
-      score: computedScore,
+      score: calculatedScore,
       totalQuestions: fullQuestionPool.length,
       percentage: accuracyPercentage,
-      answersBreakdown: computedBreakdown
+      answersBreakdown: dynamicBreakdown
     });
 
-    const savedDoc = await resultRecord.save();
+    // EXECUTION HANDSHAKE: Commits cleanly to your remote database cluster
+    const savedResult = await resultRecord.save();
 
     res.status(200).json({
       message: "Assessment evaluation finalized cleanly.",
-      score: computedScore,
+      score: calculatedScore,
       totalQuestions: fullQuestionPool.length,
       percentage: accuracyPercentage,
-      resultId: savedDoc._id
+      resultId: savedResult._id
     });
   } catch (err) {
-    console.error('CRITICAL BACKEND EVALUATION CRASH:', err.stack);
+    console.error('BACKEND GRADING EVALUATION CRASHED:', err.stack);
     res.status(500).json({ error: 'Evaluation engine crash on transaction save execution.' });
   }
 });

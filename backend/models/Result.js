@@ -21,8 +21,8 @@ const ResultSchema = new mongoose.Schema({
     required: true,
     default: 0
   },
-  // ARMORED BREAKDOWN ENGINE: Removed strict individual field "required" blocks
-  // to prevent Mongoose validation rejections during heavy traffic states!
+  // ARMORED BREAKDOWN POOL: Strict validation triggers are cleared 
+  // to ensure data writes successfully even under loose or empty selections!
   answersBreakdown: [
     {
       questionId: { type: String, default: "" },
