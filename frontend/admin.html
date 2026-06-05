@@ -22,29 +22,29 @@
 
       <form id="adminQuestionForm">
         <div class="form-group">
-          <label>Question Text</label>
+          <label for="adminQText">Question Text</label>
           <input type="text" id="adminQText" placeholder="e.g., What is the capital of France?" required>
         </div>
 
         <div class="form-group">
-          <label>Option A</label>
+          <label for="optA">Option A</label>
           <input type="text" id="optA" placeholder="Option A" required>
         </div>
         <div class="form-group">
-          <label>Option B</label>
+          <label for="optB">Option B</label>
           <input type="text" id="optB" placeholder="Option B" required>
         </div>
         <div class="form-group">
-          <label>Option C</label>
+          <label for="optC">Option C</label>
           <input type="text" id="optC" placeholder="Option C" required>
         </div>
         <div class="form-group">
-          <label>Option D</label>
+          <label for="optD">Option D</label>
           <input type="text" id="optD" placeholder="Option D" required>
         </div>
 
         <div class="form-group">
-          <label>Exact Correct Answer String</label>
+          <label for="correctAnswer">Exact Correct Answer String</label>
           <input type="text" id="correctAnswer" placeholder="Must exactly match one of the options written above" required>
         </div>
 
@@ -52,7 +52,8 @@
       </form>
     </div>
   </main>
-<script>
+
+  <script>
     document.getElementById('adminQuestionForm').addEventListener('submit', async (e) => {
       e.preventDefault();
 
@@ -90,6 +91,5 @@
       }
     });
   </script>
- 
 </body>
 </html>

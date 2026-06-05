@@ -1,34 +1,27 @@
-// Change line 1 from localhost to your Render URL:
-const API_BASE_URL = 'https://rrb-mock-backend.onrender.com/api';
+const API_BASE_URL = 'https://my-mock-test-platform.onrender.com/api';
 
-// State Management for live test execution
 let appState = {
   questions: [],
   currentQuestionIndex: 0,
-  selectedAnswers: {}, // Format: { questionId: "Selected Option Text" }
+  selectedAnswers: {}, 
   timerInterval: null,
-  totalSecondsRemaining: 300 // 5 minutes standard duration
+  totalSecondsRemaining: 600 // 10 Minutes Duration Allocation Standard
 };
 
-// Execute initialization routines on page load
+// Application Bootstrap Matrix Execution Routing
 document.addEventListener('DOMContentLoaded', () => {
   initAuthFormListeners();
   
-  // Route check: If on the exam page, bootstrap the quiz engine instantly
   if (window.location.pathname.endsWith('test.html')) {
     bootstrapQuizEngine();
   }
   
-  // Dashboard Logouts
   const logoutBtn = document.getElementById('logoutBtn');
   if (logoutBtn) {
     logoutBtn.addEventListener('click', handleLogout);
   }
 });
 
-/* ==========================================
-   1. AUTHENTICATION ENGINE CONTROLLERS
-   ========================================== */
 function initAuthFormListeners() {
   const registerForm = document.getElementById('registerForm');
   const loginForm = document.getElementById('loginForm');
@@ -47,17 +40,16 @@ function initAuthFormListeners() {
           body: JSON.stringify({ username, email, password })
         });
         const data = await response.json();
-
         if (response.ok) {
           localStorage.setItem('mock_test_token', data.token);
           localStorage.setItem('mock_test_user', JSON.stringify(data.user));
           window.location.href = 'dashboard.html';
         } else {
-          alert(data.error || 'Registration failed.');
+          alert(data.error || 'Registration processing failure.');
         }
       } catch (err) {
         console.error(err);
-        alert('Server network error during registration.');
+        alert('Cross-origin system communication cluster failure.');
       }
     });
   }
@@ -75,17 +67,16 @@ function initAuthFormListeners() {
           body: JSON.stringify({ email, password })
         });
         const data = await response.json();
-
         if (response.ok) {
           localStorage.setItem('mock_test_token', data.token);
           localStorage.setItem('mock_test_user', JSON.stringify(data.user));
           window.location.href = 'dashboard.html';
         } else {
-          alert(data.error || 'Invalid credentials.');
+          alert(data.error || 'Invalid account identification credentials.');
         }
       } catch (err) {
         console.error(err);
-        alert('Server network error during login.');
+        alert('Server network error during verification sequence.');
       }
     });
   }
@@ -97,24 +88,26 @@ function handleLogout() {
   window.location.href = 'login.html';
 }
 
-/* ==========================================
-   2. EXAM ENGINE OPERATIONAL PROCESSORS
-   ========================================== */
 async function bootstrapQuizEngine() {
   const token = localStorage.getItem('mock_test_token');
   if (!token) {
-    alert('Unauthorized access attempt detected. Returning to portal.');
     window.location.href = 'login.html';
     return;
   }
 
   try {
     const response = await fetch(`${API_BASE_URL}/tests/questions`, {
+      method: 'GET',
       headers: { 'Authorization': `Bearer ${token}` }
     });
-    
+
     if (response.ok) {
       appState.questions = await response.json();
+      if (appState.questions.length === 0) {
+        alert("The question bank partition is currently empty. Add entries inside admin panel.");
+        window.location.href = 'dashboard.html';
+        return;
+      }
       startExamTimer();
       renderActiveQuestionCard();
       generateNavigationGrid();
@@ -125,26 +118,24 @@ async function bootstrapQuizEngine() {
     }
   } catch (err) {
     console.error(err);
-    alert('Critical processing block tracking data streams.');
+    alert('Critical loss of workspace parameter streaming.');
   }
 }
 
 function startExamTimer() {
   const displayClock = document.getElementById('timerClock');
-  
+  if (!displayClock) return;
+
   appState.timerInterval = setInterval(() => {
     appState.totalSecondsRemaining--;
-    
     let mins = Math.floor(appState.totalSecondsRemaining / 60);
     let secs = appState.totalSecondsRemaining % 60;
     
-    if (displayClock) {
-      displayClock.textContent = `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
-    }
+    displayClock.textContent = `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
     
     if (appState.totalSecondsRemaining <= 0) {
       clearInterval(appState.timerInterval);
-      alert('Time limit reached! System auto-submitting your workspace answers.');
+      alert('Time limit reached! Auto-submitting assessment workspace responses.');
       submitMockTestResponses();
     }
   }, 1000);
@@ -152,50 +143,40 @@ function startExamTimer() {
 
 function renderActiveQuestionCard() {
   if (appState.questions.length === 0) return;
-  
+
   const currentQ = appState.questions[appState.currentQuestionIndex];
-  
-  const numIndicator = document.getElementById('questionNumberIndicator');
-  const textDisplay = document.getElementById('questionTextDisplay');
-  if (numIndicator) numIndicator.textContent = `Question ${appState.currentQuestionIndex + 1} of ${appState.questions.length}`;
-  if (textDisplay) textDisplay.textContent = currentQ.question;
+  const questionID = currentQ._id || currentQ.id;
+
+  document.getElementById('questionNumberIndicator').textContent = `Question ${appState.currentQuestionIndex + 1} of ${appState.questions.length}`;
+  document.getElementById('questionTextDisplay').textContent = currentQ.question;
   
   const optionsWrapper = document.getElementById('optionsContainer');
-  if (!optionsWrapper) return;
   optionsWrapper.innerHTML = '';
-  
+
   currentQ.options.forEach((option) => {
     const label = document.createElement('label');
     label.className = 'option-label';
     
-    // Look up question options cleanly using standard object parameter strings
-    const currentQuestionId = currentQ.id || currentQ._id;
-    const isChecked = appState.selectedAnswers[currentQuestionId] === option ? 'checked' : '';
-    
-    label.innerHTML = `
-      <input type="radio" name="quizOption" value="${option}" ${isChecked}>
-      <span>${option}</span>
-    `;
+    const isChecked = appState.selectedAnswers[questionID] === option ? 'checked' : '';
+    label.innerHTML = `<input type="radio" name="quizOption" value="${option}" ${isChecked}> <span>${option}</span>`;
     
     label.querySelector('input').addEventListener('change', (e) => {
-      appState.selectedAnswers[currentQuestionId] = e.target.value;
+      appState.selectedAnswers[questionID] = e.target.value;
       updateNavigationBubbles();
     });
     
     optionsWrapper.appendChild(label);
   });
-  
-  const prevBtn = document.getElementById('prevBtn');
-  const nextBtn = document.getElementById('nextBtn');
-  if (prevBtn) prevBtn.disabled = appState.currentQuestionIndex === 0;
-  if (nextBtn) nextBtn.textContent = appState.currentQuestionIndex === appState.questions.length - 1 ? 'End Exam Review' : 'Next Question';
+
+  document.getElementById('prevBtn').disabled = appState.currentQuestionIndex === 0;
+  document.getElementById('nextBtn').textContent = appState.currentQuestionIndex === appState.questions.length - 1 ? 'Finish Exam' : 'Next Question';
 }
 
 function generateNavigationGrid() {
   const container = document.getElementById('navigationBubbleContainer');
   if (!container) return;
   container.innerHTML = '';
-  
+
   appState.questions.forEach((q, index) => {
     const bubble = document.createElement('div');
     bubble.className = 'bubble';
@@ -218,21 +199,21 @@ function updateNavigationBubbles() {
     const el = document.getElementById(`bubble-nav-${index}`);
     if (!el) return;
     
+    const questionID = q._id || q.id;
     el.className = 'bubble'; 
-    const currentQuestionId = q.id || q._id;
-    
     if (index === appState.currentQuestionIndex) {
       el.classList.add('active');
-    } else if (appState.selectedAnswers[currentQuestionId]) {
+    }
+    if (appState.selectedAnswers[questionID]) {
       el.classList.add('answered');
     }
   });
 }
 
 function initExamActionButtons() {
-  const prevBtn = document.getElementById('prevBtn');
   const nextBtn = document.getElementById('nextBtn');
-  const submitExamBtn = document.getElementById('submitExamBtn');
+  const prevBtn = document.getElementById('prevBtn');
+  const submitBtn = document.getElementById('submitExamBtn');
 
   if (prevBtn) {
     prevBtn.addEventListener('click', () => {
@@ -250,12 +231,16 @@ function initExamActionButtons() {
         appState.currentQuestionIndex++;
         renderActiveQuestionCard();
         updateNavigationBubbles();
+      } else {
+        if (confirm('Are you completely sure you want to finish and submit this test?')) {
+          submitMockTestResponses();
+        }
       }
     });
   }
 
-  if (submitExamBtn) {
-    submitExamBtn.addEventListener('click', () => {
+  if (submitBtn) {
+    submitBtn.addEventListener('click', () => {
       if (confirm('Are you completely sure you want to finish and submit this test?')) {
         submitMockTestResponses();
       }
@@ -264,7 +249,7 @@ function initExamActionButtons() {
 }
 
 async function submitMockTestResponses() {
-  clearInterval(appState.timerInterval);
+  if (appState.timerInterval) clearInterval(appState.timerInterval);
   const token = localStorage.getItem('mock_test_token');
   
   try {
@@ -280,32 +265,17 @@ async function submitMockTestResponses() {
     const data = await response.json();
     
     if (response.ok && data) {
-      // Bulletproof cache pairing - extracts both standard naming options safely
-      const finalScore = data.score !== undefined ? data.score : 0;
-      const finalTotal = data.totalQuestions !== undefined ? data.totalQuestions : (data.total || appState.questions.length);
-      const finalPercentage = data.percentage !== undefined ? data.percentage : parseFloat(((finalScore / finalTotal) * 100).toFixed(2));
-      const finalResultId = data.resultId || data._id || data.id || "session_saved";
-
-      // Store metric summaries safely without crashing on null parameters
-      localStorage.setItem('last_score', finalScore);
-      localStorage.setItem('last_total', finalTotal);
-      localStorage.setItem('last_percentage', finalPercentage);
-      localStorage.setItem('last_result_id', finalResultId);
+      localStorage.setItem('last_score', data.score !== undefined ? data.score : 0);
+      localStorage.setItem('last_total', data.totalQuestions !== undefined ? data.totalQuestions : appState.questions.length);
+      localStorage.setItem('last_percentage', data.percentage !== undefined ? data.percentage : 0);
+      localStorage.setItem('last_result_id', data.resultId || data._id || "session_saved");
       
-      // Redirect cleanly to your scorecard screen layout using standard routes
-      window.location.href = `results.html?id=${finalResultId}`;
+      window.location.href = 'results.html';
     } else {
-      // Displays the raw explanation text coming back from your Render server logs
-      alert(data.error || data.message || 'Error saving your assessment evaluation details.');
+      alert(data.error || data.message || 'Error compiling scoring data calculations.');
     }
   } catch (err) {
-    console.error("FRONTEND SUBMISSION CRASH RECOVERED:", err);
-    
-    // Safety Net: Even if localStorage or the data variables glitch out, 
-    // we force the page to forward the student to results.html anyway!
-    localStorage.setItem('last_score', 'Completed');
-    localStorage.setItem('last_total', 'Saved');
-    localStorage.setItem('last_percentage', '100');
-    window.location.href = 'results.html';
+    console.error(err);
+    alert('Evaluation processing failure: local hardware pipeline redirection fault.');
   }
 }

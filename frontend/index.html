@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Create Account - Mock Test Platform</title>
+  <title>MockExam Pro - Registration Gateway</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -11,34 +11,34 @@
   <nav>
     <div class="container nav-container">
       <a href="index.html" class="logo">MockExam Pro</a>
+      <button onclick="window.location.href='login.html'" class="btn" style="width:auto; padding: 5px 15px;">Login Portal</button>
     </div>
   </nav>
 
   <main class="container auth-wrapper">
     <div class="auth-card">
-      <h2>Get Started</h2>
-      <p>Create a free student profile to begin practicing.</p>
+      <h2>Create Student Account</h2>
+      <p>Register today to test your skills, review comprehensive diagnostics, and climb the live global leaderboards.</p>
       
       <form id="registerForm">
         <div class="form-group">
           <label for="username">Username</label>
-          <input type="text" id="username" placeholder="e.g., alex_dev" required minlength="3">
+          <input type="text" id="username" placeholder="Choose a unique username" required minlength="3">
         </div>
-        
         <div class="form-group">
           <label for="email">Email Address</label>
-          <input type="email" id="email" placeholder="you@example.com" required>
+          <input type="email" id="email" placeholder="name@example.com" required>
         </div>
-        
         <div class="form-group">
-          <label for="password">Password</label>
+          <label for="password">Account Password</label>
           <input type="password" id="password" placeholder="Minimum 6 characters" required minlength="6">
         </div>
-        
-        <button type="submit" class="btn">Create Account</button>
+        <button type="submit" class="btn">Create Account & Get Started</button>
       </form>
       
-      <button onclick="window.location.href='login.html'" class="btn btn-secondary">Already have an account? Login</button>
+      <p style="margin-top: 20px; font-size: 14px; text-align: center; color: #666;">
+        Already registered? <a href="login.html" style="color: var(--primary); font-weight: bold; text-decoration: none;">Secure Login</a>
+      </p>
     </div>
   </main>
 

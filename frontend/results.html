@@ -3,10 +3,11 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Exam Scorecard</title>
+  <title>Exam Scorecard - Summary Results</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
+
   <nav>
     <div class="container nav-container">
       <a href="dashboard.html" class="logo">MockExam Pro</a>
@@ -18,21 +19,22 @@
       <h2>Exam Completed! 🎉</h2>
       <p>Your assessment evaluation details have been compiled securely.</p>
       
-      <div style="margin: 30px 0; padding: 20px; background: #f4f6f9; border-radius: 8px;">
-        <h3 style="margin: 0; color: #333;">Your Score</h3>
-        <p id="scoreDisplay" style="font-size: 36px; font-weight: bold; color: var(--primary); margin: 10px 0;">0 / 0</p>
-        <p id="percentageDisplay" style="font-size: 18px; color: #666; margin: 0;">Percentage: 0%</p>
+      <div style="margin: 30px 0; padding: 25px; background: #f8fafc; border: 1px solid var(--border-color); border-radius: 8px;">
+        <h3 style="margin: 0; color: #475569; font-size: 16px; text-transform: uppercase; letter-spacing: 0.5px;">Your Final Score</h3>
+        <p id="scoreDisplay" style="font-size: 42px; font-weight: 800; color: var(--primary); margin: 10px 0;">0 / 0</p>
+        <p id="percentageDisplay" style="font-size: 18px; font-weight: 600; color: #334155; margin: 0;">Percentage: 0%</p>
       </div>
 
-      <div style="display: flex; gap: 15px;">
-        <button id="reviewBtn" class="btn" style="background: #333;">Review Answers</button>
-        <button onclick="window.location.href='dashboard.html'" class="btn">Back to Dashboard</button>
+      <div style="display: flex; flex-direction: column; gap: 12px;">
+        <button id="reviewBtn" class="btn" style="background: #1e293b;">Review Answers Detailed Log</button>
+        <button onclick="window.location.href='dashboard.html'" class="btn" style="background: transparent; border: 1px solid var(--border-color); color: var(--text-main);">Back to Dashboard</button>
       </div>
     </div>
   </main>
 
   <script>
     document.addEventListener('DOMContentLoaded', () => {
+      // Pull scores cleanly from the verified submission cache
       const score = localStorage.getItem('last_score') || 0;
       const total = localStorage.getItem('last_total') || 0;
       const percentage = localStorage.getItem('last_percentage') || 0;
@@ -42,7 +44,7 @@
       document.getElementById('percentageDisplay').textContent = `Percentage: ${percentage}%`;
 
       document.getElementById('reviewBtn').addEventListener('click', () => {
-        if (resultId) {
+        if (resultId && resultId !== "session_saved") {
           window.location.href = `review.html?id=${resultId}`;
         } else {
           window.location.href = 'review.html';

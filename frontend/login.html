@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Login - Mock Test Platform</title>
+  <title>MockExam Pro - Student Login</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -11,32 +11,42 @@
   <nav>
     <div class="container nav-container">
       <a href="index.html" class="logo">MockExam Pro</a>
+      <button onclick="window.location.href='index.html'" class="btn" style="width:auto; padding: 5px 15px;">Create Account</button>
     </div>
   </nav>
 
   <main class="container auth-wrapper">
     <div class="auth-card">
-      <h2>Welcome Back</h2>
-      <p>Log into your student account to access active tests.</p>
+      <h2>Secure Student Login</h2>
+      <p>Log back into your assessment dashboard to access available examinations and review global standings.</p>
       
       <form id="loginForm">
         <div class="form-group">
           <label for="email">Email Address</label>
-          <input type="email" id="email" placeholder="you@example.com" required>
+          <input type="email" id="email" placeholder="name@example.com" required>
         </div>
-        
         <div class="form-group">
-          <label for="password">Password</label>
-          <input type="password" id="password" placeholder="Enter your password" required>
+          <label for="password">Account Password</label>
+          <input type="password" id="password" placeholder="Enter your secret password" required>
         </div>
-        
-        <button type="submit" class="btn">Secure Login</button>
+        <button type="submit" class="btn">Verify & Enter Dashboard</button>
       </form>
       
-      <button onclick="window.location.href='index.html'" class="btn btn-secondary">New here? Register free</button>
+      <p style="margin-top: 20px; font-size: 14px; text-align: center; color: #666;">
+        New to the platform? <a href="index.html" style="color: var(--primary); font-weight: bold; text-decoration: none;">Register Free</a>
+      </p>
     </div>
   </main>
 
   <script src="script.js"></script>
+  <script>
+    // Automated check: Session protection gate validation fallback
+    document.addEventListener('DOMContentLoaded', () => {
+      const activeToken = localStorage.getItem('mock_test_token');
+      if (activeToken) {
+        window.location.href = 'dashboard.html';
+      }
+    });
+  </script>
 </body>
 </html>
