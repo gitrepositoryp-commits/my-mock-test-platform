@@ -3,8 +3,9 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Admin Panel - Bulk Question Uploader</title>
+  <title>Admin Portal - PDF Bulk Question Uploader</title>
   <link rel="stylesheet" href="style.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.min.js"></script>
 </head>
 <body>
 
@@ -15,117 +16,169 @@
     </div>
   </nav>
 
-  <main class="container auth-wrapper" style="min-height: 80vh; max-width: 800px; margin: 0 auto; display: block; padding-top: 40px;">
+  <main class="container auth-wrapper" style="min-height: 85vh; max-width: 800px; margin: 0 auto; display: block; padding-top: 30px;">
     
-    <div class="card" style="margin-bottom: 30px;">
-      <h2>Add Single Mock Question</h2>
-      <form id="adminQuestionForm" style="margin-top: 15px;">
-        <div class="form-group">
-          <label for="adminQText">Question Text</label>
-          <input type="text" id="adminQText" placeholder="e.g., What is the value of 2 + 2?" required>
-        </div>
-        <div class="form-group"><input type="text" id="optA" placeholder="Option A" required></div>
-        <div class="form-group"><input type="text" id="optB" placeholder="Option B" required></div>
-        <div class="form-group"><input type="text" id="optC" placeholder="Option C" required></div>
-        <div class="form-group"><input type="text" id="optD" placeholder="Option D" required></div>
-        <div class="form-group">
-          <label for="correctAnswer">Exact Correct Answer String</label>
-          <input type="text" id="correctAnswer" placeholder="Must match one of the options above letter-for-letter" required>
-        </div>
-        <button type="submit" class="btn">Save Single Question</button>
-      </form>
-    </div>
-
-    <div class="card">
-      <h2>🚀 Bulk Upload 100 PDF Questions (JSON Array)</h2>
-      <p style="color: #64748b; font-size: 14px; margin-top: 5px;">
-        Paste your structured JSON array of General Awareness, Math, and Reasoning questions below to upload them to MongoDB simultaneously.
+    <div class="card" style="padding: 30px; box-shadow: 0 4px 10px rgba(0,0,0,0.05);">
+      <h2 style="text-align: center; margin-bottom: 5px;">Upload Question PDF</h2>
+      <p style="text-align: center; color: #64748b; font-size: 14px; margin-bottom: 25px;">
+        Easily extract and parse your General Awareness, Math, and Reasoning questions into the database cluster.
       </p>
-      
-      <form id="bulkUploadForm" style="margin-top: 15px;">
-        <div class="form-group">
-          <label for="bulkJsonInput">JSON Question Batch Payload</label>
-          <textarea id="bulkJsonInput" style="width: 100%; height: 300px; padding: 12px; border: 1px solid var(--border-color); border-radius: 6px; font-family: monospace; font-size: 14px; resize: vertical; outline: none;" placeholder='[&#10;  {&#10;    "question": "Which planet is known as the Red Planet?",&#10;    "options": ["Earth", "Mars", "Jupiter", "Saturn"],&#10;    "correctAnswer": "Mars"&#10;  }&#10;]' required></textarea>
-        </div>
-        <button type="submit" class="btn" style="background-color: var(--success);">Execute Batch Upload to Cloud</button>
-      </form>
+
+      <div class="form-group" style="background: #f8fafc; border: 2px dashed var(--border-color); padding: 20px; border-radius: 8px; text-align: center;">
+        <input type="file" id="pdfFileInput" accept=".pdf" style="font-size: 15px; cursor: pointer;">
+      </div>
+
+      <div style="display: flex; flex-direction: column; gap: 12px; margin-top: 20px;">
+        <button id="readPdfBtn" class="btn" style="background-color: #2563eb;">Read PDF</button>
+        <button id="convertTextBtn" class="btn" style="background-color: #3b82f6;">Convert PDF Text to Questions</button>
+      </div>
+
+      <div class="form-group" style="margin-top: 25px;">
+        <label for="pdfTextPreview" style="font-weight: bold; margin-bottom: 8px; display: block;">PDF Text Preview & Structural Logs</label>
+        <textarea id="pdfTextPreview" style="width: 100%; height: 250px; padding: 12px; border: 1px solid var(--border-color); border-radius: 6px; font-family: monospace; font-size: 14px; resize: vertical; outline: none; background: #fafafa;" placeholder="PDF text will appear here..." readonly></textarea>
+      </div>
+
+      <button id="executeUploadBtn" class="btn" style="background-color: var(--success); margin-top: 15px; display: none;">
+        Confirm & Push Questions to Cloud Atlas Database
+      </button>
     </div>
 
   </main>
 
   <script>
+    // Link pdfjs workers natively to unblock browser processing threads
+    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.worker.min.js';
+
     const LIVE_BACKEND_URL = 'https://my-mock-test-platform.onrender.com/api';
+    let extractedRawText = "";
+    let formattedQuestionsPayload = [];
 
-    // Handler: Single question form pipeline
-    document.getElementById('adminQuestionForm').addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const question = document.getElementById('adminQText').value.trim();
-      const options = [
-        document.getElementById('optA').value.trim(),
-        document.getElementById('optB').value.trim(),
-        document.getElementById('optC').value.trim(),
-        document.getElementById('optD').value.trim()
-      ];
-      const correctAnswer = document.getElementById('correctAnswer').value.trim();
-
-      if (!options.includes(correctAnswer)) {
-        alert("Error: The exact correct answer string must match one of your 4 options perfectly!");
+    // BUTTON ACTION 1: Read raw content rows using browser memory buffers
+    document.getElementById('readPdfBtn').addEventListener('click', async () => {
+      const fileInput = document.getElementById('pdfFileInput');
+      const previewArea = document.getElementById('pdfTextPreview');
+      
+      if (fileInput.files.length === 0) {
+        alert("Please select a valid quiz PDF file first.");
         return;
       }
 
-      try {
-        const response = await fetch(`${LIVE_BACKEND_URL}/tests/questions`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ question, options, correctAnswer })
-        });
-        const data = await response.json();
-        if (response.ok) {
-          alert("Question added data successfully!");
-          document.getElementById('adminQuestionForm').reset();
-        } else {
-          alert(data.error || "Failed saving question.");
+      previewArea.value = "Reading document lines... Please wait.";
+      const file = fileInput.files[0];
+      const fileReader = new FileReader();
+
+      fileReader.onload = async function() {
+        try {
+          const typedarray = new Uint8Array(this.result);
+          const pdf = await pdfjsLib.getDocument(typedarray).promise;
+          let fullTextContent = "";
+
+          for (let i = 1; i <= pdf.numPages; i++) {
+            const page = await pdf.getPage(i);
+            const textDoc = await page.getTextContent();
+            const pageStrings = textDoc.items.map(item => item.str);
+            fullTextContent += pageStrings.join(" ") + "\n";
+          }
+
+          extractedRawText = fullTextContent;
+          previewArea.value = extractedRawText;
+          alert(`Success! Read ${pdf.numPages} pages cleanly from file container.`);
+        } catch (err) {
+          console.error(err);
+          previewArea.value = "Error parsing raw text vectors out of target data stream.";
         }
-      } catch (err) {
-        console.error(err);
-        alert("Network processing error linking to remote backend.");
+      };
+
+      fileReader.readAsArrayBuffer(file);
+    });
+
+    // BUTTON ACTION 2: Smart parser matching question line arrays
+    document.getElementById('convertTextBtn').addEventListener('click', () => {
+      const previewArea = document.getElementById('pdfTextPreview');
+      if (!extractedRawText.trim()) {
+        alert("Please run 'Read PDF' first to populate content variables.");
+        return;
+      }
+
+      previewArea.value = "Parsing patterns into structured database rows...";
+
+      // Segment string arrays safely across standard multi-choice questionnaire patterns
+      const questionBlocks = extractedRawText.split(/(?=Q\d+[:.)]|\d+[\s]*\.)/g);
+      formattedQuestionsPayload = [];
+
+      questionBlocks.forEach(block => {
+        if (!block.trim()) return;
+
+        // Strip line breaks cleanly
+        const cleanLines = block.replace(/\s+/g, ' ').trim();
+        
+        // Dynamic regular expression grouping target question lines and multiple choice blocks
+        const qRegex = /(?:Q?\d+[:.)]\s*)?(.+?)(?:\(?[A-a][:.)]|\bA\s+)(.+?)(?:\(?[B-b][:.)]|\bB\s+)(.+?)(?:\(?[C-c][:.)]|\bC\s+)(.+?)(?:\(?[D-d][:.)]|\bD\s+)(.+?)(?:Ans[:.)]|\bAnswer[:.)]|\bCorrect[:.)]\s*)([A-D])/i;
+        const match = cleanLines.match(qRegex);
+
+        if (match) {
+          const qText = match[1].trim();
+          const optA = match[2].trim();
+          const optB = match[3].trim();
+          const optC = match[4].trim();
+          const optD = match[5].trim();
+          const correctLetter = match[6].trim().toUpperCase();
+
+          const optionsArray = [optA, optB, optC, optD];
+          
+          // Map index bounds letter arrays seamlessly
+          let correctString = optA;
+          if (correctLetter === 'B') correctString = optB;
+          if (correctLetter === 'C') correctString = optC;
+          if (correctLetter === 'D') correctString = optD;
+
+          formattedQuestionsPayload.push({
+            question: qText,
+            options: optionsArray,
+            correctAnswer: correctString
+          });
+        }
+      });
+
+      if (formattedQuestionsPayload.length === 0) {
+        // Fallback log prompt if raw layout structure varies slightly from standard layout
+        previewArea.value = "The automated parser completed but requires fallback JSON review. Formatted layout pattern:\n\n" + 
+          JSON.stringify([
+            {
+              question: "Sample Question Text extracted here",
+              options: ["Option A", "Option B", "Option C", "Option D"],
+              correctAnswer: "Option A"
+            }
+          ], null, 2);
+        alert("The visual text was read, but no clean choice matrices matched the standard format automatically. Please copy the template shown below to structure your paste.");
+      } else {
+        previewArea.value = `Successfully structured ${formattedQuestionsPayload.length} exam items clean array payload structure:\n\n` + JSON.stringify(formattedQuestionsPayload, null, 2);
+        document.getElementById('executeUploadBtn').style.display = "block";
+        alert(`Successfully found and structured ${formattedQuestionsPayload.length} questions matching layout parameters!`);
       }
     });
 
-    // Handler: Bulk copy-paste JSON uploader pipeline
-    document.getElementById('bulkUploadForm').addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const rawJsonString = document.getElementById('bulkJsonInput').value.trim();
-
-      let parsedArray;
-      try {
-        parsedArray = JSON.parse(rawJsonString);
-        if (!Array.isArray(parsedArray)) {
-          alert("Data structural error: Root of JSON entry must be a valid array containing objects.");
-          return;
-        }
-      } catch (parseError) {
-        alert("JSON Syntax Validation Error: Please check for missing commas, brackets, or unclosed quotation marks.");
-        return;
-      }
+    // ACTION STEP 3: Dispatch formatted batch payload directly over network
+    document.getElementById('executeUploadBtn').addEventListener('click', async () => {
+      if (formattedQuestionsPayload.length === 0) return;
 
       try {
         const response = await fetch(`${LIVE_BACKEND_URL}/tests/bulk-questions`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ questionsArray: parsedArray })
+          body: JSON.stringify({ questionsArray: formattedQuestionsPayload })
         });
         const data = await response.json();
 
         if (response.ok) {
-          alert(data.message || "Bulk questions uploaded successfully!");
-          document.getElementById('bulkUploadForm').reset();
+          alert(data.message || `Successfully committed ${formattedQuestionsPayload.length} questions straight into MongoDB Atlas!`);
+          location.reload();
         } else {
-          alert(data.error || "Cloud batch transaction failed processing.");
+          alert(data.error || "The cloud transaction was rejected by database handlers.");
         }
       } catch (err) {
         console.error(err);
-        alert("Network fault occurred connecting with backend server cluster endpoints.");
+        alert("Network processing fault tracking remote API pathways.");
       }
     });
   </script>
