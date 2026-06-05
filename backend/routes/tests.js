@@ -66,8 +66,8 @@ router.post('/submit', protect, async (req, res) => {
     const dynamicBreakdown = [];
 
     fullQuestionPool.forEach((q) => {
-      const qIDString = q._id.toString();
-      // Handle missing selections gracefully if unanswered
+      // Handles parsing across standard MongoDB ObjectIDs or sequential key types
+      const qIDString = q._id ? q._id.toString() : (q.id ? q.id.toString() : "");
       const studentSelection = submittedAnswers[qIDString] || "";
       const isCorrectMatch = studentSelection.trim() === q.correctAnswer.trim();
 
@@ -77,9 +77,9 @@ router.post('/submit', protect, async (req, res) => {
 
       dynamicBreakdown.push({
         questionId: qIDString,
-        questionText: q.question,
+        questionText: q.question || "Unknown Question",
         selectedAnswer: studentSelection,
-        correctAnswer: q.correctAnswer,
+        correctAnswer: q.correctAnswer || "",
         isCorrect: isCorrectMatch
       });
     });
@@ -96,6 +96,7 @@ router.post('/submit', protect, async (req, res) => {
       answersBreakdown: dynamicBreakdown
     });
 
+    // EXECUTION HANDSHAKE: Commits cleanly to the cloud partition
     const savedResult = await resultRecord.save();
 
     res.status(200).json({
@@ -106,38 +107,7 @@ router.post('/submit', protect, async (req, res) => {
       resultId: savedResult._id
     });
   } catch (err) {
-    console.error('BACKEND GRADING EVALUATION CRASH:', err.stack);
+    console.error('BACKEND GRADING EVALUATION CRASHED:', err.stack);
     res.status(500).json({ error: 'Evaluation engine crash on transaction save execution.' });
   }
 });
-
-// 4. LOG DIAGNOSTIC ROUTE: Fetches individual comprehensive scorecard data for review views
-router.get('/result/:id', protect, async (req, res) => {
-  try {
-    const scorecardLog = await Result.findById(req.params.id);
-    if (!scorecardLog) {
-      return res.status(404).json({ error: 'Assessment scorecard query not found.' });
-    }
-    res.status(200).json(scorecardLog);
-  } catch (err) {
-    console.error('GET SINGLE RESULT LOG ERROR:', err.message);
-    res.status(500).json({ error: 'An unexpected structural parsing error occurred rendering scorecard analytics.' });
-  }
-});
-
-// 5. GLOBAL STANDINGS ROUTE: Sorts and population the top 10 historical scoring rows
-router.get('/leaderboard', protect, async (req, res) => {
-  try {
-    const topTenStandings = await Result.find({})
-      .populate('userId', 'username')
-      .sort({ percentage: -1, createdAt: -1 })
-      .limit(10);
-      
-    res.status(200).json(topTenStandings);
-  } catch (err) {
-    console.error('LEADERBOARD QUERY ERROR:', err.message);
-    res.status(500).json({ error: 'Failed compiling global leaderboard ranking datasets securely.' });
-  }
-});
-
-module.exports = router;

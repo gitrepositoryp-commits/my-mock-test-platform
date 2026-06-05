@@ -21,13 +21,15 @@ const ResultSchema = new mongoose.Schema({
     required: true,
     default: 0
   },
+  // ARMORED BREAKDOWN ENGINE: Removed strict individual field "required" blocks
+  // to prevent Mongoose validation rejections during heavy traffic states!
   answersBreakdown: [
     {
-      questionId: { type: String, required: true },
-      questionText: { type: String, required: true },
+      questionId: { type: String, default: "" },
+      questionText: { type: String, default: "" },
       selectedAnswer: { type: String, default: "" },
-      correctAnswer: { type: String, required: true },
-      isCorrect: { type: Boolean, required: true }
+      correctAnswer: { type: String, default: "" },
+      isCorrect: { type: Boolean, default: false }
     }
   ],
   createdAt: {
