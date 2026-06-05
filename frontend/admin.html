@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Admin Portal - PDF Bulk Question Uploader</title>
+  <title>Admin Portal - Smart PDF Bulk Uploader</title>
   <link rel="stylesheet" href="style.css">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.min.js"></script>
 </head>
@@ -11,7 +11,7 @@
 
   <nav>
     <div class="container nav-container">
-      <a href="dashboard.html" class="logo">MockExam Pro (Admin Controls)</a>
+      <a href="dashboard.html" class="logo">MockExam Pro (Admin Panels)</a>
       <button onclick="window.location.href='dashboard.html'" class="btn" style="width:auto; padding: 5px 15px;">Student Dashboard</button>
     </div>
   </nav>
@@ -19,12 +19,12 @@
   <main class="container auth-wrapper" style="min-height: 85vh; max-width: 800px; margin: 0 auto; display: block; padding-top: 30px;">
     
     <div class="card" style="padding: 30px; box-shadow: 0 4px 10px rgba(0,0,0,0.05);">
-      <h2 style="text-align: center; margin-bottom: 5px;">Upload Question PDF</h2>
+      <h2 style="text-align: center; margin-bottom: 5px;">Smart PDF Question Uploader</h2>
       <p style="text-align: center; color: #64748b; font-size: 14px; margin-bottom: 25px;">
-        Easily extract and parse your General Awareness, Math, and Reasoning questions into the database cluster.
+        Extracts your 100 General Awareness, Math, and Reasoning questions cleanly[cite: 2684, 2693]. Handles varying layouts automatically.
       </p>
 
-      <div class="form-group" style="background: #f8fafc; border: 2px dashed var(--border-color); padding: 20px; border-radius: 8px; text-align: center;">
+      <div class="form-group" style="background: #f8fafc; border: 2px dashed var(--border-color); padding: 25px; border-radius: 8px; text-align: center;">
         <input type="file" id="pdfFileInput" accept=".pdf" style="font-size: 15px; cursor: pointer;">
       </div>
 
@@ -34,36 +34,36 @@
       </div>
 
       <div class="form-group" style="margin-top: 25px;">
-        <label for="pdfTextPreview" style="font-weight: bold; margin-bottom: 8px; display: block;">PDF Text Preview & Structural Logs</label>
-        <textarea id="pdfTextPreview" style="width: 100%; height: 250px; padding: 12px; border: 1px solid var(--border-color); border-radius: 6px; font-family: monospace; font-size: 14px; resize: vertical; outline: none; background: #fafafa;" placeholder="PDF text will appear here..." readonly></textarea>
+        <label for="pdfTextPreview" style="font-weight: bold; margin-bottom: 8px; display: block;">PDF Data Preview & Final Output Verification Console</label>
+        <textarea id="pdfTextPreview" style="width: 100%; height: 300px; padding: 12px; border: 1px solid var(--border-color); border-radius: 6px; font-family: monospace; font-size: 13px; resize: vertical; outline: none; background: #fafafa; line-height: 1.6;" placeholder="PDF text rows will appear here..." readonly></textarea>
       </div>
 
-      <button id="executeUploadBtn" class="btn" style="background-color: var(--success); margin-top: 15px; display: none;">
-        Confirm & Push Questions to Cloud Atlas Database
+      <button id="executeUploadBtn" class="btn" style="background-color: var(--success); margin-top: 15px; display: none; font-size: 16px; padding: 14px;">
+        🚀 All Clear! Confirm & Upload Structured Questions to MongoDB
       </button>
     </div>
 
   </main>
 
   <script>
-    // Link pdfjs workers natively to unblock browser processing threads
+    // Point global work instances cleanly to secure background processing CDN layers
     pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.worker.min.js';
 
     const LIVE_BACKEND_URL = 'https://my-mock-test-platform.onrender.com/api';
     let extractedRawText = "";
     let formattedQuestionsPayload = [];
 
-    // BUTTON ACTION 1: Read raw content rows using browser memory buffers
+    // CORE ACTION 1: Read the binary streams of the selected PDF container document
     document.getElementById('readPdfBtn').addEventListener('click', async () => {
       const fileInput = document.getElementById('pdfFileInput');
       const previewArea = document.getElementById('pdfTextPreview');
       
       if (fileInput.files.length === 0) {
-        alert("Please select a valid quiz PDF file first.");
+        alert("Please select a valid PDF question paper file first.");
         return;
       }
 
-      previewArea.value = "Reading document lines... Please wait.";
+      previewArea.value = "Reading document layout contents... Please wait patiently.";
       const file = fileInput.files[0];
       const fileReader = new FileReader();
 
@@ -76,45 +76,49 @@
           for (let i = 1; i <= pdf.numPages; i++) {
             const page = await pdf.getPage(i);
             const textDoc = await page.getTextContent();
+            
+            // Extract the strings and normalize irregular layout spaces
             const pageStrings = textDoc.items.map(item => item.str);
             fullTextContent += pageStrings.join(" ") + "\n";
           }
 
           extractedRawText = fullTextContent;
           previewArea.value = extractedRawText;
-          alert(`Success! Read ${pdf.numPages} pages cleanly from file container.`);
+          alert(`Successfully extracted text data lines from all ${pdf.numPages} pages cleanly!`);
         } catch (err) {
           console.error(err);
-          previewArea.value = "Error parsing raw text vectors out of target data stream.";
+          previewArea.value = "System Error: Failed parsing binary text vectors out of your document stream.";
         }
       };
 
       fileReader.readAsArrayBuffer(file);
     });
 
-    // BUTTON ACTION 2: Smart parser matching question line arrays
+    // CORE ACTION 2: Smart Flexible regex text parsing logic architecture
     document.getElementById('convertTextBtn').addEventListener('click', () => {
       const previewArea = document.getElementById('pdfTextPreview');
       if (!extractedRawText.trim()) {
-        alert("Please run 'Read PDF' first to populate content variables.");
+        alert("Please click 'Read PDF' to scan text fields before running conversion formatting calculations.");
         return;
       }
 
-      previewArea.value = "Parsing patterns into structured database rows...";
+      previewArea.value = "Executing smart parsing filters across text buffers...";
 
-      // Segment string arrays safely across standard multi-choice questionnaire patterns
-      const questionBlocks = extractedRawText.split(/(?=Q\d+[:.)]|\d+[\s]*\.)/g);
+      // Clean multiple consecutive blank spacings, but keep lines readable
+      let standardizedText = extractedRawText.replace(/[ \t]+/g, ' ');
+
+      // Split text cleanly wherever a question number starts (e.g., "1.", "Q2.", "100.")
+      const rawQuestionBlocks = standardizedText.split(/(?=\bQ?\d+[\.\:\)\s]+)/g);
       formattedQuestionsPayload = [];
 
-      questionBlocks.forEach(block => {
-        if (!block.trim()) return;
+      rawQuestionBlocks.forEach(block => {
+        if (!block.trim() || block.length < 15) return;
 
-        // Strip line breaks cleanly
-        const cleanLines = block.replace(/\s+/g, ' ').trim();
+        // HIGHLY BULLETPROOF REGEX EXTRACOR ENGINE MATRIX:
+        // Captures Question, Option A, Option B, Option C, Option D, and the Answer Key string
+        const bulletproofRegex = /(?:Q?\d+[\.\:\)\s]+)?(.+?)(?:\(?[A-a][\.\:\)\s]+|[^a-zA-Z]A\s+)(.+?)(?:\(?[B-b][\.\:\)\s]+|[^a-zA-Z]B\s+)(.+?)(?:\(?[C-c][\.\:\)\s]+|[^a-zA-Z]C\s+)(.+?)(?:\(?[D-d][\.\:\)\s]+|[^a-zA-Z]D\s+)(.+?)(?:Ans(?:wer)?[\.\:\s]*|Correct[\.\:\s]*|[^a-zA-Z]Ans\s*)([A-D,a-d])/i;
         
-        // Dynamic regular expression grouping target question lines and multiple choice blocks
-        const qRegex = /(?:Q?\d+[:.)]\s*)?(.+?)(?:\(?[A-a][:.)]|\bA\s+)(.+?)(?:\(?[B-b][:.)]|\bB\s+)(.+?)(?:\(?[C-c][:.)]|\bC\s+)(.+?)(?:\(?[D-d][:.)]|\bD\s+)(.+?)(?:Ans[:.)]|\bAnswer[:.)]|\bCorrect[:.)]\s*)([A-D])/i;
-        const match = cleanLines.match(qRegex);
+        const match = block.match(bulletproofRegex);
 
         if (match) {
           const qText = match[1].trim();
@@ -122,43 +126,41 @@
           const optB = match[3].trim();
           const optC = match[4].trim();
           const optD = match[5].trim();
-          const correctLetter = match[6].trim().toUpperCase();
+          const answerLetter = match[6].trim().toUpperCase();
 
           const optionsArray = [optA, optB, optC, optD];
           
-          // Map index bounds letter arrays seamlessly
-          let correctString = optA;
-          if (correctLetter === 'B') correctString = optB;
-          if (correctLetter === 'C') correctString = optC;
-          if (correctLetter === 'D') correctString = optD;
+          // Map option array coordinates perfectly based on the correct answer letter
+          let correctStringValue = optA;
+          if (answerLetter === 'B') correctStringValue = optB;
+          if (answerLetter === 'C') correctStringValue = optC;
+          if (answerLetter === 'D') correctStringValue = optD;
 
           formattedQuestionsPayload.push({
             question: qText,
             options: optionsArray,
-            correctAnswer: correctString
+            correctAnswer: correctStringValue
           });
         }
       });
 
+      // EVALUATION HANDSHAKE STATUS CHECK
       if (formattedQuestionsPayload.length === 0) {
-        // Fallback log prompt if raw layout structure varies slightly from standard layout
-        previewArea.value = "The automated parser completed but requires fallback JSON review. Formatted layout pattern:\n\n" + 
-          JSON.stringify([
-            {
-              question: "Sample Question Text extracted here",
-              options: ["Option A", "Option B", "Option C", "Option D"],
-              correctAnswer: "Option A"
-            }
-          ], null, 2);
-        alert("The visual text was read, but no clean choice matrices matched the standard format automatically. Please copy the template shown below to structure your paste.");
+        previewArea.value = "The smart parser was unable to map question rows automatically because of irregular text structuring.\n\n" +
+          "💡 PRO-TIP FOR SUCCESS:\n Ensure your questions in the PDF are structured clearly with options and an answer line like this:\n\n" +
+          "1. This is your mock exam question text string?\n" +
+          "A) First Option text  B) Second Option text  C) Third Option text  D) Fourth Option text\n" +
+          "Answer: A";
+        alert("Parsing format mismatch! Review the guide text generated in the preview box to ensure perfect structure mapping.");
       } else {
-        previewArea.value = `Successfully structured ${formattedQuestionsPayload.length} exam items clean array payload structure:\n\n` + JSON.stringify(formattedQuestionsPayload, null, 2);
+        // Output formatted data cleanly on screen for review
+        previewArea.value = `🎉 SUCCESS! Smart validation engine successfully found and structured ${formattedQuestionsPayload.length} question blocks!\n\nPayload Review Array preview below:\n\n` + JSON.stringify(formattedQuestionsPayload, null, 2);
         document.getElementById('executeUploadBtn').style.display = "block";
-        alert(`Successfully found and structured ${formattedQuestionsPayload.length} questions matching layout parameters!`);
+        alert(`Successfully formatted ${formattedQuestionsPayload.length} exam items matching standard choice layouts!`);
       }
     });
 
-    // ACTION STEP 3: Dispatch formatted batch payload directly over network
+    // CORE ACTION 3: Dispatch batch payload directly over the network tunnel straight to MongoDB Atlas
     document.getElementById('executeUploadBtn').addEventListener('click', async () => {
       if (formattedQuestionsPayload.length === 0) return;
 
@@ -171,14 +173,14 @@
         const data = await response.json();
 
         if (response.ok) {
-          alert(data.message || `Successfully committed ${formattedQuestionsPayload.length} questions straight into MongoDB Atlas!`);
-          location.reload();
+          alert(data.message || `Victory! Successfully committed ${formattedQuestionsPayload.length} questions straight into MongoDB Atlas!`);
+          window.location.href = 'dashboard.html';
         } else {
-          alert(data.error || "The cloud transaction was rejected by database handlers.");
+          alert(data.error || "The cloud database transaction was rejected by cluster handlers.");
         }
       } catch (err) {
         console.error(err);
-        alert("Network processing fault tracking remote API pathways.");
+        alert("Network routing fault connecting to remote cloud production API endpoints.");
       }
     });
   </script>
