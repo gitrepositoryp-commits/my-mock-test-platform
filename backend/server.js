@@ -36,4 +36,4 @@ app.listen(PORT, () => {
   console.log(`Server executing seamlessly on port ${PORT}`);
 });
 
-// Trigger Auto-Deploy for Smart PDF Parser Patch v2.0
+// Trigger Auto-Deploy for Standalone PDF worker patch v3.0
