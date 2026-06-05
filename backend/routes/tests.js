@@ -1,139 +1,142 @@
 const express = require('express');
 const router = express.Router();
-const Result = require('../models/Result'); 
-const Question = require('../models/Question'); 
+const Question = require('../models/Question');
+const Result = require('../models/Result');
 const jwt = require('jsonwebtoken');
 
-// Inline Auth Token Verification Middleware
+// LOCAL SECURITY GATEWAY MIDDLEWARE: Verifies active student login status
 const protect = async (req, res, next) => {
-  let token;
-  if (req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
-    try {
+  try {
+    let token;
+    if (req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
       token = req.headers.authorization.split(' ')[1];
-      const decoded = jwt.verify(token, process.env.JWT_SECRET);
-      req.userId = decoded.id;
-      next();
-    } catch (error) {
-      return res.status(401).json({ error: 'Not authorized' });
     }
+
+    if (!token) {
+      return res.status(401).json({ error: 'Session credentials missing. Please log in.' });
+    }
+
+    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'super_secret_mock_test_key_2026');
+    req.user = { id: decoded.id };
+    next();
+  } catch (err) {
+    console.error('MIDDLEWARE AUTH BLOCK:', err.message);
+    return res.status(401).json({ error: 'Your login token signature has expired or is invalid.' });
   }
-  if (!token) return res.status(401).json({ error: 'Not authorized, no token' });
 };
 
-// 1. ADMIN ROUTE: Post a new single question
-// FIXED: Pluralized path endpoint string to map with admin.html precisely
+// 1. ADMIN PANEL ROUTE: Injects a single question into the database cluster
 router.post('/questions', async (req, res) => {
   try {
-    const { question, options, correctAnswer } = req.body; 
-
-    // Validation safety fallback
+    const { question, options, correctAnswer } = req.body;
+    
     if (!question || !options || !correctAnswer) {
-      return res.status(400).json({ message: "Validation Failed: All question fields are required." });
+      return res.status(400).json({ error: 'Compulsory form parameter arrays missing.' });
     }
 
-    const count = await Question.countDocuments();
-    const newQuestion = new Question({
-      id: count + 1,
-      question,
-      options,
-      correctAnswer // Maps aligned key parameter names directly to your schema model
-    });
-
+    const newQuestion = new Question({ question, options, correctAnswer });
     await newQuestion.save();
-    res.status(201).json({ message: "Question added data successfully!" });
+    res.status(201).json({ message: 'Question added data successfully!' });
   } catch (err) {
-    console.error("ADMIN ROUTE ERROR:", err.message);
-    res.status(500).json({ message: "Database saving failed.", error: err.message });
+    console.error('ADMIN PORTAL POST ERROR:', err.message);
+    res.status(500).json({ error: 'Failed to write your new question into the database.' });
   }
 });
 
-// 2. STUDENT ROUTE: Fetch test questions safely 
+// 2. STUDENT ROUTE: Downloads available exam bank documents (Answers hidden from view)
 router.get('/questions', protect, async (req, res) => {
   try {
-    const dbQuestions = await Question.find({}, '-correctAnswer'); 
-    res.json(dbQuestions);
+    // Exclude 'correctAnswer' string to protect assessment contents from browser source inspectors
+    const databaseQuestions = await Question.find({}, '-correctAnswer');
+    res.status(200).json(databaseQuestions);
   } catch (err) {
-    res.status(500).json({ error: "Failed to fetch questions" });
+    console.error('FETCH QUESTIONS ERROR:', err.message);
+    res.status(500).json({ error: 'Failed to retrieve test bank entries securely.' });
   }
 });
 
-// 3. STUDENT ROUTE: Secure Exam Assessment Submission Routing
+// 3. EXAM EVALUATION SPRINT ENGINE ROUTE: Validates choices, scores items, and writes logs
 router.post('/submit', protect, async (req, res) => {
   try {
-    const incomingPayload = req.body.answers || req.body;
-    let score = 0;
-    const answersBreakdown = [];
-    const masterQuestions = await Question.find({});
+    const { answers } = req.body; 
+    const submittedAnswers = answers || {};
 
-    if (masterQuestions.length === 0) {
-      return res.status(400).json({ error: "Database question bank partition is currently empty." });
-    }
+    const fullQuestionPool = await Question.find({});
+    let calculatedScore = 0;
+    const dynamicBreakdown = [];
 
-    masterQuestions.forEach((q) => {
-      let selected = null;
-      if (incomingPayload[q.id] !== undefined) {
-        selected = incomingPayload[q.id];
-      } else if (incomingPayload[q._id] !== undefined) {
-        selected = incomingPayload[q._id];
+    fullQuestionPool.forEach((q) => {
+      const qIDString = q._id.toString();
+      // Handle missing selections gracefully if unanswered
+      const studentSelection = submittedAnswers[qIDString] || "";
+      const isCorrectMatch = studentSelection.trim() === q.correctAnswer.trim();
+
+      if (isCorrectMatch) {
+        calculatedScore++;
       }
 
-      const isCorrect = selected !== null && String(selected).trim() === String(q.correctAnswer).trim();
-      if (isCorrect) score++;
-
-      answersBreakdown.push({
-        questionId: String(q._id),
+      dynamicBreakdown.push({
+        questionId: qIDString,
         questionText: q.question,
-        options: q.options,
-        selectedAnswer: selected ? String(selected) : "Unanswered",
+        selectedAnswer: studentSelection,
         correctAnswer: q.correctAnswer,
-        isCorrect: isCorrect
+        isCorrect: isCorrectMatch
       });
     });
 
-    const totalQuestions = masterQuestions.length;
-    const percentage = parseFloat(((score / totalQuestions) * 100).toFixed(2));
+    const accuracyPercentage = fullQuestionPool.length > 0 
+      ? parseFloat(((calculatedScore / fullQuestionPool.length) * 100).toFixed(2)) 
+      : 0;
 
-    const newResult = new Result({
-      user: req.userId,
-      score: score,
-      totalQuestions: totalQuestions,
-      percentage: percentage,
-      answersBreakdown: answersBreakdown
+    const resultRecord = new Result({
+      userId: req.user.id,
+      score: calculatedScore,
+      totalQuestions: fullQuestionPool.length,
+      percentage: accuracyPercentage,
+      answersBreakdown: dynamicBreakdown
     });
 
-    await newResult.save();
-    res.status(201).json({ resultId: newResult._id, score, totalQuestions, percentage });
+    const savedResult = await resultRecord.save();
+
+    res.status(200).json({
+      message: "Assessment evaluation finalized cleanly.",
+      score: calculatedScore,
+      totalQuestions: fullQuestionPool.length,
+      percentage: accuracyPercentage,
+      resultId: savedResult._id
+    });
   } catch (err) {
-    console.error("EVALUATION FAULT LOGGED:", err.message);
-    res.status(500).json({ error: "Evaluation processing failure", message: err.message });
+    console.error('BACKEND GRADING EVALUATION CRASH:', err.stack);
+    res.status(500).json({ error: 'Evaluation engine crash on transaction save execution.' });
   }
 });
 
-// 4. LEADERBOARD ROUTE
-router.get('/leaderboard', async (req, res) => {
-  try {
-    const rankings = await Result.find().populate('user', 'username').sort({ score: -1 }).limit(10);
-    const organizedRankings = rankings.map((r, i) => ({
-      rank: i + 1,
-      username: r.user ? r.user.username : 'Anonymous User',
-      score: r.score,
-      totalQuestions: r.totalQuestions,
-      percentage: r.percentage,
-      date: r.submittedAt
-    }));
-    res.json(organizedRankings);
-  } catch (err) {
-    res.status(500).json({ error: "Leaderboard collection error" });
-  }
-});
-
-// 5. SINGLE RESULT ROUTE
+// 4. LOG DIAGNOSTIC ROUTE: Fetches individual comprehensive scorecard data for review views
 router.get('/result/:id', protect, async (req, res) => {
   try {
-    const record = await Result.findById(req.params.id);
-    res.json(record);
+    const scorecardLog = await Result.findById(req.params.id);
+    if (!scorecardLog) {
+      return res.status(404).json({ error: 'Assessment scorecard query not found.' });
+    }
+    res.status(200).json(scorecardLog);
   } catch (err) {
-    res.status(500).json({ error: "Retrieval processing failure" });
+    console.error('GET SINGLE RESULT LOG ERROR:', err.message);
+    res.status(500).json({ error: 'An unexpected structural parsing error occurred rendering scorecard analytics.' });
+  }
+});
+
+// 5. GLOBAL STANDINGS ROUTE: Sorts and population the top 10 historical scoring rows
+router.get('/leaderboard', protect, async (req, res) => {
+  try {
+    const topTenStandings = await Result.find({})
+      .populate('userId', 'username')
+      .sort({ percentage: -1, createdAt: -1 })
+      .limit(10);
+      
+    res.status(200).json(topTenStandings);
+  } catch (err) {
+    console.error('LEADERBOARD QUERY ERROR:', err.message);
+    res.status(500).json({ error: 'Failed compiling global leaderboard ranking datasets securely.' });
   }
 });
 
