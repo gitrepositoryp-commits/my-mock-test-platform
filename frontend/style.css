@@ -111,7 +111,6 @@ nav {
   display: inline-block;
   width: 100%;
   background-color: var(--primary);
-  color: #white;
   color: white;
   padding: 12px;
   font-size: 15px;
@@ -132,7 +131,6 @@ nav {
   cursor: not-allowed;
 }
 
-/* Exam Layout Engine Styles */
 .workspace-grid {
   display: grid;
   grid-template-columns: 1fr 300px;
