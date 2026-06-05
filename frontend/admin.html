@@ -3,60 +3,62 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Admin Panel - Add Questions</title>
+  <title>Admin Panel - Bulk Question Uploader</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
   <nav>
     <div class="container nav-container">
-      <a href="dashboard.html" class="logo">MockExam Pro (Admin)</a>
+      <a href="dashboard.html" class="logo">MockExam Pro (Admin Controls)</a>
       <button onclick="window.location.href='dashboard.html'" class="btn" style="width:auto; padding: 5px 15px;">Student Dashboard</button>
     </div>
   </nav>
 
-  <main class="container auth-wrapper" style="min-height: 70vh;">
-    <div class="auth-card" style="max-width: 600px;">
-      <h2>Add New Mock Question</h2>
-      <p>This form injects real-time questions securely into your MongoDB Atlas cloud database.</p>
-
-      <form id="adminQuestionForm">
+  <main class="container auth-wrapper" style="min-height: 80vh; max-width: 800px; margin: 0 auto; display: block; padding-top: 40px;">
+    
+    <div class="card" style="margin-bottom: 30px;">
+      <h2>Add Single Mock Question</h2>
+      <form id="adminQuestionForm" style="margin-top: 15px;">
         <div class="form-group">
           <label for="adminQText">Question Text</label>
-          <input type="text" id="adminQText" placeholder="e.g., What is the capital of France?" required>
+          <input type="text" id="adminQText" placeholder="e.g., What is the value of 2 + 2?" required>
         </div>
-
-        <div class="form-group">
-          <label for="optA">Option A</label>
-          <input type="text" id="optA" placeholder="Option A" required>
-        </div>
-        <div class="form-group">
-          <label for="optB">Option B</label>
-          <input type="text" id="optB" placeholder="Option B" required>
-        </div>
-        <div class="form-group">
-          <label for="optC">Option C</label>
-          <input type="text" id="optC" placeholder="Option C" required>
-        </div>
-        <div class="form-group">
-          <label for="optD">Option D</label>
-          <input type="text" id="optD" placeholder="Option D" required>
-        </div>
-
+        <div class="form-group"><input type="text" id="optA" placeholder="Option A" required></div>
+        <div class="form-group"><input type="text" id="optB" placeholder="Option B" required></div>
+        <div class="form-group"><input type="text" id="optC" placeholder="Option C" required></div>
+        <div class="form-group"><input type="text" id="optD" placeholder="Option D" required></div>
         <div class="form-group">
           <label for="correctAnswer">Exact Correct Answer String</label>
-          <input type="text" id="correctAnswer" placeholder="Must exactly match one of the options written above" required>
+          <input type="text" id="correctAnswer" placeholder="Must match one of the options above letter-for-letter" required>
         </div>
-
-        <button type="submit" class="btn" style="background-color: var(--primary);">Save Question to Database</button>
+        <button type="submit" class="btn">Save Single Question</button>
       </form>
     </div>
+
+    <div class="card">
+      <h2>🚀 Bulk Upload 100 PDF Questions (JSON Array)</h2>
+      <p style="color: #64748b; font-size: 14px; margin-top: 5px;">
+        Paste your structured JSON array of General Awareness, Math, and Reasoning questions below to upload them to MongoDB simultaneously.
+      </p>
+      
+      <form id="bulkUploadForm" style="margin-top: 15px;">
+        <div class="form-group">
+          <label for="bulkJsonInput">JSON Question Batch Payload</label>
+          <textarea id="bulkJsonInput" style="width: 100%; height: 300px; padding: 12px; border: 1px solid var(--border-color); border-radius: 6px; font-family: monospace; font-size: 14px; resize: vertical; outline: none;" placeholder='[&#10;  {&#10;    "question": "Which planet is known as the Red Planet?",&#10;    "options": ["Earth", "Mars", "Jupiter", "Saturn"],&#10;    "correctAnswer": "Mars"&#10;  }&#10;]' required></textarea>
+        </div>
+        <button type="submit" class="btn" style="background-color: var(--success);">Execute Batch Upload to Cloud</button>
+      </form>
+    </div>
+
   </main>
 
   <script>
+    const LIVE_BACKEND_URL = 'https://my-mock-test-platform.onrender.com/api';
+
+    // Handler: Single question form pipeline
     document.getElementById('adminQuestionForm').addEventListener('submit', async (e) => {
       e.preventDefault();
-
       const question = document.getElementById('adminQText').value.trim();
       const options = [
         document.getElementById('optA').value.trim(),
@@ -67,27 +69,63 @@
       const correctAnswer = document.getElementById('correctAnswer').value.trim();
 
       if (!options.includes(correctAnswer)) {
-        alert("Error: The exact correct answer string must perfectly match one of your 4 options!");
+        alert("Error: The exact correct answer string must match one of your 4 options perfectly!");
         return;
       }
 
       try {
-        const response = await fetch('https://my-mock-test-platform.onrender.com/api/tests/questions', {
+        const response = await fetch(`${LIVE_BACKEND_URL}/tests/questions`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ question, options, correctAnswer })
         });
-
         const data = await response.json();
         if (response.ok) {
-          alert(data.message || "Question saved successfully!");
+          alert("Question added data successfully!");
           document.getElementById('adminQuestionForm').reset();
         } else {
-          alert(data.message || "Database saving failed.");
+          alert(data.error || "Failed saving question.");
         }
       } catch (err) {
         console.error(err);
-        alert("Network processing error linking to live cloud backend.");
+        alert("Network processing error linking to remote backend.");
+      }
+    });
+
+    // Handler: Bulk copy-paste JSON uploader pipeline
+    document.getElementById('bulkUploadForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const rawJsonString = document.getElementById('bulkJsonInput').value.trim();
+
+      let parsedArray;
+      try {
+        parsedArray = JSON.parse(rawJsonString);
+        if (!Array.isArray(parsedArray)) {
+          alert("Data structural error: Root of JSON entry must be a valid array containing objects.");
+          return;
+        }
+      } catch (parseError) {
+        alert("JSON Syntax Validation Error: Please check for missing commas, brackets, or unclosed quotation marks.");
+        return;
+      }
+
+      try {
+        const response = await fetch(`${LIVE_BACKEND_URL}/tests/bulk-questions`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ questionsArray: parsedArray })
+        });
+        const data = await response.json();
+
+        if (response.ok) {
+          alert(data.message || "Bulk questions uploaded successfully!");
+          document.getElementById('bulkUploadForm').reset();
+        } else {
+          alert(data.error || "Cloud batch transaction failed processing.");
+        }
+      } catch (err) {
+        console.error(err);
+        alert("Network fault occurred connecting with backend server cluster endpoints.");
       }
     });
   </script>

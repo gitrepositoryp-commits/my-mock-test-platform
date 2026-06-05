@@ -140,5 +140,36 @@ router.get('/leaderboard', protect, async (req, res) => {
   }
 });
 
+
+// 6. ADMIN BULK UPLOADER ROUTE: Injects an array of 100 questions instantly
+router.post('/bulk-questions', async (req, res) => {
+  try {
+    const { questionsArray } = req.body;
+
+    if (!questionsArray || !Array.isArray(questionsArray) || questionsArray.length === 0) {
+      return res.status(400).json({ error: 'Payload must be a non-empty array of structured questions.' });
+    }
+
+    // Validate that every question in the batch meets structural criteria
+    for (const q of questionsArray) {
+      if (!q.question || !q.options || !Array.isArray(q.options) || q.options.length !== 4 || !q.correctAnswer) {
+        return res.status(400).json({ 
+          error: 'One or more questions are structurally invalid. Ensure each has text, 4 options, and a correct answer match.' 
+        });
+      }
+    }
+
+    // Insert the entire dataset into MongoDB Atlas simultaneously
+    const insertedQuestions = await Question.insertMany(questionsArray);
+
+    res.status(201).json({
+      message: `Successfully bulk-uploaded ${insertedQuestions.length} questions into the database cluster!`,
+      count: insertedQuestions.length
+    });
+  } catch (err) {
+    console.error('CRITICAL BULK UPLOAD CRASH:', err.message);
+    res.status(500).json({ error: 'Database transaction failed during batch insertion operations.' });
+  }
+});
 // CRITICAL EXPORT LINE: Fixes the Express routing middleware crash!
 module.exports = router;
