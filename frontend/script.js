@@ -1,5 +1,5 @@
 // Change line 1 from localhost to your Render URL:
-const API_BASE_URL = 'https://my-mock-test-platform.onrender.com/api';
+const API_BASE_URL = 'https://rrb-mock-backend.onrender.com/api';
 
 // State Management for live test execution
 let appState = {
