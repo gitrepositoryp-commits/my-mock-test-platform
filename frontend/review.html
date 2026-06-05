@@ -6,6 +6,7 @@
   <title>Review Test Log</title>
   <link rel="stylesheet" href="style.css">
 </head>
+
 <body>
   <nav>
     <div class="container nav-container">
@@ -25,23 +26,25 @@
   <script>
     document.addEventListener('DOMContentLoaded', async () => {
       const urlParams = new URLSearchParams(window.location.search);
-      let resultId = urlParams.get('id') || localStorage.getItem('last_result_id');
+      const resultId = urlParams.get('id') || localStorage.getItem('last_result_id');
       const token = localStorage.getItem('mock_test_token');
-
       const container = document.getElementById('reviewContainer');
 
       if (!resultId || !token) {
         container.innerHTML = `<p>Error: Review session credentials missing. Please return to dashboard.</p>`;
         return;
       }
-const response = await fetch(
-  `https://rrb-mock-backend.onrender.com/api/tests/result/${resultId}`,
-  {
-    headers: {
-      'Authorization': `Bearer ${token}`
-    }
-  }
-);
+
+      try {
+        const response = await fetch(
+          `https://rrb-mock-backend.onrender.com/api/tests/result/${resultId}`,
+          {
+            headers: {
+              'Authorization': `Bearer ${token}`
+            }
+          }
+        );
+
         const data = await response.json();
 
         if (!response.ok || !data) {
@@ -50,7 +53,7 @@ const response = await fetch(
         }
 
         container.innerHTML = '';
-        // Map elements directly against your Mongoose schema property layout
+
         const breakdown = data.answersBreakdown || [];
 
         if (breakdown.length === 0) {
@@ -69,10 +72,19 @@ const response = await fetch(
           card.innerHTML = `
             <h4>Question ${index + 1}: ${item.questionText}</h4>
             <div style="margin: 10px 0; font-size: 14px;">
-              <p><strong>Your Selection:</strong> <span style="color: ${item.isCorrect ? '#27ae60' : '#c0392b'}">${item.selectedAnswer || 'Unanswered'}</span></p>
-              <p><strong>Correct Target:</strong> <span style="color: #27ae60; font-weight: bold;">${item.correctAnswer}</span></p>
+              <p><strong>Your Selection:</strong> 
+                <span style="color: ${item.isCorrect ? '#27ae60' : '#c0392b'}">
+                  ${item.selectedAnswer || 'Unanswered'}
+                </span>
+              </p>
+              <p><strong>Correct Target:</strong> 
+                <span style="color: #27ae60; font-weight: bold;">
+                  ${item.correctAnswer}
+                </span>
+              </p>
             </div>
           `;
+
           container.appendChild(card);
         });
 
