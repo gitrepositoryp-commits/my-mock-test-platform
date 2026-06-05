@@ -4,7 +4,7 @@ const Question = require('../models/Question');
 const Result = require('../models/Result');
 const jwt = require('jsonwebtoken');
 
-// LOCAL SECURITY GATEWAY MIDDLEWARE: Verifies active student login status
+// LOGICAL GATEWAY MIDDLEWARE: Verifies student authentication state context
 const protect = async (req, res, next) => {
   try {
     let token;
@@ -13,71 +13,69 @@ const protect = async (req, res, next) => {
     }
 
     if (!token) {
-      return res.status(401).json({ error: 'Session credentials missing. Please log in.' });
+      return res.status(401).json({ error: 'Authorization token credentials missing.' });
     }
 
     const decoded = jwt.verify(token, process.env.JWT_SECRET || 'super_secret_mock_test_key_2026');
     req.user = { id: decoded.id };
     next();
   } catch (err) {
-    console.error('MIDDLEWARE AUTH BLOCK:', err.message);
-    return res.status(401).json({ error: 'Your login token signature has expired or is invalid.' });
+    console.error("MIDDLEWARE EXCEPTION BLOCK:", err.message);
+    return res.status(401).json({ error: 'Session signature invalid or expired.' });
   }
 };
 
-// 1. ADMIN PANEL ROUTE: Injects a single question into the database cluster
+// 1. INSTRUCTOR PORTAL: Add mock question to database cluster
 router.post('/questions', async (req, res) => {
   try {
     const { question, options, correctAnswer } = req.body;
     
     if (!question || !options || !correctAnswer) {
-      return res.status(400).json({ error: 'Compulsory form parameter arrays missing.' });
+      return res.status(400).json({ error: 'Missing mandatory questionnaire properties.' });
     }
 
     const newQuestion = new Question({ question, options, correctAnswer });
     await newQuestion.save();
-    res.status(201).json({ message: 'Question added data successfully!' });
+    res.status(201).json({ message: 'Question saved successfully!' });
   } catch (err) {
-    console.error('ADMIN PORTAL POST ERROR:', err.message);
-    res.status(500).json({ error: 'Failed to write your new question into the database.' });
+    console.error(err);
+    res.status(500).json({ error: 'Failed to write query record to collection.' });
   }
 });
 
-// 2. STUDENT ROUTE: Downloads available exam bank documents (Answers hidden from view)
+// 2. STUDENT PIPELINE: Downloads available questions pool (Hiding true answers)
 router.get('/questions', protect, async (req, res) => {
   try {
-    // Exclude 'correctAnswer' string to protect assessment contents from browser source inspectors
     const databaseQuestions = await Question.find({}, '-correctAnswer');
     res.status(200).json(databaseQuestions);
   } catch (err) {
-    console.error('FETCH QUESTIONS ERROR:', err.message);
+    console.error(err);
     res.status(500).json({ error: 'Failed to retrieve test bank entries securely.' });
   }
 });
 
-// 3. EXAM EVALUATION SPRINT ENGINE ROUTE: Validates choices, scores items, and writes logs
+// 3. PERFORMANCE ARCHITECTURE: Scores incoming answers, updates leaderboard collections
 router.post('/submit', protect, async (req, res) => {
   try {
     const { answers } = req.body; 
-    const submittedAnswers = answers || {};
+    const studentAnswers = answers || {};
 
     const fullQuestionPool = await Question.find({});
-    let calculatedScore = 0;
-    const dynamicBreakdown = [];
+    let computedScore = 0;
+    const computedBreakdown = [];
 
     fullQuestionPool.forEach((q) => {
-      // Handles parsing across standard MongoDB ObjectIDs or sequential key types
-      const qIDString = q._id ? q._id.toString() : (q.id ? q.id.toString() : "");
-      const studentSelection = submittedAnswers[qIDString] || "";
+      const qIDStr = q._id ? q._id.toString() : "";
+      const studentSelection = studentAnswers[qIDStr] || "";
       const isCorrectMatch = studentSelection.trim() === q.correctAnswer.trim();
 
       if (isCorrectMatch) {
-        calculatedScore++;
+        computedScore++;
       }
 
-      dynamicBreakdown.push({
-        questionId: qIDString,
-        questionText: q.question || "Unknown Question",
+      computedBreakdown.push({
+        questionId: qIDStr,
+        questionText: q.question || "Blank Item",
         selectedAnswer: studentSelection,
         correctAnswer: q.correctAnswer || "",
         isCorrect: isCorrectMatch
@@ -85,29 +83,60 @@ router.post('/submit', protect, async (req, res) => {
     });
 
     const accuracyPercentage = fullQuestionPool.length > 0 
-      ? parseFloat(((calculatedScore / fullQuestionPool.length) * 100).toFixed(2)) 
+      ? parseFloat(((computedScore / fullQuestionPool.length) * 100).toFixed(2)) 
       : 0;
 
     const resultRecord = new Result({
       userId: req.user.id,
-      score: calculatedScore,
+      score: computedScore,
       totalQuestions: fullQuestionPool.length,
       percentage: accuracyPercentage,
-      answersBreakdown: dynamicBreakdown
+      answersBreakdown: computedBreakdown
     });
 
-    // EXECUTION HANDSHAKE: Commits cleanly to the cloud partition
-    const savedResult = await resultRecord.save();
+    const savedDoc = await resultRecord.save();
 
     res.status(200).json({
       message: "Assessment evaluation finalized cleanly.",
-      score: calculatedScore,
+      score: computedScore,
       totalQuestions: fullQuestionPool.length,
       percentage: accuracyPercentage,
-      resultId: savedResult._id
+      resultId: savedDoc._id
     });
   } catch (err) {
-    console.error('BACKEND GRADING EVALUATION CRASHED:', err.stack);
+    console.error('CRITICAL BACKEND EVALUATION CRASH:', err.stack);
     res.status(500).json({ error: 'Evaluation engine crash on transaction save execution.' });
   }
 });
+
+// 4. DIAGNOSTIC INTERFACE: Pulls single scorecard log file for review metrics layout
+router.get('/result/:id', protect, async (req, res) => {
+  try {
+    const logFile = await Result.findById(req.params.id);
+    if (!logFile) {
+      return res.status(404).json({ error: 'Assessment scorecard query not found.' });
+    }
+    res.status(200).json(logFile);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Internal system log retrieval failure.' });
+  }
+});
+
+// 5. GLOBAL PUBLIC PLACEMENTS: Pulls top ten sorted percentage results fields
+router.get('/leaderboard', protect, async (req, res) => {
+  try {
+    const podiumStandings = await Result.find({})
+      .populate('userId', 'username')
+      .sort({ percentage: -1, createdAt: -1 })
+      .limit(10);
+      
+    res.status(200).json(podiumStandings);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed compiling ranking datasets securely.' });
+  }
+});
+
+// CRITICAL EXPORT LINE: Fixes the Express routing middleware crash!
+module.exports = router;
