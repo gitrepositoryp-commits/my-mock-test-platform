@@ -53,3 +53,5 @@ const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
   console.log(`Server executing seamlessly on port ${PORT}`);
 });
+
+// Triggering pipeline sync: Forcing backend compilation to register updated frontend script configurations.
