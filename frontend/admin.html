@@ -204,7 +204,16 @@ document.getElementById('executeUploadBtn').addEventListener('click', async () =
       body: JSON.stringify({ questionsArray })
     });
 
-    const data = await response.json();
+    const rawText = await response.text();
+console.log("SERVER RAW RESPONSE:", rawText);
+
+let data;
+try {
+  data = JSON.parse(rawText);
+} catch (e) {
+  alert("Backend returned HTML, not JSON. Check API route URL.");
+  return;
+}
 
     if (response.ok) {
       alert(data.message || `Successfully uploaded ${questionsArray.length} questions.`);
