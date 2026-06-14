@@ -130,7 +130,7 @@ router.get('/leaderboard', protect, async (req, res) => {
   try {
     const podiumStandings = await Result.find({})
       .populate('userId', 'username')
-      .sort({ percentage: -1, createdAt: -1 })
+      .sort({ score: -1, percentage: -1, createdAt: -1 })
       .limit(10);
       
     res.status(200).json(podiumStandings);
