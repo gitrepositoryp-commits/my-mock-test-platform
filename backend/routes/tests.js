@@ -191,4 +191,19 @@ router.delete('/questions/delete-all', async (req, res) => {
     });
   }
 });
+// 8. ADMIN DELETE ALL RESULTS
+router.delete('/results/delete-all', async (req, res) => {
+  try {
+    const result = await Result.deleteMany({});
+
+    res.status(200).json({
+      message: `Successfully deleted ${result.deletedCount} results.`,
+      deletedCount: result.deletedCount
+    });
+
+  } catch (err) {
+    console.error("DELETE RESULTS ERROR:", err);
+    res.status(500).json({ error: "Failed to delete results." });
+  }
+});
 module.exports = router;
