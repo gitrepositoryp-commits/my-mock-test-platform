@@ -3,177 +3,223 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Admin Portal - PDF Bulk Question Uploader</title>
+  <title>Admin Portal - Bulk Uploader</title>
   <link rel="stylesheet" href="style.css">
-  
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
 </head>
+
 <body>
 
-  <nav>
-    <div class="container nav-container">
-      <a href="dashboard.html" class="logo">MockExam Pro (Admin Controls)</a>
-      <button onclick="window.location.href='dashboard.html'" class="btn" style="width:auto; padding: 5px 15px;">Student Dashboard</button>
-    </div>
-  </nav>
+<nav>
+  <div class="container nav-container">
+    <a href="dashboard.html" class="logo">MockExam Pro (Admin Control)</a>
+    <button onclick="window.location.href='dashboard.html'" class="btn" style="width:auto; padding:5px 15px;">Dashboard</button>
+  </div>
+</nav>
 
-  <main class="container auth-wrapper" style="min-height: 85vh; max-width: 800px; margin: 0 auto; display: block; padding-top: 30px;">
-    
-    <div class="card" style="padding: 30px; box-shadow: 0 4px 10px rgba(0,0,0,0.05);">
-      <h2 style="text-align: center; margin-bottom: 5px;">Upload Question PDF</h2>
-      <p style="text-align: center; color: #64748b; font-size: 14px; margin-bottom: 25px;">
-        Easily extract and parse your General Awareness, Math, and Reasoning questions into the database cluster.
-      </p>
+<main class="container auth-wrapper" style="min-height:85vh; max-width:900px; margin:0 auto; display:block; padding-top:30px;">
 
-      <div class="form-group" style="background: #f8fafc; border: 2px dashed var(--border-color); padding: 20px; border-radius: 8px; text-align: center;">
-        <input type="file" id="pdfFileInput" accept=".pdf" style="font-size: 15px; cursor: pointer;">
-      </div>
+  <div class="card" style="padding:30px;">
+    <h2 style="text-align:center;">Universal PDF Question Uploader</h2>
 
-      <div style="display: flex; flex-direction: column; gap: 12px; margin-top: 20px;">
-        <button id="readPdfBtn" class="btn" style="background-color: #2563eb;">Read PDF</button>
-        <button id="convertTextBtn" class="btn" style="background-color: #3b82f6;">Convert PDF Text to Questions</button>
-      </div>
-
-      <div class="form-group" style="margin-top: 25px;">
-        <label for="pdfTextPreview" style="font-weight: bold; margin-bottom: 8px; display: block;">PDF Text Preview & Structural Logs</label>
-        <textarea id="pdfTextPreview" style="width: 100%; height: 250px; padding: 12px; border: 1px solid var(--border-color); border-radius: 6px; font-family: monospace; font-size: 14px; resize: vertical; outline: none; background: #fafafa;" placeholder="PDF text will appear here..." readonly></textarea>
-      </div>
-
-      <button id="executeUploadBtn" class="btn" style="background-color: var(--success); margin-top: 15px; display: none;">
-        Confirm & Push Questions to Cloud Atlas Database
-      </button>
+    <div class="form-group" style="background:#f8fafc; border:2px dashed #ddd; padding:20px; border-radius:8px; text-align:center;">
+      <input type="file" id="pdfFileInput" accept=".pdf">
     </div>
 
-  </main>
+    <div style="display:flex; gap:15px; margin-top:20px;">
+      <button id="readPdfBtn" class="btn" style="background:#2563eb; flex:1;">Step 1: Read PDF</button>
+      <button id="smartParseBtn" class="btn" style="background:#0284c7; flex:1;">Step 2: Convert To JSON</button>
+    </div>
 
-  <script>
-    // Explicitly configure verified standalone worker paths
-    const pdfjsLib = window['pdfjs-dist/build/pdf'];
-    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
+    <textarea id="editorConsole" style="width:100%; height:420px; margin-top:25px; padding:12px; font-family:monospace; font-size:13px;"></textarea>
 
-    const LIVE_BACKEND_URL = 'https://my-mock-test-platform.onrender.com/api';
-    let extractedRawText = "";
-    let formattedQuestionsPayload = [];
+    <button id="executeUploadBtn" class="btn" style="background:green; margin-top:15px; font-size:16px; padding:14px;">
+      🚀 Upload Questions to MongoDB
+    </button>
+  </div>
 
-    // BUTTON ACTION 1: Parse PDF sheets in-memory
-    document.getElementById('readPdfBtn').addEventListener('click', async () => {
-      const fileInput = document.getElementById('pdfFileInput');
-      const previewArea = document.getElementById('pdfTextPreview');
-      
-      if (fileInput.files.length === 0) {
-        alert("Please select a valid quiz PDF file first.");
-        return;
+</main>
+
+<script>
+const pdfjsLib = window['pdfjs-dist/build/pdf'];
+pdfjsLib.GlobalWorkerOptions.workerSrc =
+  'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
+
+const LIVE_BACKEND_URL = 'https://rrb-mock-backend.onrender.com/api';
+
+/* READ PDF */
+document.getElementById('readPdfBtn').addEventListener('click', async () => {
+  const fileInput = document.getElementById('pdfFileInput');
+  const consoleArea = document.getElementById('editorConsole');
+
+  if (fileInput.files.length === 0) {
+    alert("Please choose PDF first.");
+    return;
+  }
+
+  consoleArea.value = "Reading PDF... please wait.";
+
+  const fileReader = new FileReader();
+
+  fileReader.onload = async function () {
+    try {
+      const typedarray = new Uint8Array(this.result);
+      const pdf = await pdfjsLib.getDocument({ data: typedarray }).promise;
+
+      let fullText = "";
+
+      for (let i = 1; i <= pdf.numPages; i++) {
+        const page = await pdf.getPage(i);
+        const textContent = await page.getTextContent();
+        const pageText = textContent.items.map(item => item.str).join(" ");
+        fullText += pageText + "\n";
       }
 
-      previewArea.value = "Reading document lines safely... Please wait.";
-      const file = fileInput.files[0];
-      const fileReader = new FileReader();
+      consoleArea.value = fullText;
+      alert("PDF loaded successfully. Now click Step 2.");
+    } catch (err) {
+      console.error(err);
+      alert("PDF read error: " + err.message);
+    }
+  };
 
-      fileReader.onload = async function() {
-        try {
-          const typedarray = new Uint8Array(this.result);
-          const pdf = await pdfjsLib.getDocument({ data: typedarray }).promise;
-          let fullTextContent = "";
+  fileReader.readAsArrayBuffer(fileInput.files[0]);
+});
 
-          for (let i = 1; i <= pdf.numPages; i++) {
-            const page = await pdf.getPage(i);
-            const textDoc = await page.getTextContent();
-            const pageStrings = textDoc.items.map(item => item.str);
-            fullTextContent += pageStrings.join(" ") + "\n";
-          }
+/* PARSER */
+function parseQuestions(text) {
+  text = text.replace(/\s+/g, " ").trim();
 
-          extractedRawText = fullTextContent;
-          previewArea.value = extractedRawText;
-          alert(`Success! Read ${pdf.numPages} pages cleanly from file container.`);
-        } catch (err) {
-          console.error(err);
-          previewArea.value = "Error parsing raw text vectors out of target data stream: " + err.message;
-        }
-      };
+  let blocks = text.split(/(?=Q\.?\s*\d+)/gi);
 
-      fileReader.readAsArrayBuffer(file);
-    });
+  if (blocks.length <= 1) {
+    blocks = text.split(/(?=\b\d+\s*[\.\)]\s+)/g);
+  }
 
-    // BUTTON ACTION 2: Flexible extraction mapping loop
-    document.getElementById('convertTextBtn').addEventListener('click', () => {
-      const previewArea = document.getElementById('pdfTextPreview');
-      if (!extractedRawText.trim()) {
-        alert("Please run 'Read PDF' first to populate content variables.");
-        return;
+  const questions = [];
+
+  blocks.forEach(block => {
+    block = block.trim();
+    if (block.length < 20) return;
+
+    let questionText = "";
+    let options = [];
+
+    const qMatch = block.match(/Q\.?\s*\d+\.?\s*([\s\S]*?)(?=\s+(?:Ans|Answer)\s+|\s+1[\.\)]\s+)/i);
+
+    if (qMatch) {
+      questionText = qMatch[1].trim();
+    } else {
+      questionText = block.replace(/^Q\.?\s*\d+\.?/i, "").trim();
+    }
+
+    const optionPartMatch = block.match(/(?:Ans|Answer)\s+([\s\S]*)/i);
+    let optionText = optionPartMatch ? optionPartMatch[1] : block;
+
+    const optionRegex = /(?:^|\s)([1-4])[\.\)]\s*(.*?)(?=\s+[1-4][\.\)]\s*|$)/g;
+    let match;
+
+    while ((match = optionRegex.exec(optionText)) !== null) {
+      let opt = match[2].trim();
+      if (opt.length > 0) options.push(opt);
+    }
+
+    if (options.length < 4) {
+      const abcdRegex = /A[\.\)]\s*(.*?)\s+B[\.\)]\s*(.*?)\s+C[\.\)]\s*(.*?)\s+D[\.\)]\s*(.*)/i;
+      const abcd = block.match(abcdRegex);
+
+      if (abcd) {
+        options = [
+          abcd[1].trim(),
+          abcd[2].trim(),
+          abcd[3].trim(),
+          abcd[4].trim()
+        ];
       }
+    }
 
-      previewArea.value = "Parsing patterns into structured database rows...";
-
-      // Standardize spacings across lines
-      const cleanText = extractedRawText.replace(/[ \t]+/g, ' ');
-      
-      // Split blocks wherever a question index begins
-      const questionBlocks = cleanText.split(/(?=\bQ?\d+[\.\:\)\s]+)/g);
-      formattedQuestionsPayload = [];
-
-      questionBlocks.forEach(block => {
-        if (!block.trim() || block.length < 15) return;
-
-        // Armored fallback search regex capturing questions, choices, and answer rows smoothly
-        const qRegex = /(?:Q?\d+[\.\:\)\s]+)?(.+?)(?:\(?[A-a][\.\:\)\s]+|[^a-zA-Z]A\s+)(.+?)(?:\(?[B-b][\.\:\)\s]+|[^a-zA-Z]B\s+)(.+?)(?:\(?[C-c][\.\:\)\s]+|[^a-zA-Z]C\s+)(.+?)(?:\(?[D-d][\.\:\)\s]+|[^a-zA-Z]D\s+)(.+?)(?:Ans(?:wer)?[\.\:\s]*|Correct[\.\:\s]*|[^a-zA-Z]Ans\s*)([A-D,a-d])/i;
-        const match = block.match(qRegex);
-
-        if (match) {
-          const qText = match[1].trim();
-          const optA = match[2].trim();
-          const optB = match[3].trim();
-          const optC = match[4].trim();
-          const optD = match[5].trim();
-          const correctLetter = match[6].trim().toUpperCase();
-
-          const optionsArray = [optA, optB, optC, optD];
-          
-          let correctString = optA;
-          if (correctLetter === 'B') correctString = optB;
-          if (correctLetter === 'C') correctString = optC;
-          if (correctLetter === 'D') correctString = optD;
-
-          formattedQuestionsPayload.push({
-            question: qText,
-            options: optionsArray,
-            correctAnswer: correctString
-          });
-        }
+    if (questionText && options.length >= 4) {
+      questions.push({
+        question: questionText,
+        options: options.slice(0, 4),
+        correctAnswer: options[0],
+        category: "Reasoning"
       });
+    }
+  });
 
-      if (formattedQuestionsPayload.length === 0) {
-        previewArea.value = "Extraction complete but structural variations require direct check.\n\nRaw Text output displayed below:\n\n" + extractedRawText;
-        alert("The visual text was read safely! However, ensure your option headings in the file read like 'A) Option text B) Option text' so the parser can bundle them automatically.");
-      } else {
-        previewArea.value = `Successfully structured ${formattedQuestionsPayload.length} exam items clean payload structure:\n\n` + JSON.stringify(formattedQuestionsPayload, null, 2);
-        document.getElementById('executeUploadBtn').style.display = "block";
-        alert(`Successfully found and structured ${formattedQuestionsPayload.length} questions matching layout parameters!`);
-      }
+  return questions;
+}
+
+/* CONVERT */
+document.getElementById('smartParseBtn').addEventListener('click', () => {
+  const consoleArea = document.getElementById('editorConsole');
+  const text = consoleArea.value.trim();
+
+  if (!text) {
+    alert("Please read PDF first.");
+    return;
+  }
+
+  const parsed = parseQuestions(text);
+
+  console.log("Detected questions:", parsed.length);
+
+  if (parsed.length === 0) {
+    alert("No questions detected. Your PDF format is different.");
+    return;
+  }
+
+  consoleArea.value = JSON.stringify(parsed, null, 2);
+  alert(`Successfully converted ${parsed.length} questions.`);
+});
+
+/* UPLOAD */
+document.getElementById('executeUploadBtn').addEventListener('click', async () => {
+  const consoleArea = document.getElementById('editorConsole');
+
+  let questionsArray;
+
+  try {
+    questionsArray = JSON.parse(consoleArea.value.trim());
+  } catch (err) {
+    alert("JSON error. First click Step 2 Convert To JSON.");
+    return;
+  }
+
+  if (!Array.isArray(questionsArray)) {
+    alert("JSON must be an array.");
+    return;
+  }
+
+  console.log("Uploading questions:", questionsArray.length);
+  console.log("First question:", questionsArray[0]);
+
+  try {
+    const response = await fetch(`${LIVE_BACKEND_URL}/tests/bulk-questions`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({ questionsArray })
     });
 
-    // ACTION STEP 3: Submit batch over network channels
-    document.getElementById('executeUploadBtn').addEventListener('click', async () => {
-      if (formattedQuestionsPayload.length === 0) return;
+    const data = await response.json();
 
-      try {
-        const response = await fetch(`${LIVE_BACKEND_URL}/tests/bulk-questions`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ questionsArray: formattedQuestionsPayload })
-        });
-        const data = await response.json();
+    if (response.ok) {
+      alert(data.message || `Successfully uploaded ${questionsArray.length} questions.`);
+      window.location.href = "dashboard.html";
+    } else {
+      console.error("BACKEND ERROR:", data);
+      alert(data.error || "Upload failed.");
+    }
 
-        if (response.ok) {
-          alert(data.message || `Successfully committed ${formattedQuestionsPayload.length} questions straight into MongoDB Atlas!`);
-          window.location.href = 'dashboard.html';
-        } else {
-          alert(data.error || "The cloud transaction was rejected by database handlers.");
-        }
-      } catch (err) {
-        console.error(err);
-        alert("Network processing fault tracking remote API pathways.");
-      }
-    });
-  </script>
+  } catch (err) {
+    console.error("UPLOAD NETWORK ERROR:", err);
+    alert("Network error: " + err.message);
+  }
+});
+</script>
+
 </body>
 </html>
