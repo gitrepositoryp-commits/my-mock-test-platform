@@ -172,4 +172,23 @@ router.post('/bulk-questions', async (req, res) => {
   }
 });
 // CRITICAL EXPORT LINE: Fixes the Express routing middleware crash!
+// 7. ADMIN DELETE ALL QUESTIONS
+router.delete('/questions/delete-all', async (req, res) => {
+  try {
+
+    const result = await Question.deleteMany({});
+
+    res.status(200).json({
+      message: `Successfully deleted ${result.deletedCount} questions.`,
+      deletedCount: result.deletedCount
+    });
+
+  } catch (err) {
+    console.error("DELETE ALL ERROR:", err);
+
+    res.status(500).json({
+      error: "Failed to delete questions."
+    });
+  }
+});
 module.exports = router;

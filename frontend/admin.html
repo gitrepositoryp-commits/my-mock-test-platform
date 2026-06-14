@@ -45,7 +45,7 @@ const pdfjsLib = window['pdfjs-dist/build/pdf'];
 pdfjsLib.GlobalWorkerOptions.workerSrc =
   'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
 
-const LIVE_BACKEND_URL = 'https://rrb-mock-backend.onrender.com/api';
+const LIVE_BACKEND_URL = 'https://my-mock-test-platform.onrender.com/api';
 
 /* READ PDF */
 document.getElementById('readPdfBtn').addEventListener('click', async () => {
@@ -104,8 +104,9 @@ function parseQuestions(text) {
 
     let questionText = "";
     let options = [];
+    let correctAnswer = "";
 
-    const qMatch = block.match(/Q\.?\s*\d+\.?\s*([\s\S]*?)(?=\s+(?:Ans|Answer)\s+|\s+1[\.\)]\s+)/i);
+    const qMatch = block.match(/Q\.?\s*\d+\.?\s*([\s\S]*?)(?=\s+(?:Ans|Answer|Correct Answer)\s+|\s+1[\.\)]\s+)/i);
 
     if (qMatch) {
       questionText = qMatch[1].trim();
@@ -113,36 +114,41 @@ function parseQuestions(text) {
       questionText = block.replace(/^Q\.?\s*\d+\.?/i, "").trim();
     }
 
-    const optionPartMatch = block.match(/(?:Ans|Answer)\s+([\s\S]*)/i);
-    let optionText = optionPartMatch ? optionPartMatch[1] : block;
-
     const optionRegex = /(?:^|\s)([1-4])[\.\)]\s*(.*?)(?=\s+[1-4][\.\)]\s*|$)/g;
     let match;
 
-    while ((match = optionRegex.exec(optionText)) !== null) {
+    while ((match = optionRegex.exec(block)) !== null) {
       let opt = match[2].trim();
-      if (opt.length > 0) options.push(opt);
+
+      opt = opt
+        .replace(/(?:Ans|Answer|Correct Answer).*/i, "")
+        .trim();
+
+      if (opt.length > 0) {
+        options.push(opt);
+      }
     }
 
-    if (options.length < 4) {
-      const abcdRegex = /A[\.\)]\s*(.*?)\s+B[\.\)]\s*(.*?)\s+C[\.\)]\s*(.*?)\s+D[\.\)]\s*(.*)/i;
-      const abcd = block.match(abcdRegex);
+    const ansMatch = block.match(/(?:Ans|Answer|Correct Answer)[\s\:\.\-]*([1-4A-D])/i);
 
-      if (abcd) {
-        options = [
-          abcd[1].trim(),
-          abcd[2].trim(),
-          abcd[3].trim(),
-          abcd[4].trim()
-        ];
-      }
+    if (ansMatch) {
+      const ans = ansMatch[1].toUpperCase();
+
+      if (ans === "1" || ans === "A") correctAnswer = options[0];
+      if (ans === "2" || ans === "B") correctAnswer = options[1];
+      if (ans === "3" || ans === "C") correctAnswer = options[2];
+      if (ans === "4" || ans === "D") correctAnswer = options[3];
+    }
+
+    if (!correctAnswer) {
+      correctAnswer = options[0];
     }
 
     if (questionText && options.length >= 4) {
       questions.push({
         question: questionText,
         options: options.slice(0, 4),
-        correctAnswer: options[0],
+        correctAnswer: correctAnswer,
         category: "Reasoning"
       });
     }
@@ -192,40 +198,35 @@ document.getElementById('executeUploadBtn').addEventListener('click', async () =
     return;
   }
 
-  console.log("Uploading questions:", questionsArray.length);
-  console.log("First question:", questionsArray[0]);
-
   try {
-    const response = await fetch(`${LIVE_BACKEND_URL}/tests/bulk-questions`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({ questionsArray })
-    });
+    let successCount = 0;
 
-    const rawText = await response.text();
-console.log("SERVER RAW RESPONSE:", rawText);
+  for (const q of questionsArray) {
 
-let data;
-try {
-  data = JSON.parse(rawText);
-} catch (e) {
-  alert("Backend returned HTML, not JSON. Check API route URL.");
-  return;
+  const response = await fetch(`${LIVE_BACKEND_URL}/tests/questions`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify(q)
+  });
+
+  if (response.ok) {
+    successCount++;
+  } else {
+    const serverError = await response.text();
+
+    console.log("FAILED QUESTION:", q);
+    console.log("SERVER ERROR:", serverError);
+  }
 }
 
-    if (response.ok) {
-      alert(data.message || `Successfully uploaded ${questionsArray.length} questions.`);
-      window.location.href = "dashboard.html";
-    } else {
-      console.error("BACKEND ERROR:", data);
-      alert(data.error || "Upload failed.");
-    }
+    alert(`Successfully uploaded ${successCount} questions.`);
+    window.location.href = "dashboard.html";
 
   } catch (err) {
-    console.error("UPLOAD NETWORK ERROR:", err);
-    alert("Network error: " + err.message);
+    console.error("UPLOAD ERROR:", err);
+    alert("Upload error: " + err.message);
   }
 });
 </script>
