@@ -25,6 +25,18 @@
     <div style="text-align:center; margin:15px 0; padding:15px; background:#f1f5f9; border-radius:8px;">
       <h3 id="questionCountDisplay" style="margin:0; color:#2563eb;">Total Questions: Loading...</h3>
     </div>
+    <div class="card" style="margin-top:20px; padding:20px;">
+  <h3>🔍 Search Questions</h3>
+
+  <input
+    type="text"
+    id="searchQuestionInput"
+    placeholder="Type any keyword..."
+    style="width:100%; padding:10px; margin-top:10px;"
+  >
+
+  <div id="questionPreviewContainer" style="margin-top:20px;"></div>
+</div>
 
     <div class="form-group" style="background:#f8fafc; border:2px dashed #ddd; padding:20px; border-radius:8px; text-align:center;">
       <input type="file" id="pdfFileInput" accept=".pdf">
@@ -84,6 +96,10 @@ async function loadQuestionCount() {
 }
 
 loadQuestionCount();
+
+
+
+
 
 /* READ PDF */
 document.getElementById('readPdfBtn').addEventListener('click', async () => {
@@ -291,6 +307,82 @@ document.getElementById('deleteAllBtn').addEventListener('click', async () => {
     alert("Delete error: " + err.message);
   }
 });
+let allQuestions = [];
+
+async function loadQuestionsPreview() {
+  try {
+    const response = await fetch(
+      `${LIVE_BACKEND_URL}/tests/admin/questions`
+    );
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      console.log(data);
+      return;
+    }
+
+    allQuestions = data;
+
+    renderQuestions(allQuestions.slice(0, 20));
+
+  } catch (err) {
+    console.error(err);
+  }
+}
+
+function renderQuestions(questions) {
+  const container = document.getElementById(
+    "questionPreviewContainer"
+  );
+
+  container.innerHTML = "";
+
+  questions.forEach((q, index) => {
+
+    const card = document.createElement("div");
+
+    card.style.border = "1px solid #ddd";
+    card.style.padding = "15px";
+    card.style.marginBottom = "15px";
+    card.style.borderRadius = "8px";
+
+    card.innerHTML = `
+      <h4>Q${index + 1}</h4>
+
+      <p><strong>${q.question}</strong></p>
+
+      <ul>
+        ${q.options.map(opt =>
+          `<li>${opt}</li>`
+        ).join("")}
+      </ul>
+
+      <p style="color:green;">
+        <strong>Answer:</strong>
+        ${q.correctAnswer}
+      </p>
+    `;
+
+    container.appendChild(card);
+
+  });
+}
+
+document
+.getElementById("searchQuestionInput")
+.addEventListener("input", (e) => {
+
+  const keyword = e.target.value.toLowerCase();
+
+  const filtered = allQuestions.filter(q =>
+    q.question.toLowerCase().includes(keyword)
+  );
+
+  renderQuestions(filtered.slice(0, 50));
+});
+
+loadQuestionsPreview();
 </script>
 
 </body>
