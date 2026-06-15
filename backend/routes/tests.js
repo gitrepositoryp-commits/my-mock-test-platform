@@ -218,4 +218,35 @@ router.get('/admin/questions', async (req, res) => {
     res.status(500).json({ error: "Failed to fetch admin questions." });
   }
 });
+// 10. ADMIN UPDATE SINGLE QUESTION
+router.put('/admin/questions/:id', async (req, res) => {
+  try {
+    const { question, options, correctAnswer } = req.body;
+
+    if (!question || !options || !Array.isArray(options) || options.length !== 4 || !correctAnswer) {
+      return res.status(400).json({
+        error: "Question, 4 options, and correct answer are required."
+      });
+    }
+
+    const updatedQuestion = await Question.findByIdAndUpdate(
+      req.params.id,
+      { question, options, correctAnswer },
+      { new: true }
+    );
+
+    if (!updatedQuestion) {
+      return res.status(404).json({ error: "Question not found." });
+    }
+
+    res.status(200).json({
+      message: "Question updated successfully.",
+      question: updatedQuestion
+    });
+
+  } catch (err) {
+    console.error("UPDATE QUESTION ERROR:", err);
+    res.status(500).json({ error: "Failed to update question." });
+  }
+});
 module.exports = router;
