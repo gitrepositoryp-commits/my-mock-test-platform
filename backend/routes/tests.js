@@ -206,4 +206,16 @@ router.delete('/results/delete-all', async (req, res) => {
     res.status(500).json({ error: "Failed to delete results." });
   }
 });
+// 9. ADMIN GET ALL QUESTIONS WITH ANSWERS
+router.get('/admin/questions', async (req, res) => {
+  try {
+    const questions = await Question.find({}).sort({ createdAt: -1 });
+
+    res.status(200).json(questions);
+
+  } catch (err) {
+    console.error("ADMIN QUESTIONS ERROR:", err);
+    res.status(500).json({ error: "Failed to fetch admin questions." });
+  }
+});
 module.exports = router;
