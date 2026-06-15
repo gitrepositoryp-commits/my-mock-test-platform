@@ -3,54 +3,107 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Exam Scorecard - Summary Results</title>
+  <title>Exam Scorecard</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-  <nav>
-    <div class="container nav-container">
-      <a href="dashboard.html" class="logo">MockExam Pro</a>
-    </div>
-  </nav>
+<nav>
+  <div class="container nav-container">
+    <a href="dashboard.html" class="logo">MockExam Pro</a>
+  </div>
+</nav>
 
-  <main class="container auth-wrapper">
-    <div class="auth-card" style="max-width: 500px; text-align: center;">
-      <h2>Exam Completed! 🎉</h2>
-      <p>Your assessment evaluation details have been compiled securely.</p>
-      
-      <div style="margin: 30px 0; padding: 25px; background: #f8fafc; border: 1px solid var(--border-color); border-radius: 8px;">
-        <h3 style="margin: 0; color: #475569; font-size: 16px; text-transform: uppercase; letter-spacing: 0.5px;">Your Final Score</h3>
-        <p id="scoreDisplay" style="font-size: 42px; font-weight: 800; color: var(--primary); margin: 10px 0;">0 / 0</p>
-        <p id="percentageDisplay" style="font-size: 18px; font-weight: 600; color: #334155; margin: 0;">Percentage: 0%</p>
+<main class="container auth-wrapper">
+  <div class="auth-card" style="max-width: 750px; text-align: center;">
+    <h2>Exam Completed! 🎉</h2>
+    <p>Your result has been saved successfully.</p>
+
+    <div style="margin:25px 0; padding:25px; background:#f8fafc; border-radius:10px;">
+      <h3>Your Final Score</h3>
+      <p id="scoreDisplay" style="font-size:45px; font-weight:800; color:#2563eb;">0 / 0</p>
+      <p id="percentageDisplay" style="font-size:20px; font-weight:600;">Percentage: 0%</p>
+      <h3 id="statusDisplay" style="margin-top:15px;">Status</h3>
+    </div>
+
+    <div style="display:grid; grid-template-columns:repeat(3, 1fr); gap:15px; margin:25px 0;">
+      <div style="padding:15px; background:#dcfce7; border-radius:8px;">
+        <h3 id="correctDisplay">0</h3>
+        <p>Correct</p>
       </div>
 
-      <div style="display: flex; flex-direction: column; gap: 12px;">
-        <button id="reviewBtn" class="btn" style="background: #1e293b;">Review Answers Detailed Log</button>
-        <button onclick="window.location.href='dashboard.html'" class="btn" style="background: transparent; border: 1px solid var(--border-color); color: var(--text-main);">Back to Dashboard</button>
+      <div style="padding:15px; background:#fee2e2; border-radius:8px;">
+        <h3 id="wrongDisplay">0</h3>
+        <p>Wrong</p>
+      </div>
+
+      <div style="padding:15px; background:#e2e8f0; border-radius:8px;">
+        <h3 id="unansweredDisplay">0</h3>
+        <p>Unanswered</p>
       </div>
     </div>
-  </main>
 
-  <script>
-    document.addEventListener('DOMContentLoaded', () => {
-      // Pull scores cleanly from the verified submission cache
-      const score = localStorage.getItem('last_score') || 0;
-      const total = localStorage.getItem('last_total') || 0;
-      const percentage = localStorage.getItem('last_percentage') || 0;
-      const resultId = localStorage.getItem('last_result_id');
+    <div style="display:flex; gap:12px; flex-wrap:wrap;">
+      <button id="reviewBtn" class="btn" style="background:#1e293b; flex:1;">Review Answers</button>
+      <button onclick="window.location.href='leaderboard.html'" class="btn" style="background:#7c3aed; flex:1;">Leaderboard</button>
+      <button onclick="window.location.href='dashboard.html'" class="btn" style="background:#475569; flex:1;">Dashboard</button>
+    </div>
+  </div>
+</main>
 
-      document.getElementById('scoreDisplay').textContent = `${score} / ${total}`;
-      document.getElementById('percentageDisplay').textContent = `Percentage: ${percentage}%`;
+<script>
+document.addEventListener('DOMContentLoaded', async () => {
+  const score = Number(localStorage.getItem('last_score')) || 0;
+  const total = Number(localStorage.getItem('last_total')) || 0;
+  const percentage = Number(localStorage.getItem('last_percentage')) || 0;
+  const resultId = localStorage.getItem('last_result_id');
+  const token = localStorage.getItem('mock_test_token');
 
-      document.getElementById('reviewBtn').addEventListener('click', () => {
-        if (resultId && resultId !== "session_saved") {
-          window.location.href = `review.html?id=${resultId}`;
-        } else {
-          window.location.href = 'review.html';
+  document.getElementById('scoreDisplay').textContent = `${score} / ${total}`;
+  document.getElementById('percentageDisplay').textContent = `Percentage: ${percentage}%`;
+
+  if (percentage >= 40) {
+    document.getElementById('statusDisplay').textContent = "✅ Qualified";
+    document.getElementById('statusDisplay').style.color = "green";
+  } else {
+    document.getElementById('statusDisplay').textContent = "❌ Not Qualified";
+    document.getElementById('statusDisplay').style.color = "red";
+  }
+
+  if (resultId && token && resultId !== "session_saved") {
+    try {
+      const response = await fetch(`https://my-mock-test-platform.onrender.com/api/tests/result/${resultId}`, {
+        headers: {
+          "Authorization": `Bearer ${token}`
         }
       });
-    });
-  </script>
+
+      const data = await response.json();
+
+      if (response.ok && data.answersBreakdown) {
+        const correct = data.answersBreakdown.filter(a => a.isCorrect).length;
+        const unanswered = data.answersBreakdown.filter(a => !a.selectedAnswer).length;
+        const wrong = data.answersBreakdown.length - correct - unanswered;
+
+        document.getElementById('correctDisplay').textContent = correct;
+        document.getElementById('wrongDisplay').textContent = wrong;
+        document.getElementById('unansweredDisplay').textContent = unanswered;
+      }
+
+    } catch (err) {
+      console.error("Result analytics error:", err);
+    }
+  }
+
+  document.getElementById('reviewBtn').addEventListener('click', () => {
+    if (resultId && resultId !== "session_saved") {
+      window.location.href = `review.html?id=${resultId}`;
+    } else {
+      window.location.href = 'review.html';
+    }
+  });
+});
+</script>
+
 </body>
 </html>
