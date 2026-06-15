@@ -3,113 +3,167 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Review Diagnostic Log</title>
+  <title>Review Answers</title>
   <link rel="stylesheet" href="style.css">
 </head>
+
 <body>
 
-  <nav>
-    <div class="container nav-container">
-      <a href="dashboard.html" class="logo">MockExam Pro (Review)</a>
-      <button onclick="window.location.href='dashboard.html'" class="btn" style="width:auto; padding: 5px 15px;">Exit Review</button>
+<nav>
+  <div class="container nav-container">
+    <a href="dashboard.html" class="logo">MockExam Pro (Review)</a>
+    <button onclick="window.location.href='result.html'" class="btn" style="width:auto; padding:5px 15px;">Back to Result</button>
+  </div>
+</nav>
+
+<main class="container" style="max-width:900px; margin-top:40px;">
+
+  <div class="card" style="margin-bottom:25px;">
+    <h2>Question-by-Question Review</h2>
+    <p style="color:#64748b; margin-top:5px;">
+      Green = Correct, Red = Wrong, Gray = Unanswered.
+    </p>
+  </div>
+
+  <div id="summaryBox" class="card" style="display:grid; grid-template-columns:repeat(3, 1fr); gap:15px; margin-bottom:25px; text-align:center;">
+    <div>
+      <h3 id="correctCount" style="color:green;">0</h3>
+      <p>Correct</p>
     </div>
-  </nav>
-
-  <main class="container" style="max-width: 800px; margin-top: 40px;">
-    <div class="card" style="margin-bottom: 25px;">
-      <h2>Question-by-Question Evaluation</h2>
-      <p style="color: #64748b; margin-top: 5px;">Analyze your responses below. Green indicators reveal verified answers, while red highlights track incorrect selections[cite: 60, 103].</p>
+    <div>
+      <h3 id="wrongCount" style="color:red;">0</h3>
+      <p>Wrong</p>
     </div>
-
-    <div id="reviewContainer">
-      <div style="text-align: center; padding: 30px; color: #64748b;">Loading evaluation breakdown details...</div>
+    <div>
+      <h3 id="unansweredCount" style="color:#475569;">0</h3>
+      <p>Unanswered</p>
     </div>
-  </main>
+  </div>
 
-  <script>
-    document.addEventListener('DOMContentLoaded', async () => {
-      const urlParams = new URLSearchParams(window.location.search);
-      let resultId = urlParams.get('id') || localStorage.getItem('last_result_id');
-      const token = localStorage.getItem('mock_test_token');
-      const container = document.getElementById('reviewContainer');
+  <div id="reviewContainer">
+    <div style="text-align:center; padding:30px; color:#64748b;">
+      Loading review...
+    </div>
+  </div>
 
-      if (!token) {
-        window.location.href = 'login.html';
-        return;
-      }
+</main>
 
-      if (!resultId || resultId === "session_saved") {
-        container.innerHTML = `
-          <div class="card" style="text-align:center; border-left: 5px solid var(--error);">
-            <h3>Review Token Missing</h3>
-            <p style="color:#64748b; margin-top:10px;">Please open the review panel through your scorecard summary page directly[cite: 101].</p>
-            <button onclick="window.location.href='dashboard.html'" class="btn" style="width:auto; margin-top:15px; padding:8px 20px;">Back to Dashboard</button>
-          </div>`;
-        return;
-      }
+<script>
+document.addEventListener('DOMContentLoaded', async () => {
+  const urlParams = new URLSearchParams(window.location.search);
+  const resultId = urlParams.get('id') || localStorage.getItem('last_result_id');
+  const token = localStorage.getItem('mock_test_token');
+  const container = document.getElementById('reviewContainer');
 
-      try {
-        const response = await fetch(`https://my-mock-test-platform.onrender.com/api/tests/result/${resultId}`, {
-          method: 'GET',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`
-          }
-        });
+  if (!token) {
+    window.location.href = 'login.html';
+    return;
+  }
 
-        const data = await response.json();
+  if (!resultId || resultId === "session_saved") {
+    container.innerHTML = `
+      <div class="card" style="text-align:center; border-left:6px solid red;">
+        <h3>Review Data Missing</h3>
+        <p>Please open review from your result page.</p>
+        <button onclick="window.location.href='dashboard.html'" class="btn" style="width:auto; margin-top:15px;">Dashboard</button>
+      </div>
+    `;
+    return;
+  }
 
-        if (!response.ok || !data) {
-          container.innerHTML = `<div class="card" style="color:var(--error); border-left:5px solid var(--error);">Failed to load scorecard evaluation breakdown details.</div>`;
-          return;
-        }
-
-        container.innerHTML = '';
-        const breakdown = data.answersBreakdown || [];
-
-        if (breakdown.length === 0) {
-          container.innerHTML = `<div class="card" style="text-align:center;">No descriptive response breakdown matrices found for this test session.</div>`;
-          return;
-        }
-
-        breakdown.forEach((item, index) => {
-          const card = document.createElement('div');
-          card.className = 'card';
-          card.style.padding = '20px';
-          card.style.margin = '20px 0';
-          
-          // Color coding assignment algorithms [cite: 103]
-          if (item.isCorrect) {
-            card.style.borderLeft = '6px solid var(--success)';
-            card.style.background = '#f0fdf4';
-          } else {
-            card.style.borderLeft = '6px solid var(--error)';
-            card.style.background = '#fef2f2';
-          }
-
-          card.innerHTML = `
-            <h3 style="font-size: 18px; margin-bottom: 12px; color: var(--text-main);">Question ${index + 1}: ${item.questionText}</h3>
-            <div style="font-size: 15px; display: flex; flex-direction: column; gap: 6px; margin-top: 10px;">
-              <p><strong>Your Selection:</strong> 
-                <span style="color: ${item.isCorrect ? 'var(--success)' : 'var(--error)'}; font-weight: 600;">
-                  ${item.selectedAnswer || 'Unanswered'}
-                </span>
-              </p>
-              <p><strong>Correct Answer:</strong> 
-                <span style="color: var(--success); font-weight: bold;">
-                  ${item.correctAnswer}
-                </span>
-              </p>
-            </div>
-          `;
-          container.appendChild(card);
-        });
-
-      } catch (err) {
-        console.error("Review component exception logic:", err);
-        container.innerHTML = `<div class="card" style="color:var(--error); border-left:5px solid var(--error);">An unexpected network processing fault occurred rendering scorecard analytics.</div>`;
+  try {
+    const response = await fetch(`https://my-mock-test-platform.onrender.com/api/tests/result/${resultId}`, {
+      headers: {
+        'Authorization': `Bearer ${token}`
       }
     });
-  </script>
+
+    const data = await response.json();
+
+    if (!response.ok || !data.answersBreakdown) {
+      container.innerHTML = `
+        <div class="card" style="color:red; border-left:6px solid red;">
+          Failed to load review details.
+        </div>
+      `;
+      return;
+    }
+
+    const breakdown = data.answersBreakdown;
+
+    const correct = breakdown.filter(q => q.isCorrect).length;
+    const unanswered = breakdown.filter(q => !q.selectedAnswer).length;
+    const wrong = breakdown.length - correct - unanswered;
+
+    document.getElementById('correctCount').textContent = correct;
+    document.getElementById('wrongCount').textContent = wrong;
+    document.getElementById('unansweredCount').textContent = unanswered;
+
+    container.innerHTML = '';
+
+    breakdown.forEach((item, index) => {
+      const isUnanswered = !item.selectedAnswer;
+
+      const card = document.createElement('div');
+      card.className = 'card';
+      card.style.padding = '20px';
+      card.style.margin = '18px 0';
+
+      if (item.isCorrect) {
+        card.style.borderLeft = '6px solid green';
+        card.style.background = '#f0fdf4';
+      } else if (isUnanswered) {
+        card.style.borderLeft = '6px solid #64748b';
+        card.style.background = '#f8fafc';
+      } else {
+        card.style.borderLeft = '6px solid red';
+        card.style.background = '#fef2f2';
+      }
+
+      card.innerHTML = `
+        <h3 style="font-size:18px; margin-bottom:12px;">
+          Q${index + 1}. ${item.questionText}
+        </h3>
+
+        <p>
+          <strong>Status:</strong>
+          ${
+            item.isCorrect
+              ? '<span style="color:green; font-weight:bold;">Correct ✅</span>'
+              : isUnanswered
+                ? '<span style="color:#475569; font-weight:bold;">Unanswered ⚪</span>'
+                : '<span style="color:red; font-weight:bold;">Wrong ❌</span>'
+          }
+        </p>
+
+        <p>
+          <strong>Your Answer:</strong>
+          <span style="font-weight:bold; color:${item.isCorrect ? 'green' : isUnanswered ? '#475569' : 'red'};">
+            ${item.selectedAnswer || 'Not Answered'}
+          </span>
+        </p>
+
+        <p>
+          <strong>Correct Answer:</strong>
+          <span style="font-weight:bold; color:green;">
+            ${item.correctAnswer}
+          </span>
+        </p>
+      `;
+
+      container.appendChild(card);
+    });
+
+  } catch (err) {
+    console.error("Review error:", err);
+    container.innerHTML = `
+      <div class="card" style="color:red; border-left:6px solid red;">
+        Network error while loading review.
+      </div>
+    `;
+  }
+});
+</script>
+
 </body>
 </html>
