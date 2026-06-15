@@ -22,6 +22,10 @@
   <div class="card" style="padding:30px;">
     <h2 style="text-align:center;">Universal PDF Question Uploader</h2>
 
+    <div style="text-align:center; margin:15px 0; padding:15px; background:#f1f5f9; border-radius:8px;">
+      <h3 id="questionCountDisplay" style="margin:0; color:#2563eb;">Total Questions: Loading...</h3>
+    </div>
+
     <div class="form-group" style="background:#f8fafc; border:2px dashed #ddd; padding:20px; border-radius:8px; text-align:center;">
       <input type="file" id="pdfFileInput" accept=".pdf">
     </div>
@@ -32,9 +36,11 @@
     </div>
 
     <textarea id="editorConsole" style="width:100%; height:420px; margin-top:25px; padding:12px; font-family:monospace; font-size:13px;"></textarea>
-<button id="deleteAllBtn" class="btn" style="background:#dc2626; margin-top:15px; font-size:16px; padding:14px;">
-  🗑 Delete All Questions
-</button>
+
+    <button id="deleteAllBtn" class="btn" style="background:#dc2626; margin-top:15px; font-size:16px; padding:14px;">
+      🗑 Delete All Questions
+    </button>
+
     <button id="executeUploadBtn" class="btn" style="background:green; margin-top:15px; font-size:16px; padding:14px;">
       🚀 Upload Questions to MongoDB
     </button>
@@ -48,6 +54,36 @@ pdfjsLib.GlobalWorkerOptions.workerSrc =
   'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
 
 const LIVE_BACKEND_URL = 'https://my-mock-test-platform.onrender.com/api';
+
+/* QUESTION COUNTER */
+async function loadQuestionCount() {
+  const token = localStorage.getItem("mock_test_token");
+
+  try {
+    const response = await fetch(`${LIVE_BACKEND_URL}/tests/questions`, {
+      headers: {
+        "Authorization": `Bearer ${token}`
+      }
+    });
+
+    const data = await response.json();
+
+    if (response.ok && Array.isArray(data)) {
+      document.getElementById("questionCountDisplay").textContent =
+        `Total Questions: ${data.length}`;
+    } else {
+      document.getElementById("questionCountDisplay").textContent =
+        "Total Questions: Unable to load";
+    }
+
+  } catch (err) {
+    console.error("COUNT ERROR:", err);
+    document.getElementById("questionCountDisplay").textContent =
+      "Total Questions: Error";
+  }
+}
+
+loadQuestionCount();
 
 /* READ PDF */
 document.getElementById('readPdfBtn').addEventListener('click', async () => {
@@ -203,34 +239,34 @@ document.getElementById('executeUploadBtn').addEventListener('click', async () =
   try {
     let successCount = 0;
 
-  for (const q of questionsArray) {
+    for (const q of questionsArray) {
+      const response = await fetch(`${LIVE_BACKEND_URL}/tests/questions`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify(q)
+      });
 
-  const response = await fetch(`${LIVE_BACKEND_URL}/tests/questions`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json"
-    },
-    body: JSON.stringify(q)
-  });
-
-  if (response.ok) {
-    successCount++;
-  } else {
-    const serverError = await response.text();
-
-    console.log("FAILED QUESTION:", q);
-    console.log("SERVER ERROR:", serverError);
-  }
-}
+      if (response.ok) {
+        successCount++;
+      } else {
+        const serverError = await response.text();
+        console.log("FAILED QUESTION:", q);
+        console.log("SERVER ERROR:", serverError);
+      }
+    }
 
     alert(`Successfully uploaded ${successCount} questions.`);
-    window.location.href = "dashboard.html";
+    await loadQuestionCount();
 
   } catch (err) {
     console.error("UPLOAD ERROR:", err);
     alert("Upload error: " + err.message);
   }
 });
+
+/* DELETE ALL QUESTIONS */
 document.getElementById('deleteAllBtn').addEventListener('click', async () => {
   const confirmDelete = confirm("Are you sure? This will delete ALL questions from MongoDB.");
 
@@ -245,6 +281,7 @@ document.getElementById('deleteAllBtn').addEventListener('click', async () => {
 
     if (response.ok) {
       alert(data.message);
+      await loadQuestionCount();
     } else {
       alert(data.error || "Delete failed.");
     }
