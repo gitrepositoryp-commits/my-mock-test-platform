@@ -28,6 +28,14 @@
     <div class="card" style="margin-top:20px; padding:20px;">
   <h3>🔍 Search Questions</h3>
 
+<div class="card" style="margin-top:20px; padding:20px;">
+  <h3>📊 Student Results</h3>
+  <button id="loadResultsBtn" class="btn" style="background:#7c3aed; margin-top:10px;">
+    Load Results
+  </button>
+  <div id="resultsContainer" style="margin-top:20px;"></div>
+</div>
+
   <input
     type="text"
     id="searchQuestionInput"
@@ -420,6 +428,41 @@ document
 });
 
 loadQuestionsPreview();
+async function loadAdminResults() {
+  const container = document.getElementById("resultsContainer");
+  container.innerHTML = "Loading results...";
+
+  try {
+    const response = await fetch(`${LIVE_BACKEND_URL}/tests/admin/results`);
+    const results = await response.json();
+
+    if (!response.ok) {
+      container.innerHTML = "Failed to load results.";
+      return;
+    }
+
+    if (results.length === 0) {
+      container.innerHTML = "No results found.";
+      return;
+    }
+
+    container.innerHTML = results.map((r, index) => `
+      <div style="border:1px solid #ddd; padding:12px; margin-bottom:12px; border-radius:8px;">
+        <h4>#${index + 1} ${r.userId?.username || "Unknown Student"}</h4>
+        <p>Email: ${r.userId?.email || "N/A"}</p>
+        <p>Score: ${r.score} / ${r.totalQuestions}</p>
+        <p>Percentage: ${r.percentage}%</p>
+        <p>Date: ${new Date(r.createdAt).toLocaleString()}</p>
+      </div>
+    `).join("");
+
+  } catch (err) {
+    console.error("RESULTS ERROR:", err);
+    container.innerHTML = "Network error while loading results.";
+  }
+}
+
+document.getElementById("loadResultsBtn").addEventListener("click", loadAdminResults);
 </script>
 
 </body>
