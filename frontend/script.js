@@ -5,7 +5,7 @@ let appState = {
   currentQuestionIndex: 0,
   selectedAnswers: {}, 
   timerInterval: null,
-  totalSecondsRemaining: 600 // 10 Minutes Duration Allocation Standard
+  totalSecondsRemaining:90* 60 // 90 Minutes Duration Allocation Standard
 };
 
 // Application Bootstrap Matrix Execution Routing

@@ -13,7 +13,12 @@
 <nav>
   <div class="container nav-container">
     <a href="dashboard.html" class="logo">MockExam Pro (Admin Control)</a>
-    <button onclick="window.location.href='dashboard.html'" class="btn" style="width:auto; padding:5px 15px;">Dashboard</button>
+
+    <button id="adminLogoutBtn"
+      class="btn"
+      style="width:auto; padding:8px 15px; background:#dc2626;">
+      Logout
+    </button>
   </div>
 </nav>
 
@@ -96,6 +101,16 @@
 </main>
 
 <script>
+  if (
+  localStorage.getItem(
+    "admin_logged_in"
+  ) !== "true"
+) {
+
+  window.location.href =
+    "admin-login.html";
+
+}
 const pdfjsLib = window['pdfjs-dist/build/pdf'];
 pdfjsLib.GlobalWorkerOptions.workerSrc =
   'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
@@ -602,7 +617,36 @@ async function deleteSingleQuestion(id) {
 loadQuestionCount();
 loadQuestionsPreview();
 loadAdminAnalytics();
-</script>
 
+
+//log out script
+
+document.getElementById("adminLogoutBtn")
+.addEventListener("click", () => {
+
+  localStorage.removeItem("mock_test_token");
+  localStorage.removeItem("mock_test_user");
+
+  alert("Logged out successfully.");
+
+  window.location.href = "login.html";
+});
+document
+.getElementById("adminLogoutBtn")
+.addEventListener("click", () => {
+
+  localStorage.removeItem(
+    "admin_logged_in"
+  );
+
+  alert(
+    "Admin logged out successfully."
+  );
+
+  window.location.href =
+    "admin-login.html";
+
+});
+</script>
 </body>
 </html>

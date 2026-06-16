@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Create Account - MockExam Pro</title>
+<title>Admin Login - MockExam Pro</title>
 
 <style>
 *{
@@ -63,17 +63,17 @@ body{
   font-size:18px;
 }
 
-.register-wrapper{
+.login-wrapper{
   min-height:100vh;
   display:flex;
   align-items:center;
   justify-content:center;
 }
 
-.register-card{
-  width:450px;
+.login-card{
+  width:430px;
   padding:42px;
-  background:rgba(255,255,255,.92);
+  background:rgba(255,255,255,.9);
   border:1px solid rgba(255,255,255,.8);
   border-radius:26px;
   box-shadow:0 30px 80px rgba(15,23,42,.12);
@@ -81,12 +81,12 @@ body{
   text-align:center;
 }
 
-.user-icon{
+.lock-icon{
   width:90px;
   height:90px;
   margin:0 auto 25px;
   border-radius:50%;
-  background:linear-gradient(135deg,#2563eb,#7c3aed);
+  background:linear-gradient(135deg,#6366f1,#8b5cf6);
   display:flex;
   align-items:center;
   justify-content:center;
@@ -95,20 +95,19 @@ body{
   box-shadow:0 20px 40px rgba(99,102,241,.35);
 }
 
-.register-card h1{
+.login-card h1{
   font-size:30px;
   color:#0f172a;
   margin-bottom:8px;
 }
 
-.register-card p{
+.login-card p{
   color:#64748b;
-  margin-bottom:26px;
-  line-height:1.5;
+  margin-bottom:28px;
 }
 
 .input-group{
-  margin-bottom:15px;
+  margin-bottom:16px;
   text-align:left;
 }
 
@@ -127,7 +126,21 @@ body{
   box-shadow:0 0 0 4px rgba(124,58,237,.12);
 }
 
-.register-btn{
+.row{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  font-size:14px;
+  margin:8px 0 22px;
+  color:#64748b;
+}
+
+.row a{
+  color:#7c3aed;
+  text-decoration:none;
+}
+
+.login-btn{
   width:100%;
   padding:16px;
   border:none;
@@ -138,23 +151,16 @@ body{
   font-weight:bold;
   cursor:pointer;
   box-shadow:0 14px 35px rgba(124,58,237,.3);
-  margin-top:5px;
 }
 
-.register-btn:hover{
+.login-btn:hover{
   transform:translateY(-1px);
 }
 
 .footer-text{
-  margin-top:22px;
+  margin-top:28px;
   font-size:14px;
-  color:#64748b;
-}
-
-.footer-text a{
-  color:#7c3aed;
-  font-weight:bold;
-  text-decoration:none;
+  color:#94a3b8;
 }
 
 .secure-box{
@@ -187,28 +193,12 @@ body{
   line-height:1.6;
 }
 
-.top-link{
-  position:absolute;
-  top:65px;
-  right:70px;
-}
-
-.top-link a{
-  padding:12px 20px;
-  background:white;
-  border-radius:12px;
-  text-decoration:none;
-  color:#4f46e5;
-  font-weight:bold;
-  box-shadow:0 12px 30px rgba(15,23,42,.08);
-}
-
 @media(max-width:768px){
-  .brand,.secure-box,.top-link{
+  .brand,.secure-box{
     display:none;
   }
 
-  .register-card{
+  .login-card{
     width:90%;
     padding:30px;
   }
@@ -229,57 +219,64 @@ body{
   <div class="logo-box">🎓</div>
   <div>
     <h2>MockExam Pro</h2>
-    <p>Student Registration</p>
+    <p>Admin Panel</p>
   </div>
 </div>
 
-<div class="top-link">
-  <a href="login.html">Login Portal</a>
-</div>
-
 <div class="secure-box">
-  <div class="secure-icon">🚀</div>
-  <h3>Start Your Exam Journey</h3>
-  <p>Create an account to access<br>mock tests, results and certificates.</p>
+  <div class="secure-icon">🛡️</div>
+  <h3>Secure Admin Access</h3>
+  <p>Only authorized administrators<br>can access this area.</p>
 </div>
 
-<div class="register-wrapper">
-  <div class="register-card">
+<div class="login-wrapper">
+  <div class="login-card">
 
-    <div class="user-icon">📝</div>
+    <div class="lock-icon">🔒</div>
 
-    <h1>Create Account</h1>
-    <p>Register today to test your skills and track your progress.</p>
+    <h1>Admin Login</h1>
+    <p>Enter your credentials to access the admin panel</p>
 
-    <form id="registerForm">
+    <div class="input-group">
+      <input type="text" id="adminUsername" placeholder="Admin Username">
+    </div>
 
-      <div class="input-group">
-        <input type="text" id="username" placeholder="Choose Username" required minlength="3">
-      </div>
+    <div class="input-group">
+      <input type="password" id="adminPassword" placeholder="Admin Password">
+    </div>
 
-      <div class="input-group">
-        <input type="email" id="email" placeholder="Email Address" required>
-      </div>
+    <div class="row">
+      <label>
+        <input type="checkbox" checked>
+        Remember me
+      </label>
+      <a href="#">Forgot password?</a>
+    </div>
 
-      <div class="input-group">
-        <input type="password" id="password" placeholder="Password - minimum 6 characters" required minlength="6">
-      </div>
-
-      <button type="submit" class="register-btn">
-        Create Account & Get Started
-      </button>
-
-    </form>
+    <button id="adminLoginBtn" class="login-btn">
+      Login
+    </button>
 
     <div class="footer-text">
-      Already registered?
-      <a href="login.html">Secure Login</a>
+      🔐 Secure Access • MockExam Pro Admin Panel
     </div>
 
   </div>
 </div>
 
-<script src="script.js"></script>
+<script>
+document.getElementById("adminLoginBtn").addEventListener("click", () => {
+  const username = document.getElementById("adminUsername").value.trim();
+  const password = document.getElementById("adminPassword").value.trim();
+
+  if (username === "admin" && password === "RRBADMIN2026") {
+    localStorage.setItem("admin_logged_in", "true");
+    window.location.href = "admin.html";
+  } else {
+    alert("Invalid Admin Credentials");
+  }
+});
+</script>
 
 </body>
 </html>
