@@ -1,4 +1,3 @@
-const router = express.Router();
 const express = require("express");
 const Razorpay = require("razorpay");
 const crypto = require("crypto");
@@ -11,7 +10,6 @@ const razorpay = new Razorpay({
   key_secret: process.env.RAZORPAY_KEY_SECRET
 });
 
-// CREATE PREMIUM ORDER ₹79
 router.post("/create-order", async (req, res) => {
   try {
     const options = {
@@ -21,18 +19,14 @@ router.post("/create-order", async (req, res) => {
     };
 
     const order = await razorpay.orders.create(options);
-
     res.status(200).json(order);
 
   } catch (err) {
     console.error("RAZORPAY ORDER ERROR:", err);
-    res.status(500).json({
-      error: "Failed to create payment order"
-    });
+    res.status(500).json({ error: "Failed to create payment order" });
   }
 });
 
-// VERIFY PAYMENT + ACTIVATE PREMIUM
 router.post("/verify-payment", async (req, res) => {
   try {
     const {
@@ -46,13 +40,11 @@ router.post("/verify-payment", async (req, res) => {
 
     const expectedSign = crypto
       .createHmac("sha256", process.env.RAZORPAY_KEY_SECRET)
-      .update(sign.toString())
+      .update(sign)
       .digest("hex");
 
     if (razorpay_signature !== expectedSign) {
-      return res.status(400).json({
-        error: "Invalid payment signature"
-      });
+      return res.status(400).json({ error: "Invalid payment signature" });
     }
 
     const startedAt = new Date();
@@ -70,9 +62,7 @@ router.post("/verify-payment", async (req, res) => {
     );
 
     if (!user) {
-      return res.status(404).json({
-        error: "User not found"
-      });
+      return res.status(404).json({ error: "User not found" });
     }
 
     res.status(200).json({
@@ -83,9 +73,7 @@ router.post("/verify-payment", async (req, res) => {
 
   } catch (err) {
     console.error("PAYMENT VERIFY ERROR:", err);
-    res.status(500).json({
-      error: "Payment verification failed"
-    });
+    res.status(500).json({ error: "Payment verification failed" });
   }
 });
 
