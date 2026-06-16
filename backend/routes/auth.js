@@ -70,6 +70,28 @@ router.post('/login', async (req, res) => {
     res.status(500).json({ error: 'Server error processing authentication verification.' });
   }
 });
+// PREMIUM STATUS CHECK
+router.get('/premium-status/:id', async (req, res) => {
+  try {
+    const user = await User.findById(req.params.id);
+
+    if (!user) {
+      return res.status(404).json({
+        error: "User not found"
+      });
+    }
+
+    res.json({
+      isPremium: user.isPremium,
+      premiumExpiresAt: user.premiumExpiresAt
+    });
+
+  } catch (err) {
+    res.status(500).json({
+      error: "Failed to check premium status"
+    });
+  }
+});
 
 // CRITICAL EXPORT LINE: Fixes the Express routing middleware crash!
 module.exports = router;

@@ -9,6 +9,7 @@ const UserSchema = new mongoose.Schema({
     trim: true,
     minlength: 3
   },
+
   email: {
     type: String,
     required: true,
@@ -16,20 +17,38 @@ const UserSchema = new mongoose.Schema({
     trim: true,
     lowercase: true
   },
+
   password: {
     type: String,
     required: true,
     minlength: 6
   },
+
+  isPremium: {
+    type: Boolean,
+    default: false
+  },
+
+  premiumStartedAt: {
+    type: Date,
+    default: null
+  },
+
+  premiumExpiresAt: {
+    type: Date,
+    default: null
+  },
+
   createdAt: {
     type: Date,
     default: Date.now
   }
 });
 
-// Automated Database Lifecycle Hook: Hashes passwords before writing to cluster storage
+// Hash password before saving
 UserSchema.pre('save', async function (next) {
   if (!this.isModified('password')) return next();
+
   try {
     const salt = await bcrypt.genSalt(10);
     this.password = await bcrypt.hash(this.password, salt);
@@ -39,7 +58,7 @@ UserSchema.pre('save', async function (next) {
   }
 });
 
-// Instance Method Helper: Securely evaluates candidate login hashes against DB records
+// Compare login password
 UserSchema.methods.matchPassword = async function (enteredPassword) {
   return await bcrypt.compare(enteredPassword, this.password);
 };
