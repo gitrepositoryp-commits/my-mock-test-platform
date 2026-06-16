@@ -92,6 +92,39 @@ router.get('/premium-status/:id', async (req, res) => {
     });
   }
 });
+// ACTIVATE PREMIUM MANUALLY / AFTER PAYMENT
+router.post('/activate-premium/:id', async (req, res) => {
+  try {
+    const user = await User.findById(req.params.id);
 
+    if (!user) {
+      return res.status(404).json({
+        error: "User not found"
+      });
+    }
+
+    const startedAt = new Date();
+    const expiresAt = new Date();
+    expiresAt.setDate(expiresAt.getDate() + 30);
+
+    user.isPremium = true;
+    user.premiumStartedAt = startedAt;
+    user.premiumExpiresAt = expiresAt;
+
+    await user.save();
+
+    res.json({
+      message: "Premium activated successfully",
+      isPremium: user.isPremium,
+      premiumStartedAt: user.premiumStartedAt,
+      premiumExpiresAt: user.premiumExpiresAt
+    });
+
+  } catch (err) {
+    res.status(500).json({
+      error: "Failed to activate premium"
+    });
+  }
+});
 // CRITICAL EXPORT LINE: Fixes the Express routing middleware crash!
 module.exports = router;
