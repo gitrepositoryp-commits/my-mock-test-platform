@@ -27,6 +27,33 @@
     </div>
     <div class="card" style="margin-top:20px; padding:20px;">
   <h3>🔍 Search Questions</h3>
+  <div class="card" style="margin-top:20px; padding:20px;">
+  <h3>📈 Admin Analytics</h3>
+
+  <div style="display:grid; grid-template-columns:repeat(4,1fr); gap:15px; margin-top:15px;">
+
+    <div style="background:#eff6ff; padding:15px; border-radius:8px; text-align:center;">
+      <h2 id="totalResultsCard">0</h2>
+      <p>Total Results</p>
+    </div>
+
+    <div style="background:#ecfdf5; padding:15px; border-radius:8px; text-align:center;">
+      <h2 id="highestScoreCard">0</h2>
+      <p>Highest Score</p>
+    </div>
+
+    <div style="background:#fef3c7; padding:15px; border-radius:8px; text-align:center;">
+      <h2 id="avgPercentageCard">0%</h2>
+      <p>Average %</p>
+    </div>
+
+    <div style="background:#f3e8ff; padding:15px; border-radius:8px; text-align:center;">
+      <h2 id="studentsCard">0</h2>
+      <p>Students</p>
+    </div>
+
+  </div>
+</div>
 
 <div class="card" style="margin-top:20px; padding:20px;">
   <h3>📊 Student Results</h3>
@@ -492,6 +519,89 @@ async function deleteSingleResult(id) {
     alert("Delete error: " + err.message);
   }
 }
+
+async function loadAdminAnalytics() {
+  try {
+    const response = await fetch(`${LIVE_BACKEND_URL}/tests/admin/results`);
+    const results = await response.json();
+
+    if (!response.ok || !Array.isArray(results)) return;
+
+    document.getElementById("totalResultsCard").textContent =
+      results.length;
+
+    let highestScore = 0;
+    let totalPercentage = 0;
+
+    const uniqueStudents = new Set();
+
+    results.forEach(r => {
+      if (r.score > highestScore) {
+        highestScore = r.score;
+      }
+
+      totalPercentage += Number(r.percentage || 0);
+
+      if (r.userId?._id) {
+        uniqueStudents.add(r.userId._id);
+      }
+    });
+
+    const avg =
+      results.length > 0
+        ? (totalPercentage / results.length).toFixed(2)
+        : 0;
+
+    document.getElementById("highestScoreCard").textContent =
+      highestScore;
+
+    document.getElementById("avgPercentageCard").textContent =
+      avg + "%";
+
+    document.getElementById("studentsCard").textContent =
+      uniqueStudents.size;
+
+  } catch (err) {
+    console.error("ANALYTICS ERROR:", err);
+  }
+}
+// DELETE SINGLE QUESTION
+async function deleteSingleQuestion(id) {
+  const confirmDelete = confirm(
+    "Are you sure you want to delete this question?"
+  );
+
+  if (!confirmDelete) return;
+
+  try {
+    const response = await fetch(
+      `${LIVE_BACKEND_URL}/tests/admin/questions/${id}`,
+      {
+        method: "DELETE"
+      }
+    );
+
+    const data = await response.json();
+
+    if (response.ok) {
+      alert("Question deleted successfully.");
+
+      await loadQuestionCount();
+      await loadQuestionsPreview();
+    } else {
+      alert(data.error || "Delete failed.");
+    }
+
+  } catch (err) {
+    console.error("DELETE QUESTION ERROR:", err);
+    alert("Delete error: " + err.message);
+  }
+}
+
+// AUTO LOAD FUNCTIONS
+loadQuestionCount();
+loadQuestionsPreview();
+loadAdminAnalytics();
 </script>
 
 </body>
