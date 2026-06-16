@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Results History - MockExam Pro</title>
 <link rel="stylesheet" href="style.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 </head>
 
 <body>
@@ -63,6 +64,9 @@ document.addEventListener("DOMContentLoaded", async () => {
         <button onclick="openReview('${r._id}')" class="btn" style="background:#1e293b;margin-top:10px;">
           Review Answers
         </button>
+        <button onclick="downloadCertificate('${r.score}', '${r.totalQuestions}', '${r.percentage}', '${r.createdAt}')" class="btn" style="background:#16a34a;margin-top:10px;">
+  Download Certificate
+</button>
       </div>
     `).join("");
 
@@ -75,6 +79,34 @@ document.addEventListener("DOMContentLoaded", async () => {
 function openReview(id) {
   localStorage.setItem("last_result_id", id);
   window.location.href = `review.html?id=${id}`;
+}
+function downloadCertificate(score, total, percentage, createdAt) {
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF();
+
+  const userData = JSON.parse(localStorage.getItem("mock_test_user"));
+  const username = userData?.username || "Student";
+  const certificateId = "CERT-" + Date.now();
+
+  doc.setFontSize(22);
+  doc.text("MockExam Pro", 105, 30, { align: "center" });
+
+  doc.setFontSize(18);
+  doc.text("Certificate of Completion", 105, 50, { align: "center" });
+
+  doc.setFontSize(12);
+  doc.text("This certificate is proudly presented to", 105, 70, { align: "center" });
+
+  doc.setFontSize(20);
+  doc.text(username, 105, 90, { align: "center" });
+
+  doc.setFontSize(12);
+  doc.text(`For completing the mock test with score ${score}/${total}`, 105, 110, { align: "center" });
+  doc.text(`Percentage: ${percentage}%`, 105, 122, { align: "center" });
+  doc.text(`Exam Date: ${new Date(createdAt).toLocaleDateString()}`, 105, 134, { align: "center" });
+  doc.text(`Certificate ID: ${certificateId}`, 105, 146, { align: "center" });
+
+  doc.save("MockExam_Certificate.pdf");
 }
 </script>
 </body>
