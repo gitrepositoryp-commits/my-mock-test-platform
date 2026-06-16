@@ -453,6 +453,9 @@ async function loadAdminResults() {
         <p>Score: ${r.score} / ${r.totalQuestions}</p>
         <p>Percentage: ${r.percentage}%</p>
         <p>Date: ${new Date(r.createdAt).toLocaleString()}</p>
+        <button onclick="deleteSingleResult('${r._id}')" class="btn" style="background:#dc2626; margin-top:10px;">
+  Delete Result
+</button>
       </div>
     `).join("");
 
@@ -463,6 +466,32 @@ async function loadAdminResults() {
 }
 
 document.getElementById("loadResultsBtn").addEventListener("click", loadAdminResults);
+
+
+async function deleteSingleResult(id) {
+  const confirmDelete = confirm("Are you sure you want to delete this result?");
+
+  if (!confirmDelete) return;
+
+  try {
+    const response = await fetch(`${LIVE_BACKEND_URL}/tests/admin/results/${id}`, {
+      method: "DELETE"
+    });
+
+    const data = await response.json();
+
+    if (response.ok) {
+      alert("Result deleted successfully.");
+      await loadAdminResults();
+    } else {
+      alert(data.error || "Delete failed.");
+    }
+
+  } catch (err) {
+    console.error("DELETE RESULT ERROR:", err);
+    alert("Delete error: " + err.message);
+  }
+}
 </script>
 
 </body>
