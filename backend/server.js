@@ -5,51 +5,67 @@ require('dotenv').config();
 
 const app = express();
 
-// CORS CONFIGURATION: Unblocks cross-origin preflight requests from Vercel hosting CDNs
+// CORS CONFIGURATION
 app.use(cors({
-  origin: '*', 
+  origin: '*',
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept']
 }));
 
-// Standard middleware object request parsers
+// BODY PARSERS
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Database Connection Integration
+// DATABASE CONNECTION
 const mongoURI = process.env.MONGO_URI;
 
 if (!mongoURI) {
-  console.error("CRITICAL RUNTIME WARNING: MONGO_URI string variable missing from environment definitions.");
+  console.error("CRITICAL RUNTIME WARNING: MONGO_URI missing.");
   process.exit(1);
 }
 
 mongoose.connect(mongoURI)
-.then(() => console.log('MongoDB Cloud Database Connected Successfully.'))
-.catch(err => console.error('Database connection error cascade:', err.message));
+.then(() => {
+  console.log('MongoDB Cloud Database Connected Successfully.');
+})
+.catch((err) => {
+  console.error('Database connection error cascade:', err.message);
+});
 
-// Mount Decoupled Routing Elements 
+// ROUTES
 const authRoutes = require('./routes/auth');
 const testRoutes = require('./routes/tests');
+const paymentRoutes = require('./routes/payment');
 
+// API ROUTES
 app.use('/api/auth', authRoutes);
 app.use('/api/tests', testRoutes);
+app.use('/api/payment', paymentRoutes);
 
-// Base Universal Health Check Endpoint
+// HEALTH CHECK
 app.get('/', (req, res) => {
-  res.json({ message: "Mock Test API is running smoothly." });
+  res.json({
+    message: "Mock Test API is running smoothly."
+  });
 });
 
-// Centralized Express Global Exception Catch Fallback Gateway
+// GLOBAL ERROR HANDLER
 app.use((err, req, res, next) => {
-  console.error("UNHANDLED SYSTEM RUNTIME FAULT DETECTED:", err.stack);
-  res.status(500).json({ error: "Internal Server Error Cascade", message: err.message });
+  console.error(
+    "UNHANDLED SYSTEM RUNTIME FAULT DETECTED:",
+    err.stack
+  );
+
+  res.status(500).json({
+    error: "Internal Server Error Cascade",
+    message: err.message
+  });
 });
 
+// SERVER START
 const PORT = process.env.PORT || 5000;
+
 app.listen(PORT, () => {
   console.log(`Server executing seamlessly on port ${PORT}`);
 });
-
-// Clean and verified deployment comment check
-// Force Sync Deployment for Universal JSON Workspace Array v5.0
+//Force Sync Deployment for Universal JSON Workspace Array v5.0
