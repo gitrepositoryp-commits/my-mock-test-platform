@@ -267,4 +267,17 @@ router.delete('/admin/questions/:id', async (req, res) => {
     res.status(500).json({ error: "Failed to delete question." });
   }
 });
+// 12. ADMIN GET ALL RESULTS
+router.get('/admin/results', async (req, res) => {
+  try {
+    const results = await Result.find({})
+      .populate('userId', 'username email')
+      .sort({ createdAt: -1 });
+
+    res.status(200).json(results);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to fetch results.' });
+  }
+});
 module.exports = router;

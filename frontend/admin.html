@@ -357,7 +357,11 @@ function renderQuestions(questions) {
       <button onclick="updateQuestion('${q._id}')" class="btn" style="background:#2563eb; margin-top:10px;">
         Save Question
       </button>
+          <button onclick="deleteSingleQuestion('${q._id}')" class="btn" style="background:#dc2626; margin-top:10px;">
+  Delete Question
+</button>
     `;
+
 
     container.appendChild(card);
   });
