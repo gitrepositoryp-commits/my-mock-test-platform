@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Exam Scorecard</title>
   <link rel="stylesheet" href="style.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 </head>
 <body>
 
@@ -45,6 +46,9 @@
 
     <div style="display:flex; gap:12px; flex-wrap:wrap;">
       <button id="reviewBtn" class="btn" style="background:#1e293b; flex:1;">Review Answers</button>
+      <button id="certificateBtn" class="btn" style="background:#16a34a; flex:1;">
+  Download Certificate
+</button>
       <button onclick="window.location.href='leaderboard.html'" class="btn" style="background:#7c3aed; flex:1;">Leaderboard</button>
       <button onclick="window.location.href='dashboard.html'" class="btn" style="background:#475569; flex:1;">Dashboard</button>
     </div>
@@ -103,6 +107,36 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
   });
 });
+document.getElementById("certificateBtn").addEventListener("click", () => {
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF();
+
+  const username = localStorage.getItem("mock_test_username") || "Student";
+  const score = localStorage.getItem("last_score") || 0;
+  const total = localStorage.getItem("last_total") || 0;
+  const percentage = localStorage.getItem("last_percentage") || 0;
+  const certificateId = "CERT-" + Date.now();
+
+  doc.setFontSize(22);
+  doc.text("MockExam Pro", 105, 30, { align: "center" });
+
+  doc.setFontSize(18);
+  doc.text("Certificate of Completion", 105, 50, { align: "center" });
+
+  doc.setFontSize(12);
+  doc.text("This certificate is proudly presented to", 105, 70, { align: "center" });
+
+  doc.setFontSize(20);
+  doc.text(username, 105, 90, { align: "center" });
+
+  doc.setFontSize(12);
+  doc.text(`For completing the mock test with score ${score}/${total}`, 105, 110, { align: "center" });
+  doc.text(`Percentage: ${percentage}%`, 105, 122, { align: "center" });
+  doc.text(`Date: ${new Date().toLocaleDateString()}`, 105, 134, { align: "center" });
+  doc.text(`Certificate ID: ${certificateId}`, 105, 146, { align: "center" });
+
+  doc.save("MockExam_Certificate.pdf");
+});                                                                                                                                                                 
 </script>
 
 </body>
