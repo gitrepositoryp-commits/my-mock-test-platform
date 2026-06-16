@@ -280,4 +280,22 @@ router.get('/admin/results', async (req, res) => {
     res.status(500).json({ error: 'Failed to fetch results.' });
   }
 });
+// 13. ADMIN DELETE SINGLE RESULT
+router.delete('/admin/results/:id', async (req, res) => {
+  try {
+    const deletedResult = await Result.findByIdAndDelete(req.params.id);
+
+    if (!deletedResult) {
+      return res.status(404).json({ error: "Result not found." });
+    }
+
+    res.status(200).json({
+      message: "Result deleted successfully."
+    });
+
+  } catch (err) {
+    console.error("DELETE RESULT ERROR:", err);
+    res.status(500).json({ error: "Failed to delete result." });
+  }
+});
 module.exports = router;
