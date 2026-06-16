@@ -250,9 +250,21 @@ body{
         <input type="checkbox" checked>
         Remember me
       </label>
-      <a href="#">Forgot password?</a>
+      
     </div>
+    <div style="text-align:right; margin-bottom:15px;">
 
+         <a
+    href="admin-forgot-password.html"
+    style="
+      color:#7c3aed;
+      text-decoration:none;
+      font-size:14px;
+      font-weight:600;
+    ">
+    Forgot Password?
+  </a>
+</div>
     <button id="adminLoginBtn" class="login-btn">
       Login
     </button>
@@ -269,7 +281,7 @@ document.getElementById("adminLoginBtn").addEventListener("click", () => {
   const username = document.getElementById("adminUsername").value.trim();
   const password = document.getElementById("adminPassword").value.trim();
 
-  if (username === "admin" && password === "RRBADMIN2026") {
+  if (username === "Prasanth" && password === "Koduru367@@") {
     localStorage.setItem("admin_logged_in", "true");
     window.location.href = "admin.html";
   } else {

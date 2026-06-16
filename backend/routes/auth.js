@@ -126,5 +126,46 @@ router.post('/activate-premium/:id', async (req, res) => {
     });
   }
 });
+// RESET PASSWORD BY EMAIL
+router.post('/reset-password', async (req, res) => {
+  try {
+    const { email, newPassword } = req.body;
+
+    if (!email || !newPassword) {
+      return res.status(400).json({
+        error: "Email and new password are required."
+      });
+    }
+
+    if (newPassword.length < 6) {
+      return res.status(400).json({
+        error: "Password must be at least 6 characters."
+      });
+    }
+
+    const user = await User.findOne({
+      email: email.toLowerCase()
+    });
+
+    if (!user) {
+      return res.status(404).json({
+        error: "No account found with this email."
+      });
+    }
+
+    user.password = newPassword;
+    await user.save();
+
+    res.status(200).json({
+      message: "Password reset successfully. Please login with new password."
+    });
+
+  } catch (err) {
+    console.error("RESET PASSWORD ERROR:", err);
+    res.status(500).json({
+      error: "Failed to reset password."
+    });
+  }
+});
 // CRITICAL EXPORT LINE: Fixes the Express routing middleware crash!
 module.exports = router;
