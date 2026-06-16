@@ -332,16 +332,11 @@ async function loadQuestionsPreview() {
 }
 
 function renderQuestions(questions) {
-  const container = document.getElementById(
-    "questionPreviewContainer"
-  );
-
+  const container = document.getElementById("questionPreviewContainer");
   container.innerHTML = "";
 
   questions.forEach((q, index) => {
-
     const card = document.createElement("div");
-
     card.style.border = "1px solid #ddd";
     card.style.padding = "15px";
     card.style.marginBottom = "15px";
@@ -350,25 +345,63 @@ function renderQuestions(questions) {
     card.innerHTML = `
       <h4>Q${index + 1}</h4>
 
-      <p><strong>${q.question}</strong></p>
+      <textarea id="qtext-${q._id}" style="width:100%; height:70px;">${q.question}</textarea>
 
-      <ul>
-        ${q.options.map(opt =>
-          `<li>${opt}</li>`
-        ).join("")}
-      </ul>
+      <input id="opt1-${q._id}" value="${q.options[0]}" style="width:100%; margin-top:8px; padding:8px;">
+      <input id="opt2-${q._id}" value="${q.options[1]}" style="width:100%; margin-top:8px; padding:8px;">
+      <input id="opt3-${q._id}" value="${q.options[2]}" style="width:100%; margin-top:8px; padding:8px;">
+      <input id="opt4-${q._id}" value="${q.options[3]}" style="width:100%; margin-top:8px; padding:8px;">
 
-      <p style="color:green;">
-        <strong>Answer:</strong>
-        ${q.correctAnswer}
-      </p>
+      <input id="ans-${q._id}" value="${q.correctAnswer}" style="width:100%; margin-top:8px; padding:8px; color:green; font-weight:bold;">
+
+      <button onclick="updateQuestion('${q._id}')" class="btn" style="background:#2563eb; margin-top:10px;">
+        Save Question
+      </button>
     `;
 
     container.appendChild(card);
-
   });
 }
 
+async function updateQuestion(id) {
+  const question = document.getElementById(`qtext-${id}`).value.trim();
+
+  const options = [
+    document.getElementById(`opt1-${id}`).value.trim(),
+    document.getElementById(`opt2-${id}`).value.trim(),
+    document.getElementById(`opt3-${id}`).value.trim(),
+    document.getElementById(`opt4-${id}`).value.trim()
+  ];
+
+  const correctAnswer = document.getElementById(`ans-${id}`).value.trim();
+
+  try {
+    const response = await fetch(`${LIVE_BACKEND_URL}/tests/admin/questions/${id}`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        question,
+        options,
+        correctAnswer
+      })
+    });
+
+    const data = await response.json();
+
+    if (response.ok) {
+      alert("Question updated successfully.");
+      await loadQuestionsPreview();
+    } else {
+      alert(data.error || "Update failed.");
+    }
+
+  } catch (err) {
+    console.error("UPDATE ERROR:", err);
+    alert("Update error: " + err.message);
+  }
+}
 document
 .getElementById("searchQuestionInput")
 .addEventListener("input", (e) => {

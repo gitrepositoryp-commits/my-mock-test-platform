@@ -249,4 +249,22 @@ router.put('/admin/questions/:id', async (req, res) => {
     res.status(500).json({ error: "Failed to update question." });
   }
 });
+// 11. ADMIN DELETE SINGLE QUESTION
+router.delete('/admin/questions/:id', async (req, res) => {
+  try {
+    const deletedQuestion = await Question.findByIdAndDelete(req.params.id);
+
+    if (!deletedQuestion) {
+      return res.status(404).json({ error: "Question not found." });
+    }
+
+    res.status(200).json({
+      message: "Question deleted successfully."
+    });
+
+  } catch (err) {
+    console.error("DELETE QUESTION ERROR:", err);
+    res.status(500).json({ error: "Failed to delete question." });
+  }
+});
 module.exports = router;
