@@ -270,7 +270,7 @@ async function submitMockTestResponses() {
       localStorage.setItem('last_percentage', data.percentage !== undefined ? data.percentage : 0);
       localStorage.setItem('last_result_id', data.resultId || data._id || "session_saved");
       
-      window.location.href = 'results.html';
+      window.location.href = 'result.html';
     } else {
       alert(data.error || data.message || 'Error compiling scoring data calculations.');
     }
