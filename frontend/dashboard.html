@@ -261,23 +261,60 @@ document.addEventListener('DOMContentLoaded', async () => {
         return;
       }
 
-      testContainer.innerHTML = `
-        <div class="card" style="max-width:500px; padding:30px;">
-          <span style="background:#e0e7ff; color:var(--primary); padding:4px 10px; border-radius:20px; font-size:12px; font-weight:bold;">
-            LIVE EXAM
-          </span>
+ testContainer.innerHTML = `
 
-          <h3 style="margin-top:15px;">Comprehensive Syllabus Mock Sprint</h3>
+<div style="display:grid;
+grid-template-columns:repeat(auto-fit,minmax(280px,1fr));
+gap:20px;">
 
-          <p style="color:#64748b; font-size:14px; margin:10px 0 20px 0;">
-            Contains exactly <strong>${dataBank.length} questions</strong> compiled from your cloud database.
-          </p>
+  <div class="card" style="padding:25px;">
+    <h3>🚆 RRB NTPC Mock Tests</h3>
 
-          <button onclick="window.location.href='test.html'" class="btn">
-            Launch Examination Engine
-          </button>
-        </div>
-      `;
+    <p style="color:#64748b;">
+      NTPC Previous Papers, Full Length Tests,
+      CBT-1 & CBT-2 Practice.
+    </p>
+
+    <button
+      class="btn"
+      onclick="window.location.href='test.html?exam=NTPC'">
+      Start NTPC Test
+    </button>
+  </div>
+
+  <div class="card" style="padding:25px;">
+    <h3>🛤 RRB Group-D Mock Tests</h3>
+
+    <p style="color:#64748b;">
+      Group-D Previous Papers,
+      Full Length Tests & Practice Sets.
+    </p>
+
+    <button
+      class="btn"
+      onclick="window.location.href='test.html?exam=GROUP_D'">
+      Start Group-D Test
+    </button>
+  </div>
+
+  <div class="card" style="padding:25px;">
+    <h3>🏛 AP Group-2 Mock Tests</h3>
+
+    <p style="color:#64748b;">
+      APPSC Group-2 Screening,
+      Mains Practice & PYQ Tests.
+    </p>
+
+    <button
+      class="btn"
+      onclick="window.location.href='test.html?exam=GROUP_2'">
+      Start Group-2 Test
+    </button>
+  </div>
+
+</div>
+
+`;
     } else {
       testContainer.innerHTML =
         `<div class="card" style="border-left:5px solid var(--error); color:var(--error);">
