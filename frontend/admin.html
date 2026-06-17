@@ -12,127 +12,140 @@
 
 <nav>
   <div class="container nav-container">
-    <a href="dashboard.html" class="logo">MockExam Pro (Admin Control)</a>
-
-    <button id="adminLogoutBtn"
-      class="btn"
-      style="width:auto; padding:8px 15px; background:#dc2626;">
+    <a href="dashboard.html" class="logo">MockExam Pro Admin</a>
+    <button id="adminLogoutBtn" class="btn" style="width:auto;padding:8px 15px;background:#dc2626;">
       Logout
     </button>
   </div>
 </nav>
 
-<main class="container auth-wrapper" style="min-height:85vh; max-width:900px; margin:0 auto; display:block; padding-top:30px;">
+<main class="container auth-wrapper" style="min-height:85vh; max-width:950px; margin:0 auto; display:block; padding-top:30px;">
 
   <div class="card" style="padding:30px;">
     <h2 style="text-align:center;">Universal PDF Question Uploader</h2>
 
+    <div style="margin:20px 0;">
+      <label style="font-weight:bold;">Select Exam Type</label>
+      <select id="examType" style="width:100%;padding:12px;margin-top:8px;border-radius:8px;">
+        <option value="NTPC">RRB NTPC</option>
+        <option value="GROUP_D">RRB Group-D</option>
+        <option value="GROUP_2">AP Group-2</option>
+      </select>
+    </div>
+
     <div style="text-align:center; margin:15px 0; padding:15px; background:#f1f5f9; border-radius:8px;">
-      <h3 id="questionCountDisplay" style="margin:0; color:#2563eb;">Total Questions: Loading...</h3>
-    </div>
-    <div class="card" style="margin-top:20px; padding:20px;">
-  <h3>🔍 Search Questions</h3>
-  <div class="card" style="margin-top:20px; padding:20px;">
-  <h3>📈 Admin Analytics</h3>
-
-  <div style="display:grid; grid-template-columns:repeat(4,1fr); gap:15px; margin-top:15px;">
-
-    <div style="background:#eff6ff; padding:15px; border-radius:8px; text-align:center;">
-      <h2 id="totalResultsCard">0</h2>
-      <p>Total Results</p>
+      <h3 id="questionCountDisplay" style="margin:0;color:#2563eb;">Total Questions: Loading...</h3>
     </div>
 
-    <div style="background:#ecfdf5; padding:15px; border-radius:8px; text-align:center;">
-      <h2 id="highestScoreCard">0</h2>
-      <p>Highest Score</p>
+    <div class="card" style="margin-top:20px;padding:20px;">
+      <h3>📈 Admin Analytics</h3>
+
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:15px;margin-top:15px;">
+        <div style="background:#eff6ff;padding:15px;border-radius:8px;text-align:center;">
+          <h2 id="totalResultsCard">0</h2>
+          <p>Total Results</p>
+        </div>
+
+        <div style="background:#ecfdf5;padding:15px;border-radius:8px;text-align:center;">
+          <h2 id="highestScoreCard">0</h2>
+          <p>Highest Score</p>
+        </div>
+
+        <div style="background:#fef3c7;padding:15px;border-radius:8px;text-align:center;">
+          <h2 id="avgPercentageCard">0%</h2>
+          <p>Average %</p>
+        </div>
+
+        <div style="background:#f3e8ff;padding:15px;border-radius:8px;text-align:center;">
+          <h2 id="studentsCard">0</h2>
+          <p>Students</p>
+        </div>
+      </div>
     </div>
 
-    <div style="background:#fef3c7; padding:15px; border-radius:8px; text-align:center;">
-      <h2 id="avgPercentageCard">0%</h2>
-      <p>Average %</p>
+    <div class="card" style="margin-top:20px;padding:20px;">
+      <h3>📊 Student Results</h3>
+      <button id="loadResultsBtn" class="btn" style="background:#7c3aed;margin-top:10px;">
+        Load Results
+      </button>
+      <div id="resultsContainer" style="margin-top:20px;"></div>
     </div>
 
-    <div style="background:#f3e8ff; padding:15px; border-radius:8px; text-align:center;">
-      <h2 id="studentsCard">0</h2>
-      <p>Students</p>
+    <div class="card" style="margin-top:20px;padding:20px;">
+      <h3>🔍 Search Questions</h3>
+
+      <input
+        type="text"
+        id="searchQuestionInput"
+        placeholder="Type any keyword..."
+        style="width:100%;padding:10px;margin-top:10px;"
+      >
+
+      <div id="questionPreviewContainer" style="margin-top:20px;"></div>
     </div>
 
-  </div>
-</div>
-
-<div class="card" style="margin-top:20px; padding:20px;">
-  <h3>📊 Student Results</h3>
-  <button id="loadResultsBtn" class="btn" style="background:#7c3aed; margin-top:10px;">
-    Load Results
-  </button>
-  <div id="resultsContainer" style="margin-top:20px;"></div>
-</div>
-
-  <input
-    type="text"
-    id="searchQuestionInput"
-    placeholder="Type any keyword..."
-    style="width:100%; padding:10px; margin-top:10px;"
-  >
-
-  <div id="questionPreviewContainer" style="margin-top:20px;"></div>
-</div>
-
-    <div class="form-group" style="background:#f8fafc; border:2px dashed #ddd; padding:20px; border-radius:8px; text-align:center;">
+    <div class="form-group" style="background:#f8fafc;border:2px dashed #ddd;padding:20px;border-radius:8px;text-align:center;margin-top:20px;">
       <input type="file" id="pdfFileInput" accept=".pdf">
     </div>
 
-    <div style="display:flex; gap:15px; margin-top:20px;">
-      <button id="readPdfBtn" class="btn" style="background:#2563eb; flex:1;">Step 1: Read PDF</button>
-      <button id="smartParseBtn" class="btn" style="background:#0284c7; flex:1;">Step 2: Convert To JSON</button>
+    <div style="display:flex;gap:15px;margin-top:20px;flex-wrap:wrap;">
+      <button id="readPdfBtn" class="btn" style="background:#2563eb;flex:1;">Step 1: Read PDF</button>
+      <button id="smartParseBtn" class="btn" style="background:#0284c7;flex:1;">Step 2: Convert To JSON</button>
     </div>
 
-    <textarea id="editorConsole" style="width:100%; height:420px; margin-top:25px; padding:12px; font-family:monospace; font-size:13px;"></textarea>
+    <textarea id="editorConsole" style="width:100%;height:420px;margin-top:25px;padding:12px;font-family:monospace;font-size:13px;"></textarea>
 
-    <button id="deleteAllBtn" class="btn" style="background:#dc2626; margin-top:15px; font-size:16px; padding:14px;">
-      🗑 Delete All Questions
+    <button id="deleteAllBtn" class="btn" style="background:#dc2626;margin-top:15px;font-size:16px;padding:14px;">
+      🗑 Delete Selected Exam Questions
     </button>
 
-    <button id="executeUploadBtn" class="btn" style="background:green; margin-top:15px; font-size:16px; padding:14px;">
-      🚀 Upload Questions to MongoDB
+    <button id="executeUploadBtn" class="btn" style="background:green;margin-top:15px;font-size:16px;padding:14px;">
+      🚀 Upload Questions to Selected Exam
     </button>
   </div>
 
 </main>
 
 <script>
-  if (
-  localStorage.getItem(
-    "admin_logged_in"
-  ) !== "true"
-) {
-
-  window.location.href =
-    "admin-login.html";
-
+if (localStorage.getItem("admin_logged_in") !== "true") {
+  window.location.href = "admin-login.html";
 }
+
 const pdfjsLib = window['pdfjs-dist/build/pdf'];
 pdfjsLib.GlobalWorkerOptions.workerSrc =
   'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
 
 const LIVE_BACKEND_URL = 'https://my-mock-test-platform.onrender.com/api';
+let allQuestions = [];
+
+function getSelectedExam() {
+  return document.getElementById("examType").value;
+}
+
+function getExamLabel() {
+  const exam = getSelectedExam();
+
+  if (exam === "NTPC") return "RRB NTPC";
+  if (exam === "GROUP_D") return "RRB Group-D";
+  if (exam === "GROUP_2") return "AP Group-2";
+
+  return exam;
+}
 
 /* QUESTION COUNTER */
 async function loadQuestionCount() {
-  const token = localStorage.getItem("mock_test_token");
-
   try {
-    const response = await fetch(`${LIVE_BACKEND_URL}/tests/questions`, {
-      headers: {
-        "Authorization": `Bearer ${token}`
-      }
-    });
+    const exam = getSelectedExam();
+
+    const response = await fetch(
+      `${LIVE_BACKEND_URL}/tests/admin/questions?exam=${exam}`
+    );
 
     const data = await response.json();
 
     if (response.ok && Array.isArray(data)) {
       document.getElementById("questionCountDisplay").textContent =
-        `Total Questions: ${data.length}`;
+        `${getExamLabel()} Questions: ${data.length}`;
     } else {
       document.getElementById("questionCountDisplay").textContent =
         "Total Questions: Unable to load";
@@ -144,12 +157,6 @@ async function loadQuestionCount() {
       "Total Questions: Error";
   }
 }
-
-loadQuestionCount();
-
-
-
-
 
 /* READ PDF */
 document.getElementById('readPdfBtn').addEventListener('click', async () => {
@@ -181,6 +188,7 @@ document.getElementById('readPdfBtn').addEventListener('click', async () => {
 
       consoleArea.value = fullText;
       alert("PDF loaded successfully. Now click Step 2.");
+
     } catch (err) {
       console.error(err);
       alert("PDF read error: " + err.message);
@@ -201,6 +209,7 @@ function parseQuestions(text) {
   }
 
   const questions = [];
+  const examType = getSelectedExam();
 
   blocks.forEach(block => {
     block = block.trim();
@@ -250,10 +259,11 @@ function parseQuestions(text) {
 
     if (questionText && options.length >= 4) {
       questions.push({
+        examType,
         question: questionText,
         options: options.slice(0, 4),
-        correctAnswer: correctAnswer,
-        category: "Reasoning"
+        correctAnswer,
+        category: "General"
       });
     }
   });
@@ -273,20 +283,19 @@ document.getElementById('smartParseBtn').addEventListener('click', () => {
 
   const parsed = parseQuestions(text);
 
-  console.log("Detected questions:", parsed.length);
-
   if (parsed.length === 0) {
     alert("No questions detected. Your PDF format is different.");
     return;
   }
 
   consoleArea.value = JSON.stringify(parsed, null, 2);
-  alert(`Successfully converted ${parsed.length} questions.`);
+  alert(`Successfully converted ${parsed.length} ${getExamLabel()} questions.`);
 });
 
-/* UPLOAD */
+/* BULK UPLOAD */
 document.getElementById('executeUploadBtn').addEventListener('click', async () => {
   const consoleArea = document.getElementById('editorConsole');
+  const examType = getSelectedExam();
 
   let questionsArray;
 
@@ -302,29 +311,33 @@ document.getElementById('executeUploadBtn').addEventListener('click', async () =
     return;
   }
 
+  questionsArray = questionsArray.map(q => ({
+    ...q,
+    examType
+  }));
+
   try {
-    let successCount = 0;
+    const response = await fetch(`${LIVE_BACKEND_URL}/tests/bulk-questions`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        examType,
+        questionsArray
+      })
+    });
 
-    for (const q of questionsArray) {
-      const response = await fetch(`${LIVE_BACKEND_URL}/tests/questions`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify(q)
-      });
+    const data = await response.json();
 
-      if (response.ok) {
-        successCount++;
-      } else {
-        const serverError = await response.text();
-        console.log("FAILED QUESTION:", q);
-        console.log("SERVER ERROR:", serverError);
-      }
+    if (response.ok) {
+      alert(data.message || `Successfully uploaded ${questionsArray.length} questions.`);
+      await loadQuestionCount();
+      await loadQuestionsPreview();
+      await loadAdminAnalytics();
+    } else {
+      alert(data.error || "Upload failed.");
     }
-
-    alert(`Successfully uploaded ${successCount} questions.`);
-    await loadQuestionCount();
 
   } catch (err) {
     console.error("UPLOAD ERROR:", err);
@@ -332,22 +345,30 @@ document.getElementById('executeUploadBtn').addEventListener('click', async () =
   }
 });
 
-/* DELETE ALL QUESTIONS */
+/* DELETE SELECTED EXAM QUESTIONS */
 document.getElementById('deleteAllBtn').addEventListener('click', async () => {
-  const confirmDelete = confirm("Are you sure? This will delete ALL questions from MongoDB.");
+  const exam = getSelectedExam();
+
+  const confirmDelete = confirm(
+    `Are you sure? This will delete ALL ${getExamLabel()} questions only.`
+  );
 
   if (!confirmDelete) return;
 
   try {
-    const response = await fetch(`${LIVE_BACKEND_URL}/tests/questions/delete-all`, {
-      method: "DELETE"
-    });
+    const response = await fetch(
+      `${LIVE_BACKEND_URL}/tests/questions/delete-all?exam=${exam}`,
+      {
+        method: "DELETE"
+      }
+    );
 
     const data = await response.json();
 
     if (response.ok) {
       alert(data.message);
       await loadQuestionCount();
+      await loadQuestionsPreview();
     } else {
       alert(data.error || "Delete failed.");
     }
@@ -357,12 +378,14 @@ document.getElementById('deleteAllBtn').addEventListener('click', async () => {
     alert("Delete error: " + err.message);
   }
 });
-let allQuestions = [];
 
+/* LOAD QUESTIONS PREVIEW */
 async function loadQuestionsPreview() {
   try {
+    const exam = getSelectedExam();
+
     const response = await fetch(
-      `${LIVE_BACKEND_URL}/tests/admin/questions`
+      `${LIVE_BACKEND_URL}/tests/admin/questions?exam=${exam}`
     );
 
     const data = await response.json();
@@ -373,7 +396,6 @@ async function loadQuestionsPreview() {
     }
 
     allQuestions = data;
-
     renderQuestions(allQuestions.slice(0, 20));
 
   } catch (err) {
@@ -381,43 +403,53 @@ async function loadQuestionsPreview() {
   }
 }
 
+/* RENDER QUESTIONS */
 function renderQuestions(questions) {
   const container = document.getElementById("questionPreviewContainer");
   container.innerHTML = "";
 
+  if (questions.length === 0) {
+    container.innerHTML = `<p style="color:#64748b;">No questions found for ${getExamLabel()}.</p>`;
+    return;
+  }
+
   questions.forEach((q, index) => {
     const card = document.createElement("div");
+
     card.style.border = "1px solid #ddd";
     card.style.padding = "15px";
     card.style.marginBottom = "15px";
     card.style.borderRadius = "8px";
 
     card.innerHTML = `
-      <h4>Q${index + 1}</h4>
+      <h4>Q${index + 1} - ${q.examType || getSelectedExam()}</h4>
 
-      <textarea id="qtext-${q._id}" style="width:100%; height:70px;">${q.question}</textarea>
+      <textarea id="qtext-${q._id}" style="width:100%;height:70px;">${q.question || ""}</textarea>
 
-      <input id="opt1-${q._id}" value="${q.options[0]}" style="width:100%; margin-top:8px; padding:8px;">
-      <input id="opt2-${q._id}" value="${q.options[1]}" style="width:100%; margin-top:8px; padding:8px;">
-      <input id="opt3-${q._id}" value="${q.options[2]}" style="width:100%; margin-top:8px; padding:8px;">
-      <input id="opt4-${q._id}" value="${q.options[3]}" style="width:100%; margin-top:8px; padding:8px;">
+      <input id="opt1-${q._id}" value="${q.options?.[0] || ""}" style="width:100%;margin-top:8px;padding:8px;">
+      <input id="opt2-${q._id}" value="${q.options?.[1] || ""}" style="width:100%;margin-top:8px;padding:8px;">
+      <input id="opt3-${q._id}" value="${q.options?.[2] || ""}" style="width:100%;margin-top:8px;padding:8px;">
+      <input id="opt4-${q._id}" value="${q.options?.[3] || ""}" style="width:100%;margin-top:8px;padding:8px;">
 
-      <input id="ans-${q._id}" value="${q.correctAnswer}" style="width:100%; margin-top:8px; padding:8px; color:green; font-weight:bold;">
+      <input id="ans-${q._id}" value="${q.correctAnswer || ""}" style="width:100%;margin-top:8px;padding:8px;color:green;font-weight:bold;">
 
-      <button onclick="updateQuestion('${q._id}')" class="btn" style="background:#2563eb; margin-top:10px;">
+      <button onclick="updateQuestion('${q._id}')" class="btn" style="background:#2563eb;margin-top:10px;">
         Save Question
       </button>
-          <button onclick="deleteSingleQuestion('${q._id}')" class="btn" style="background:#dc2626; margin-top:10px;">
-  Delete Question
-</button>
-    `;
 
+      <button onclick="deleteSingleQuestion('${q._id}')" class="btn" style="background:#dc2626;margin-top:10px;">
+        Delete Question
+      </button>
+    `;
 
     container.appendChild(card);
   });
 }
 
+/* UPDATE QUESTION */
 async function updateQuestion(id) {
+  const examType = getSelectedExam();
+
   const question = document.getElementById(`qtext-${id}`).value.trim();
 
   const options = [
@@ -436,6 +468,7 @@ async function updateQuestion(id) {
         "Content-Type": "application/json"
       },
       body: JSON.stringify({
+        examType,
         question,
         options,
         correctAnswer
@@ -447,6 +480,7 @@ async function updateQuestion(id) {
     if (response.ok) {
       alert("Question updated successfully.");
       await loadQuestionsPreview();
+      await loadQuestionCount();
     } else {
       alert(data.error || "Update failed.");
     }
@@ -456,26 +490,60 @@ async function updateQuestion(id) {
     alert("Update error: " + err.message);
   }
 }
-document
-.getElementById("searchQuestionInput")
-.addEventListener("input", (e) => {
 
+/* DELETE SINGLE QUESTION */
+async function deleteSingleQuestion(id) {
+  const confirmDelete = confirm("Are you sure you want to delete this question?");
+
+  if (!confirmDelete) return;
+
+  try {
+    const response = await fetch(
+      `${LIVE_BACKEND_URL}/tests/admin/questions/${id}`,
+      {
+        method: "DELETE"
+      }
+    );
+
+    const data = await response.json();
+
+    if (response.ok) {
+      alert("Question deleted successfully.");
+      await loadQuestionCount();
+      await loadQuestionsPreview();
+    } else {
+      alert(data.error || "Delete failed.");
+    }
+
+  } catch (err) {
+    console.error("DELETE QUESTION ERROR:", err);
+    alert("Delete error: " + err.message);
+  }
+}
+
+/* SEARCH QUESTIONS */
+document.getElementById("searchQuestionInput").addEventListener("input", (e) => {
   const keyword = e.target.value.toLowerCase();
 
   const filtered = allQuestions.filter(q =>
-    q.question.toLowerCase().includes(keyword)
+    (q.question || "").toLowerCase().includes(keyword)
   );
 
   renderQuestions(filtered.slice(0, 50));
 });
 
-loadQuestionsPreview();
+/* LOAD ADMIN RESULTS */
 async function loadAdminResults() {
   const container = document.getElementById("resultsContainer");
+  const exam = getSelectedExam();
+
   container.innerHTML = "Loading results...";
 
   try {
-    const response = await fetch(`${LIVE_BACKEND_URL}/tests/admin/results`);
+    const response = await fetch(
+      `${LIVE_BACKEND_URL}/tests/admin/results?exam=${exam}`
+    );
+
     const results = await response.json();
 
     if (!response.ok) {
@@ -484,20 +552,22 @@ async function loadAdminResults() {
     }
 
     if (results.length === 0) {
-      container.innerHTML = "No results found.";
+      container.innerHTML = `No ${getExamLabel()} results found.`;
       return;
     }
 
     container.innerHTML = results.map((r, index) => `
-      <div style="border:1px solid #ddd; padding:12px; margin-bottom:12px; border-radius:8px;">
+      <div style="border:1px solid #ddd;padding:12px;margin-bottom:12px;border-radius:8px;">
         <h4>#${index + 1} ${r.userId?.username || "Unknown Student"}</h4>
         <p>Email: ${r.userId?.email || "N/A"}</p>
+        <p>Exam: ${r.examType || exam}</p>
         <p>Score: ${r.score} / ${r.totalQuestions}</p>
         <p>Percentage: ${r.percentage}%</p>
         <p>Date: ${new Date(r.createdAt).toLocaleString()}</p>
-        <button onclick="deleteSingleResult('${r._id}')" class="btn" style="background:#dc2626; margin-top:10px;">
-  Delete Result
-</button>
+
+        <button onclick="deleteSingleResult('${r._id}')" class="btn" style="background:#dc2626;margin-top:10px;">
+          Delete Result
+        </button>
       </div>
     `).join("");
 
@@ -509,7 +579,7 @@ async function loadAdminResults() {
 
 document.getElementById("loadResultsBtn").addEventListener("click", loadAdminResults);
 
-
+/* DELETE SINGLE RESULT */
 async function deleteSingleResult(id) {
   const confirmDelete = confirm("Are you sure you want to delete this result?");
 
@@ -525,6 +595,7 @@ async function deleteSingleResult(id) {
     if (response.ok) {
       alert("Result deleted successfully.");
       await loadAdminResults();
+      await loadAdminAnalytics();
     } else {
       alert(data.error || "Delete failed.");
     }
@@ -535,19 +606,23 @@ async function deleteSingleResult(id) {
   }
 }
 
+/* ADMIN ANALYTICS */
 async function loadAdminAnalytics() {
   try {
-    const response = await fetch(`${LIVE_BACKEND_URL}/tests/admin/results`);
+    const exam = getSelectedExam();
+
+    const response = await fetch(
+      `${LIVE_BACKEND_URL}/tests/admin/results?exam=${exam}`
+    );
+
     const results = await response.json();
 
     if (!response.ok || !Array.isArray(results)) return;
 
-    document.getElementById("totalResultsCard").textContent =
-      results.length;
+    document.getElementById("totalResultsCard").textContent = results.length;
 
     let highestScore = 0;
     let totalPercentage = 0;
-
     const uniqueStudents = new Set();
 
     results.forEach(r => {
@@ -567,86 +642,39 @@ async function loadAdminAnalytics() {
         ? (totalPercentage / results.length).toFixed(2)
         : 0;
 
-    document.getElementById("highestScoreCard").textContent =
-      highestScore;
-
-    document.getElementById("avgPercentageCard").textContent =
-      avg + "%";
-
-    document.getElementById("studentsCard").textContent =
-      uniqueStudents.size;
+    document.getElementById("highestScoreCard").textContent = highestScore;
+    document.getElementById("avgPercentageCard").textContent = avg + "%";
+    document.getElementById("studentsCard").textContent = uniqueStudents.size;
 
   } catch (err) {
     console.error("ANALYTICS ERROR:", err);
   }
 }
-// DELETE SINGLE QUESTION
-async function deleteSingleQuestion(id) {
-  const confirmDelete = confirm(
-    "Are you sure you want to delete this question?"
-  );
 
-  if (!confirmDelete) return;
+/* CHANGE EXAM TYPE */
+document.getElementById("examType").addEventListener("change", async () => {
+  document.getElementById("editorConsole").value = "";
+  document.getElementById("searchQuestionInput").value = "";
 
-  try {
-    const response = await fetch(
-      `${LIVE_BACKEND_URL}/tests/admin/questions/${id}`,
-      {
-        method: "DELETE"
-      }
-    );
+  await loadQuestionCount();
+  await loadQuestionsPreview();
+  await loadAdminAnalytics();
 
-    const data = await response.json();
+  document.getElementById("resultsContainer").innerHTML = "";
+});
 
-    if (response.ok) {
-      alert("Question deleted successfully.");
+/* ADMIN LOGOUT */
+document.getElementById("adminLogoutBtn").addEventListener("click", () => {
+  localStorage.removeItem("admin_logged_in");
+  alert("Admin logged out successfully.");
+  window.location.href = "admin-login.html";
+});
 
-      await loadQuestionCount();
-      await loadQuestionsPreview();
-    } else {
-      alert(data.error || "Delete failed.");
-    }
-
-  } catch (err) {
-    console.error("DELETE QUESTION ERROR:", err);
-    alert("Delete error: " + err.message);
-  }
-}
-
-// AUTO LOAD FUNCTIONS
+/* AUTO LOAD */
 loadQuestionCount();
 loadQuestionsPreview();
 loadAdminAnalytics();
-
-
-//log out script
-
-document.getElementById("adminLogoutBtn")
-.addEventListener("click", () => {
-
-  localStorage.removeItem("mock_test_token");
-  localStorage.removeItem("mock_test_user");
-
-  alert("Logged out successfully.");
-
-  window.location.href = "login.html";
-});
-document
-.getElementById("adminLogoutBtn")
-.addEventListener("click", () => {
-
-  localStorage.removeItem(
-    "admin_logged_in"
-  );
-
-  alert(
-    "Admin logged out successfully."
-  );
-
-  window.location.href =
-    "admin-login.html";
-
-});
 </script>
+
 </body>
 </html>
