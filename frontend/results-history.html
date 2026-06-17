@@ -9,28 +9,63 @@
 </head>
 
 <body>
+
 <nav>
   <div class="container nav-container">
     <a href="dashboard.html" class="logo">MockExam Pro</a>
-    <button onclick="window.location.href='dashboard.html'" class="btn" style="width:auto;padding:8px 15px;">
+
+    <button onclick="window.location.href='dashboard.html'"
+      class="btn"
+      style="width:auto;padding:8px 15px;">
       Dashboard
     </button>
   </div>
 </nav>
 
 <main class="container" style="margin-top:40px;">
+
   <div class="card">
     <h2>📜 My Results History</h2>
-    <p style="color:#64748b;margin-top:5px;">View all your previous mock test attempts.</p>
+    <p style="color:#64748b;margin-top:5px;">
+      View all your previous mock test attempts.
+    </p>
+
+    <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:20px;">
+      <button class="btn" onclick="filterResults('ALL')">
+        All
+      </button>
+
+      <button class="btn" onclick="filterResults('NTPC')">
+        🚆 NTPC
+      </button>
+
+      <button class="btn" onclick="filterResults('GROUP_D')">
+        🛤 Group-D
+      </button>
+
+      <button class="btn" onclick="filterResults('GROUP_2')">
+        🏛 Group-2
+      </button>
+    </div>
   </div>
 
   <div id="historyContainer" style="margin-top:25px;">
     Loading results...
   </div>
+
 </main>
 
 <script>
 const API_BASE = "https://my-mock-test-platform.onrender.com/api";
+
+let allResults = [];
+
+function getExamName(examType) {
+  if (examType === "NTPC") return "RRB NTPC";
+  if (examType === "GROUP_D") return "RRB Group-D";
+  if (examType === "GROUP_2") return "AP Group-2";
+  return "Mock Test";
+}
 
 document.addEventListener("DOMContentLoaded", async () => {
   const token = localStorage.getItem("mock_test_token");
@@ -47,46 +82,124 @@ document.addEventListener("DOMContentLoaded", async () => {
     const results = await response.json();
     const user = JSON.parse(userData);
 
-    const myResults = results.filter(r => r.userId?._id === user.id);
-
-    if (myResults.length === 0) {
-      container.innerHTML = `<div class="card">No results found.</div>`;
+    if (!response.ok || !Array.isArray(results)) {
+      container.innerHTML =
+        `<div class="card" style="color:red;">
+          Failed to load results history.
+        </div>`;
       return;
     }
 
-    container.innerHTML = myResults.map((r, index) => `
-      <div class="card" style="margin-bottom:15px;">
-        <h3>Attempt #${index + 1}</h3>
-        <p><strong>Score:</strong> ${r.score} / ${r.totalQuestions}</p>
-        <p><strong>Percentage:</strong> ${r.percentage}%</p>
-        <p><strong>Date:</strong> ${new Date(r.createdAt).toLocaleString()}</p>
+    allResults = results.filter(
+      r => r.userId?._id === user.id
+    );
 
-        <button onclick="openReview('${r._id}')" class="btn" style="background:#1e293b;margin-top:10px;">
-          Review Answers
-        </button>
-        <button onclick="downloadCertificate('${r.score}', '${r.totalQuestions}', '${r.percentage}', '${r.createdAt}')" class="btn" style="background:#16a34a;margin-top:10px;">
-  Download Certificate
-</button>
-      </div>
-    `).join("");
+    renderResults(allResults);
 
   } catch (err) {
     console.error(err);
-    container.innerHTML = `<div class="card" style="color:red;">Failed to load results history.</div>`;
+    container.innerHTML =
+      `<div class="card" style="color:red;">
+        Failed to load results history.
+      </div>`;
   }
 });
 
-function openReview(id) {
+function renderResults(results) {
+  const container = document.getElementById("historyContainer");
+
+  if (!results || results.length === 0) {
+    container.innerHTML =
+      `<div class="card">No results found.</div>`;
+    return;
+  }
+
+  container.innerHTML = results.map((r, index) => {
+    const examType = r.examType || "NTPC";
+    const examName = getExamName(examType);
+
+    return `
+      <div class="card" style="margin-bottom:15px;">
+
+        <h3>Attempt #${index + 1}</h3>
+
+        <p>
+          <strong>Exam:</strong>
+          ${examName}
+        </p>
+
+        <p>
+          <strong>Score:</strong>
+          ${r.score} / ${r.totalQuestions}
+        </p>
+
+        <p>
+          <strong>Percentage:</strong>
+          ${r.percentage}%
+        </p>
+
+        <p>
+          <strong>Date:</strong>
+          ${new Date(r.createdAt).toLocaleString()}
+        </p>
+
+        <button
+          onclick="openReview('${r._id}', '${examType}')"
+          class="btn"
+          style="background:#1e293b;margin-top:10px;">
+          Review Answers
+        </button>
+
+        <button
+          onclick="downloadCertificate('${r.score}', '${r.totalQuestions}', '${r.percentage}', '${r.createdAt}', '${examType}')"
+          class="btn"
+          style="background:#16a34a;margin-top:10px;">
+          Download Certificate
+        </button>
+
+      </div>
+    `;
+  }).join("");
+}
+
+function filterResults(type) {
+  if (type === "ALL") {
+    renderResults(allResults);
+    return;
+  }
+
+  const filtered = allResults.filter(
+    r => r.examType === type
+  );
+
+  renderResults(filtered);
+}
+
+function openReview(id, examType) {
   localStorage.setItem("last_result_id", id);
+  localStorage.setItem("last_exam_type", examType || "NTPC");
+
   window.location.href = `review.html?id=${id}`;
 }
-function downloadCertificate(score, total, percentage, createdAt) {
+
+function downloadCertificate(score, total, percentage, createdAt, examType) {
   const { jsPDF } = window.jspdf;
   const doc = new jsPDF();
 
-  const userData = JSON.parse(localStorage.getItem("mock_test_user"));
-  const username = userData?.username || "Student";
+  let username = "Student";
+
+  try {
+    const userData = JSON.parse(
+      localStorage.getItem("mock_test_user")
+    );
+
+    username = userData?.username || "Student";
+  } catch (e) {
+    username = "Student";
+  }
+
   const certificateId = "CERT-" + Date.now();
+  const examName = getExamName(examType);
 
   doc.setFontSize(22);
   doc.text("MockExam Pro", 105, 30, { align: "center" });
@@ -101,13 +214,22 @@ function downloadCertificate(score, total, percentage, createdAt) {
   doc.text(username, 105, 90, { align: "center" });
 
   doc.setFontSize(12);
-  doc.text(`For completing the mock test with score ${score}/${total}`, 105, 110, { align: "center" });
-  doc.text(`Percentage: ${percentage}%`, 105, 122, { align: "center" });
-  doc.text(`Exam Date: ${new Date(createdAt).toLocaleDateString()}`, 105, 134, { align: "center" });
-  doc.text(`Certificate ID: ${certificateId}`, 105, 146, { align: "center" });
+  doc.text(`Exam: ${examName}`, 105, 106, { align: "center" });
+
+  doc.text(
+    `For completing the mock test with score ${score}/${total}`,
+    105,
+    120,
+    { align: "center" }
+  );
+
+  doc.text(`Percentage: ${percentage}%`, 105, 132, { align: "center" });
+  doc.text(`Exam Date: ${new Date(createdAt).toLocaleDateString()}`, 105, 144, { align: "center" });
+  doc.text(`Certificate ID: ${certificateId}`, 105, 156, { align: "center" });
 
   doc.save("MockExam_Certificate.pdf");
 }
 </script>
+
 </body>
 </html>
