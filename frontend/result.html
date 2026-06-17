@@ -7,6 +7,7 @@
   <link rel="stylesheet" href="style.css">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 </head>
+
 <body>
 
 <nav>
@@ -16,18 +17,37 @@
 </nav>
 
 <main class="container auth-wrapper">
-  <div class="auth-card" style="max-width: 750px; text-align: center;">
+  <div class="auth-card" style="max-width:750px; text-align:center;">
+
     <h2>Exam Completed! 🎉</h2>
     <p>Your result has been saved successfully.</p>
 
     <div style="margin:25px 0; padding:25px; background:#f8fafc; border-radius:10px;">
+
+      <p id="examTypeDisplay"
+         style="font-weight:bold; color:#7c3aed; font-size:18px; margin-bottom:15px;">
+        Exam: Loading...
+      </p>
+
       <h3>Your Final Score</h3>
-      <p id="scoreDisplay" style="font-size:45px; font-weight:800; color:#2563eb;">0 / 0</p>
-      <p id="percentageDisplay" style="font-size:20px; font-weight:600;">Percentage: 0%</p>
-      <h3 id="statusDisplay" style="margin-top:15px;">Status</h3>
+
+      <p id="scoreDisplay"
+         style="font-size:45px; font-weight:800; color:#2563eb;">
+        0 / 0
+      </p>
+
+      <p id="percentageDisplay"
+         style="font-size:20px; font-weight:600;">
+        Percentage: 0%
+      </p>
+
+      <h3 id="statusDisplay" style="margin-top:15px;">
+        Status
+      </h3>
     </div>
 
-    <div style="display:grid; grid-template-columns:repeat(3, 1fr); gap:15px; margin:25px 0;">
+    <div style="display:grid; grid-template-columns:repeat(3,1fr); gap:15px; margin:25px 0;">
+
       <div style="padding:15px; background:#dcfce7; border-radius:8px;">
         <h3 id="correctDisplay">0</h3>
         <p>Correct</p>
@@ -42,20 +62,40 @@
         <h3 id="unansweredDisplay">0</h3>
         <p>Unanswered</p>
       </div>
+
     </div>
 
     <div style="display:flex; gap:12px; flex-wrap:wrap;">
-      <button id="reviewBtn" class="btn" style="background:#1e293b; flex:1;">Review Answers</button>
+
+      <button id="reviewBtn" class="btn" style="background:#1e293b; flex:1;">
+        Review Answers
+      </button>
+
       <button id="certificateBtn" class="btn" style="background:#16a34a; flex:1;">
-  Download Certificate
-</button>
-      <button onclick="window.location.href='leaderboard.html'" class="btn" style="background:#7c3aed; flex:1;">Leaderboard</button>
-      <button onclick="window.location.href='dashboard.html'" class="btn" style="background:#475569; flex:1;">Dashboard</button>
+        Download Certificate
+      </button>
+
+      <button onclick="window.location.href='leaderboard.html'" class="btn" style="background:#7c3aed; flex:1;">
+        Leaderboard
+      </button>
+
+      <button onclick="window.location.href='dashboard.html'" class="btn" style="background:#475569; flex:1;">
+        Dashboard
+      </button>
+
     </div>
+
   </div>
 </main>
 
 <script>
+function getExamName(examType) {
+  if (examType === "NTPC") return "RRB NTPC";
+  if (examType === "GROUP_D") return "RRB Group-D";
+  if (examType === "GROUP_2") return "AP Group-2";
+  return "Mock Test";
+}
+
 document.addEventListener('DOMContentLoaded', async () => {
   const score = Number(localStorage.getItem('last_score')) || 0;
   const total = Number(localStorage.getItem('last_total')) || 0;
@@ -63,8 +103,17 @@ document.addEventListener('DOMContentLoaded', async () => {
   const resultId = localStorage.getItem('last_result_id');
   const token = localStorage.getItem('mock_test_token');
 
-  document.getElementById('scoreDisplay').textContent = `${score} / ${total}`;
-  document.getElementById('percentageDisplay').textContent = `Percentage: ${percentage}%`;
+  const savedExamType = localStorage.getItem("last_exam_type") || "NTPC";
+  const examName = getExamName(savedExamType);
+
+  document.getElementById("examTypeDisplay").textContent =
+    "Exam: " + examName;
+
+  document.getElementById('scoreDisplay').textContent =
+    `${score} / ${total}`;
+
+  document.getElementById('percentageDisplay').textContent =
+    `Percentage: ${percentage}%`;
 
   if (percentage >= 40) {
     document.getElementById('statusDisplay').textContent = "✅ Qualified";
@@ -76,22 +125,37 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   if (resultId && token && resultId !== "session_saved") {
     try {
-      const response = await fetch(`https://my-mock-test-platform.onrender.com/api/tests/result/${resultId}`, {
-        headers: {
-          "Authorization": `Bearer ${token}`
+      const response = await fetch(
+        `https://my-mock-test-platform.onrender.com/api/tests/result/${resultId}`,
+        {
+          headers: {
+            "Authorization": `Bearer ${token}`
+          }
         }
-      });
+      );
 
       const data = await response.json();
 
       if (response.ok && data.answersBreakdown) {
-        const correct = data.answersBreakdown.filter(a => a.isCorrect).length;
-        const unanswered = data.answersBreakdown.filter(a => !a.selectedAnswer).length;
-        const wrong = data.answersBreakdown.length - correct - unanswered;
+        const correct =
+          data.answersBreakdown.filter(a => a.isCorrect).length;
+
+        const unanswered =
+          data.answersBreakdown.filter(a => !a.selectedAnswer).length;
+
+        const wrong =
+          data.answersBreakdown.length - correct - unanswered;
 
         document.getElementById('correctDisplay').textContent = correct;
         document.getElementById('wrongDisplay').textContent = wrong;
         document.getElementById('unansweredDisplay').textContent = unanswered;
+
+        if (data.examType) {
+          const dbExamName = getExamName(data.examType);
+          document.getElementById("examTypeDisplay").textContent =
+            "Exam: " + dbExamName;
+          localStorage.setItem("last_exam_type", data.examType);
+        }
       }
 
     } catch (err) {
@@ -106,37 +170,71 @@ document.addEventListener('DOMContentLoaded', async () => {
       window.location.href = 'review.html';
     }
   });
+
+  document.getElementById("certificateBtn").addEventListener("click", () => {
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF();
+
+    let username = "Student";
+
+    try {
+      const userData =
+        JSON.parse(localStorage.getItem("mock_test_user"));
+
+      if (userData && userData.username) {
+        username = userData.username;
+      }
+    } catch (e) {
+      username = "Student";
+    }
+
+    const certScore =
+      localStorage.getItem("last_score") || 0;
+
+    const certTotal =
+      localStorage.getItem("last_total") || 0;
+
+    const certPercentage =
+      localStorage.getItem("last_percentage") || 0;
+
+    const certExamType =
+      localStorage.getItem("last_exam_type") || "NTPC";
+
+    const certExamName =
+      getExamName(certExamType);
+
+    const certificateId =
+      "CERT-" + Date.now();
+
+    doc.setFontSize(22);
+    doc.text("MockExam Pro", 105, 30, { align: "center" });
+
+    doc.setFontSize(18);
+    doc.text("Certificate of Completion", 105, 50, { align: "center" });
+
+    doc.setFontSize(12);
+    doc.text("This certificate is proudly presented to", 105, 70, { align: "center" });
+
+    doc.setFontSize(20);
+    doc.text(username, 105, 90, { align: "center" });
+
+    doc.setFontSize(12);
+    doc.text(`Exam: ${certExamName}`, 105, 106, { align: "center" });
+
+    doc.text(
+      `For completing the mock test with score ${certScore}/${certTotal}`,
+      105,
+      120,
+      { align: "center" }
+    );
+
+    doc.text(`Percentage: ${certPercentage}%`, 105, 132, { align: "center" });
+    doc.text(`Date: ${new Date().toLocaleDateString()}`, 105, 144, { align: "center" });
+    doc.text(`Certificate ID: ${certificateId}`, 105, 156, { align: "center" });
+
+    doc.save("MockExam_Certificate.pdf");
+  });
 });
-document.getElementById("certificateBtn").addEventListener("click", () => {
-  const { jsPDF } = window.jspdf;
-  const doc = new jsPDF();
-
-  const username = localStorage.getItem("mock_test_username") || "Student";
-  const score = localStorage.getItem("last_score") || 0;
-  const total = localStorage.getItem("last_total") || 0;
-  const percentage = localStorage.getItem("last_percentage") || 0;
-  const certificateId = "CERT-" + Date.now();
-
-  doc.setFontSize(22);
-  doc.text("MockExam Pro", 105, 30, { align: "center" });
-
-  doc.setFontSize(18);
-  doc.text("Certificate of Completion", 105, 50, { align: "center" });
-
-  doc.setFontSize(12);
-  doc.text("This certificate is proudly presented to", 105, 70, { align: "center" });
-
-  doc.setFontSize(20);
-  doc.text(username, 105, 90, { align: "center" });
-
-  doc.setFontSize(12);
-  doc.text(`For completing the mock test with score ${score}/${total}`, 105, 110, { align: "center" });
-  doc.text(`Percentage: ${percentage}%`, 105, 122, { align: "center" });
-  doc.text(`Date: ${new Date().toLocaleDateString()}`, 105, 134, { align: "center" });
-  doc.text(`Certificate ID: ${certificateId}`, 105, 146, { align: "center" });
-
-  doc.save("MockExam_Certificate.pdf");
-});                                                                                                                                                                 
 </script>
 
 </body>
