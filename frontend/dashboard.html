@@ -62,7 +62,7 @@
     <p id="premiumExpiryText" style="color:#64748b;"></p>
 
     <button id="activatePremiumBtn" class="btn" style="background:#16a34a; margin-top:15px;">
-      Upgrade Premium ₹79 / 30 Days
+      Upgrade Premium 1/ 30 Days
     </button>
   </div>
 
@@ -181,7 +181,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         order_id: order.id,
 
         handler: async function (response) {
-          try {
+         console.log("RAZORPAY SUCCESS RESPONSE:", response);
+         
+         try{
             const verifyResponse = await fetch(`${API_BASE}/payment/verify-payment`, {
               method: "POST",
               headers: {
