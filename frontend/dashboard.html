@@ -13,6 +13,7 @@
 <nav>
   <div class="container nav-container">
     <a href="dashboard.html" class="logo">MockExam Pro (Dashboard)</a>
+
     <div style="display:flex; gap:10px; flex-wrap:wrap;">
       <a href="leaderboard.html" class="btn" style="width:auto; padding:8px 15px; background:#1e293b; text-decoration:none;">Leaderboard</a>
       <a href="profile.html" class="btn" style="width:auto; padding:8px 15px; background:#7c3aed; text-decoration:none;">Profile</a>
@@ -62,7 +63,7 @@
     <p id="premiumExpiryText" style="color:#64748b;"></p>
 
     <button id="activatePremiumBtn" class="btn" style="background:#16a34a; margin-top:15px;">
-      Upgrade Premium 1/ 30 Days
+      Upgrade Premium ₹79 / 30 Days
     </button>
   </div>
 
@@ -70,7 +71,7 @@
 
   <div id="availableTestsContainer" style="margin-top:20px;">
     <div style="padding:20px; text-align:center; color:#64748b;">
-      Querying production test bank allocations... Please wait.
+      Loading exam categories...
     </div>
   </div>
 
@@ -96,8 +97,10 @@ document.addEventListener('DOMContentLoaded', async () => {
   if (cachedUserData) {
     try {
       currentUser = JSON.parse(cachedUserData);
+
       document.getElementById('welcomeGreeting').textContent =
         `Welcome back, ${currentUser.username || 'Student'}! 👋`;
+
     } catch (e) {
       console.error("Failed parsing profile metadata state.", e);
     }
@@ -129,6 +132,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             : "";
 
         document.getElementById("activatePremiumBtn").style.display = "none";
+
       } else {
         document.getElementById("premiumCard").textContent = "FREE";
         document.getElementById("premiumCard").style.color = "red";
@@ -146,6 +150,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     } catch (err) {
       console.error("PREMIUM STATUS ERROR:", err);
+
       document.getElementById("premiumStatusText").textContent =
         "Unable to check premium status.";
     }
@@ -181,9 +186,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         order_id: order.id,
 
         handler: async function (response) {
-         console.log("RAZORPAY SUCCESS RESPONSE:", response);
-         
-         try{
+          console.log("RAZORPAY SUCCESS RESPONSE:", response);
+
+          try {
             const verifyResponse = await fetch(`${API_BASE}/payment/verify-payment`, {
               method: "POST",
               headers: {
@@ -231,104 +236,90 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
   });
 
-  await loadPremiumStatus();
+  async function loadExamCards() {
+    try {
+      const exams = [
+        {
+          examType: "NTPC",
+          title: "🚆 RRB NTPC Mock Tests",
+          desc: "NTPC previous papers, CBT practice and full-length tests.",
+          btn: "Start NTPC Test"
+        },
+        {
+          examType: "GROUP_D",
+          title: "🛤 RRB Group-D Mock Tests",
+          desc: "Group-D previous papers, practice sets and full mock tests.",
+          btn: "Start Group-D Test"
+        },
+        {
+          examType: "GROUP_2",
+          title: "🏛 AP Group-2 Mock Tests",
+          desc: "APPSC Group-2 screening, mains and PYQ practice tests.",
+          btn: "Start Group-2 Test"
+        }
+      ];
 
-  try {
-    const response = await fetch(`${API_BASE}/tests/questions`, {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${sessionToken}`
-      }
-    });
+      let totalQuestions = 0;
+      let cardsHTML = "";
 
-    const dataBank = await response.json();
+      for (const exam of exams) {
+        const response = await fetch(`${API_BASE}/tests/questions?exam=${exam.examType}`, {
+          method: "GET",
+          headers: {
+            "Authorization": `Bearer ${sessionToken}`
+          }
+        });
 
-    if (Array.isArray(dataBank)) {
-      document.getElementById("questionCountCard").textContent =
-        dataBank.length;
-    }
+        const data = await response.json();
+        const count = Array.isArray(data) ? data.length : 0;
 
-    if (response.ok && Array.isArray(dataBank)) {
-      if (dataBank.length === 0) {
-        testContainer.innerHTML = `
-          <div class="card" style="text-align:center; padding:40px;">
-            <h3>No Exams Posted Yet</h3>
-            <p style="color:#64748b; margin-top:10px;">
-              The instructor panel has not uploaded test items to this database cluster.
+        totalQuestions += count;
+
+        cardsHTML += `
+          <div class="card" style="padding:25px;">
+            <h3>${exam.title}</h3>
+
+            <p style="color:#64748b; margin:10px 0;">
+              ${exam.desc}
             </p>
-          </div>`;
-        return;
+
+            <p style="margin-bottom:15px;">
+              <strong>Total Questions:</strong> ${count}
+            </p>
+
+            ${
+              count > 0
+                ? `<button class="btn" onclick="window.location.href='test.html?exam=${exam.examType}'">
+                    ${exam.btn}
+                  </button>`
+                : `<button class="btn" style="background:#94a3b8;" disabled>
+                    No Questions Uploaded
+                  </button>`
+            }
+          </div>
+        `;
       }
 
- testContainer.innerHTML = `
+      document.getElementById("questionCountCard").textContent = totalQuestions;
 
-<div style="display:grid;
-grid-template-columns:repeat(auto-fit,minmax(280px,1fr));
-gap:20px;">
+      testContainer.innerHTML = `
+        <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(280px,1fr)); gap:20px;">
+          ${cardsHTML}
+        </div>
+      `;
 
-  <div class="card" style="padding:25px;">
-    <h3>🚆 RRB NTPC Mock Tests</h3>
+    } catch (err) {
+      console.error("Dashboard multi-exam load error:", err);
 
-    <p style="color:#64748b;">
-      NTPC Previous Papers, Full Length Tests,
-      CBT-1 & CBT-2 Practice.
-    </p>
-
-    <button
-      class="btn"
-      onclick="window.location.href='test.html?exam=NTPC'">
-      Start NTPC Test
-    </button>
-  </div>
-
-  <div class="card" style="padding:25px;">
-    <h3>🛤 RRB Group-D Mock Tests</h3>
-
-    <p style="color:#64748b;">
-      Group-D Previous Papers,
-      Full Length Tests & Practice Sets.
-    </p>
-
-    <button
-      class="btn"
-      onclick="window.location.href='test.html?exam=GROUP_D'">
-      Start Group-D Test
-    </button>
-  </div>
-
-  <div class="card" style="padding:25px;">
-    <h3>🏛 AP Group-2 Mock Tests</h3>
-
-    <p style="color:#64748b;">
-      APPSC Group-2 Screening,
-      Mains Practice & PYQ Tests.
-    </p>
-
-    <button
-      class="btn"
-      onclick="window.location.href='test.html?exam=GROUP_2'">
-      Start Group-2 Test
-    </button>
-  </div>
-
-</div>
-
-`;
-    } else {
       testContainer.innerHTML =
         `<div class="card" style="border-left:5px solid var(--error); color:var(--error);">
-          Failed to retrieve test bank entries securely.
+          Failed to retrieve exam lists.
         </div>`;
     }
-
-  } catch (err) {
-    console.error("Dashboard fetch block error connection failure:", err);
-    testContainer.innerHTML =
-      `<div class="card" style="border-left:5px solid var(--error); color:var(--error);">
-        Failed to retrieve test bank entries securely.
-      </div>`;
   }
+
+  await loadPremiumStatus();
+  await loadExamCards();
 });
 </script>
 
