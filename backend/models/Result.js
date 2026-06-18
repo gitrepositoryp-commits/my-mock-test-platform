@@ -6,6 +6,12 @@ const ResultSchema = new mongoose.Schema({
     ref: 'User',
     required: true
   },
+  examType: {
+    type: String,
+    enum: ['NTPC', 'GROUP_D', 'GROUP_2'],
+    default: 'NTPC',
+    index: true
+  },
   score: {
     type: Number,
     required: true,
@@ -21,15 +27,14 @@ const ResultSchema = new mongoose.Schema({
     required: true,
     default: 0
   },
-  // ARMORED BREAKDOWN POOL: Strict validation triggers are cleared 
-  // to ensure data writes successfully even under loose or empty selections!
   answersBreakdown: [
     {
       questionId: { type: String, default: "" },
       questionText: { type: String, default: "" },
       selectedAnswer: { type: String, default: "" },
       correctAnswer: { type: String, default: "" },
-      isCorrect: { type: Boolean, default: false }
+      isCorrect: { type: Boolean, default: false },
+      examType: { type: String, default: "NTPC" }
     }
   ],
   createdAt: {
