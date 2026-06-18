@@ -27,10 +27,13 @@ function getCurrentExamTitle() {
 document.addEventListener('DOMContentLoaded', () => {
   initAuthFormListeners();
 
-  if (window.location.pathname.endsWith('test.html')) {
-    bootstrapQuizEngine();
-  }
-
+ if (
+  window.location.pathname.endsWith('test.html') ||
+  window.location.pathname === '/test' ||
+  document.getElementById('examWorkspaceContainer')
+) {
+  bootstrapQuizEngine();
+}
   const logoutBtn = document.getElementById('logoutBtn');
 
   if (logoutBtn) {
