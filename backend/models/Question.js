@@ -1,12 +1,19 @@
 const mongoose = require('mongoose');
 
 const QuestionSchema = new mongoose.Schema({
-  examType: {
-    type: String,
-    required: true,
-    enum: ['NTPC', 'GROUP_D', 'GROUP_2'],
-    default: 'NTPC'
-  },
+ examType: {
+  type: String,
+  required: true,
+  enum: [
+    'NTPC',
+    'GROUP_D',
+    'GROUP_2',
+    'NTPC_PREMIUM',
+    'GROUP_D_PREMIUM',
+    'GROUP_2_PREMIUM'
+  ],
+  default: 'NTPC'
+},
 
   question: {
     type: String,
