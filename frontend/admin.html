@@ -27,9 +27,13 @@
     <div style="margin:20px 0;">
       <label style="font-weight:bold;">Select Exam Type</label>
       <select id="examType" style="width:100%;padding:12px;margin-top:8px;border-radius:8px;">
-        <option value="NTPC">RRB NTPC</option>
-        <option value="GROUP_D">RRB Group-D</option>
-        <option value="GROUP_2">AP Group-2</option>
+       <option value="NTPC">RRB NTPC - Free</option>
+<option value="GROUP_D">RRB Group-D - Free</option>
+<option value="GROUP_2">AP Group-2 - Free</option>
+
+<option value="NTPC_PREMIUM">🔒 RRB NTPC - Premium</option>
+<option value="GROUP_D_PREMIUM">🔒 RRB Group-D - Premium</option>
+<option value="GROUP_2_PREMIUM">🔒 AP Group-2 - Premium</option>
       </select>
     </div>
 
@@ -125,9 +129,13 @@ function getSelectedExam() {
 function getExamLabel() {
   const exam = getSelectedExam();
 
-  if (exam === "NTPC") return "RRB NTPC";
-  if (exam === "GROUP_D") return "RRB Group-D";
-  if (exam === "GROUP_2") return "AP Group-2";
+  if (exam === "NTPC") return "RRB NTPC Free";
+  if (exam === "GROUP_D") return "RRB Group-D Free";
+  if (exam === "GROUP_2") return "AP Group-2 Free";
+
+  if (exam === "NTPC_PREMIUM") return "RRB NTPC Premium";
+  if (exam === "GROUP_D_PREMIUM") return "RRB Group-D Premium";
+  if (exam === "GROUP_2_PREMIUM") return "AP Group-2 Premium";
 
   return exam;
 }
