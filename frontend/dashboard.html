@@ -36,7 +36,6 @@
     <h2>Premium Status</h2>
 
     <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:20px; margin:20px 0 30px;">
-
       <div class="card">
         <h3>📚 Questions</h3>
         <h1 id="questionCountCard">0</h1>
@@ -56,7 +55,6 @@
         <h3>📜 Certificates</h3>
         <h1>1</h1>
       </div>
-
     </div>
 
     <p id="premiumStatusText" style="margin-top:10px; font-weight:bold;">Checking premium status...</p>
@@ -77,8 +75,6 @@
 
 </main>
 
-<script src="script.js"></script>
-
 <script>
 document.addEventListener('DOMContentLoaded', async () => {
   const API_BASE = "https://my-mock-test-platform.onrender.com/api";
@@ -90,32 +86,49 @@ document.addEventListener('DOMContentLoaded', async () => {
   let currentUser = null;
   let userIsPremium = false;
 
-  if (!sessionToken) {
-    window.location.href = 'login.html';
+  function forceLogout() {
+    localStorage.removeItem("mock_test_token");
+    localStorage.removeItem("mock_test_user");
+    localStorage.removeItem("last_score");
+    localStorage.removeItem("last_total");
+    localStorage.removeItem("last_percentage");
+    localStorage.removeItem("last_result_id");
+    localStorage.removeItem("last_exam_type");
+    window.location.replace("login.html");
+  }
+
+  if (!sessionToken || !cachedUserData) {
+    forceLogout();
     return;
   }
 
-  if (cachedUserData) {
-    try {
-      currentUser = JSON.parse(cachedUserData);
+  try {
+    currentUser = JSON.parse(cachedUserData);
 
-      document.getElementById('welcomeGreeting').textContent =
-        `Welcome back, ${currentUser.username || 'Student'}! 👋`;
-
-    } catch (e) {
-      console.error("Failed parsing profile metadata state.", e);
-    }
-  }
-
-  async function loadPremiumStatus() {
     if (!currentUser || !currentUser.id) {
-      document.getElementById("premiumStatusText").textContent =
-        "Premium status unavailable.";
+      forceLogout();
       return;
     }
 
+    document.getElementById('welcomeGreeting').textContent =
+      `Welcome back, ${currentUser.username || 'Student'}! 👋`;
+
+  } catch (e) {
+    forceLogout();
+    return;
+  }
+
+  document.getElementById("logoutBtn").addEventListener("click", forceLogout);
+
+  async function loadPremiumStatus() {
     try {
       const response = await fetch(`${API_BASE}/auth/premium-status/${currentUser.id}`);
+
+      if (response.status === 401 || response.status === 404) {
+        forceLogout();
+        return;
+      }
+
       const data = await response.json();
 
       if (response.ok && data.isPremium) {
@@ -123,10 +136,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         document.getElementById("premiumCard").textContent = "ACTIVE";
         document.getElementById("premiumCard").style.color = "green";
-
-        document.getElementById("premiumStatusText").textContent =
-          "✅ Premium Active";
-
+        document.getElementById("premiumStatusText").textContent = "✅ Premium Active";
         document.getElementById("premiumStatusText").style.color = "green";
 
         document.getElementById("premiumExpiryText").textContent =
@@ -141,12 +151,8 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         document.getElementById("premiumCard").textContent = "FREE";
         document.getElementById("premiumCard").style.color = "red";
-
-        document.getElementById("premiumStatusText").textContent =
-          "❌ Free Account";
-
+        document.getElementById("premiumStatusText").textContent = "❌ Free Account";
         document.getElementById("premiumStatusText").style.color = "red";
-
         document.getElementById("premiumExpiryText").textContent =
           "Upgrade to unlock premium mock tests.";
 
@@ -155,24 +161,16 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     } catch (err) {
       console.error("PREMIUM STATUS ERROR:", err);
-
       document.getElementById("premiumStatusText").textContent =
         "Unable to check premium status.";
     }
   }
 
   document.getElementById("activatePremiumBtn").addEventListener("click", async () => {
-    if (!currentUser || !currentUser.id) {
-      alert("User data missing. Please login again.");
-      return;
-    }
-
     try {
       const orderResponse = await fetch(`${API_BASE}/payment/create-order`, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        }
+        headers: { "Content-Type": "application/json" }
       });
 
       const order = await orderResponse.json();
@@ -191,14 +189,10 @@ document.addEventListener('DOMContentLoaded', async () => {
         order_id: order.id,
 
         handler: async function (response) {
-          console.log("RAZORPAY SUCCESS RESPONSE:", response);
-
           try {
             const verifyResponse = await fetch(`${API_BASE}/payment/verify-payment`, {
               method: "POST",
-              headers: {
-                "Content-Type": "application/json"
-              },
+              headers: { "Content-Type": "application/json" },
               body: JSON.stringify({
                 userId: currentUser.id,
                 razorpay_order_id: response.razorpay_order_id,
@@ -228,9 +222,7 @@ document.addEventListener('DOMContentLoaded', async () => {
           email: currentUser.email || ""
         },
 
-        theme: {
-          color: "#7c3aed"
-        }
+        theme: { color: "#7c3aed" }
       };
 
       const rzp = new Razorpay(options);
@@ -298,10 +290,13 @@ document.addEventListener('DOMContentLoaded', async () => {
         try {
           const response = await fetch(`${API_BASE}/tests/questions?exam=${exam.examType}`, {
             method: "GET",
-            headers: {
-              "Authorization": `Bearer ${sessionToken}`
-            }
+            headers: { "Authorization": `Bearer ${sessionToken}` }
           });
+
+          if (response.status === 401) {
+            forceLogout();
+            return;
+          }
 
           const data = await response.json();
           count = Array.isArray(data) ? data.length : 0;
