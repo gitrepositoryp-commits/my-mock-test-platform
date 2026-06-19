@@ -88,6 +88,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   const testContainer = document.getElementById('availableTestsContainer');
 
   let currentUser = null;
+  let userIsPremium = false;
 
   if (!sessionToken) {
     window.location.href = 'login.html';
@@ -118,6 +119,8 @@ document.addEventListener('DOMContentLoaded', async () => {
       const data = await response.json();
 
       if (response.ok && data.isPremium) {
+        userIsPremium = true;
+
         document.getElementById("premiumCard").textContent = "ACTIVE";
         document.getElementById("premiumCard").style.color = "green";
 
@@ -134,6 +137,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         document.getElementById("activatePremiumBtn").style.display = "none";
 
       } else {
+        userIsPremium = false;
+
         document.getElementById("premiumCard").textContent = "FREE";
         document.getElementById("premiumCard").style.color = "red";
 
@@ -207,6 +212,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             if (verifyResponse.ok) {
               alert("Payment successful. Premium activated!");
               await loadPremiumStatus();
+              await loadExamCards();
             } else {
               alert(verifyData.error || "Payment verification failed.");
             }
@@ -241,21 +247,45 @@ document.addEventListener('DOMContentLoaded', async () => {
       const exams = [
         {
           examType: "NTPC",
-          title: "🚆 RRB NTPC Mock Tests",
-          desc: "NTPC previous papers, CBT practice and full-length tests.",
-          btn: "Start NTPC Test"
+          title: "🚆 RRB NTPC Free Mock",
+          desc: "Free Mock Test - Available for all students.",
+          btn: "Start Free NTPC Test",
+          premium: false
         },
         {
           examType: "GROUP_D",
-          title: "🛤 RRB Group-D Mock Tests",
-          desc: "Group-D previous papers, practice sets and full mock tests.",
-          btn: "Start Group-D Test"
+          title: "🛤 RRB Group-D Free Mock",
+          desc: "Free Mock Test - Available for all students.",
+          btn: "Start Free Group-D Test",
+          premium: false
         },
         {
           examType: "GROUP_2",
-          title: "🏛 AP Group-2 Mock Tests",
-          desc: "APPSC Group-2 screening, mains and PYQ practice tests.",
-          btn: "Start Group-2 Test"
+          title: "🏛 AP Group-2 Free Mock",
+          desc: "Free Mock Test - Available for all students.",
+          btn: "Start Free Group-2 Test",
+          premium: false
+        },
+        {
+          examType: "NTPC_PREMIUM",
+          title: "🔒 Premium NTPC Mock Series",
+          desc: "Premium mock tests for serious NTPC preparation.",
+          btn: "Start Premium NTPC",
+          premium: true
+        },
+        {
+          examType: "GROUP_D_PREMIUM",
+          title: "🔒 Premium Group-D Mock Series",
+          desc: "Premium mock tests for Group-D preparation.",
+          btn: "Start Premium Group-D",
+          premium: true
+        },
+        {
+          examType: "GROUP_2_PREMIUM",
+          title: "🔒 Premium Group-2 Mock Series",
+          desc: "Premium mock tests for AP Group-2 preparation.",
+          btn: "Start Premium Group-2",
+          premium: true
         }
       ];
 
@@ -263,21 +293,57 @@ document.addEventListener('DOMContentLoaded', async () => {
       let cardsHTML = "";
 
       for (const exam of exams) {
-        const response = await fetch(`${API_BASE}/tests/questions?exam=${exam.examType}`, {
-          method: "GET",
-          headers: {
-            "Authorization": `Bearer ${sessionToken}`
-          }
-        });
+        let count = 0;
 
-        const data = await response.json();
-        const count = Array.isArray(data) ? data.length : 0;
+        try {
+          const response = await fetch(`${API_BASE}/tests/questions?exam=${exam.examType}`, {
+            method: "GET",
+            headers: {
+              "Authorization": `Bearer ${sessionToken}`
+            }
+          });
+
+          const data = await response.json();
+          count = Array.isArray(data) ? data.length : 0;
+
+        } catch (err) {
+          console.error("Question count failed:", exam.examType, err);
+        }
 
         totalQuestions += count;
 
+        const premiumBadge = exam.premium
+          ? `<span style="background:#f59e0b; color:white; padding:4px 10px; border-radius:20px; font-size:12px;">PREMIUM</span>`
+          : `<span style="background:#16a34a; color:white; padding:4px 10px; border-radius:20px; font-size:12px;">FREE</span>`;
+
+        let actionButton = "";
+
+        if (count <= 0) {
+          actionButton = `
+            <button class="btn" style="background:#94a3b8;" disabled>
+              No Questions Uploaded
+            </button>
+          `;
+        } else if (exam.premium && !userIsPremium) {
+          actionButton = `
+            <button class="btn" style="background:#f59e0b;" onclick="alert('🔒 Premium Membership Required. Upgrade for ₹79 to unlock this mock series.')">
+              🔒 Upgrade Required
+            </button>
+          `;
+        } else {
+          actionButton = `
+            <button class="btn" onclick="window.location.href='test.html?exam=${exam.examType}'">
+              ${exam.btn}
+            </button>
+          `;
+        }
+
         cardsHTML += `
-          <div class="card" style="padding:25px;">
-            <h3>${exam.title}</h3>
+          <div class="card" style="padding:25px; position:relative;">
+            <div style="display:flex; justify-content:space-between; align-items:center; gap:10px;">
+              <h3>${exam.title}</h3>
+              ${premiumBadge}
+            </div>
 
             <p style="color:#64748b; margin:10px 0;">
               ${exam.desc}
@@ -287,15 +353,7 @@ document.addEventListener('DOMContentLoaded', async () => {
               <strong>Total Questions:</strong> ${count}
             </p>
 
-            ${
-              count > 0
-                ? `<button class="btn" onclick="window.location.href='test.html?exam=${exam.examType}'">
-                    ${exam.btn}
-                  </button>`
-                : `<button class="btn" style="background:#94a3b8;" disabled>
-                    No Questions Uploaded
-                  </button>`
-            }
+            ${actionButton}
           </div>
         `;
       }
