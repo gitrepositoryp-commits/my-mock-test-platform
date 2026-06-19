@@ -6,37 +6,67 @@ const ResultSchema = new mongoose.Schema({
     ref: 'User',
     required: true
   },
+
   examType: {
     type: String,
-    enum: ['NTPC', 'GROUP_D', 'GROUP_2'],
-    default: 'NTPC',
+    required: true,
+    trim: true,
+    default: 'NTPC_FREE_1',
     index: true
   },
+
   score: {
     type: Number,
     required: true,
     default: 0
   },
+
   totalQuestions: {
     type: Number,
     required: true,
     default: 0
   },
+
   percentage: {
     type: Number,
     required: true,
     default: 0
   },
+
   answersBreakdown: [
     {
-      questionId: { type: String, default: "" },
-      questionText: { type: String, default: "" },
-      selectedAnswer: { type: String, default: "" },
-      correctAnswer: { type: String, default: "" },
-      isCorrect: { type: Boolean, default: false },
-      examType: { type: String, default: "NTPC" }
+      questionId: {
+        type: String,
+        default: ""
+      },
+
+      questionText: {
+        type: String,
+        default: ""
+      },
+
+      selectedAnswer: {
+        type: String,
+        default: ""
+      },
+
+      correctAnswer: {
+        type: String,
+        default: ""
+      },
+
+      isCorrect: {
+        type: Boolean,
+        default: false
+      },
+
+      examType: {
+        type: String,
+        default: "NTPC_FREE_1"
+      }
     }
   ],
+
   createdAt: {
     type: Date,
     default: Date.now
