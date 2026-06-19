@@ -177,17 +177,38 @@ router.get('/result/:id', protect, async (req, res) => {
 // 5. LEADERBOARD (BEST SCORE ONLY)
 router.get('/leaderboard', protect, async (req, res) => {
   try {
-    const examType = req.query.exam;
 
-    const filter = examType ? { examType } : {};
+    const exam = req.query.exam;
+
+    let filter = {};
+
+    if (exam === "NTPC") {
+      filter = {
+        examType: { $regex: "^NTPC" }
+      };
+    }
+
+    else if (exam === "GROUP_D") {
+      filter = {
+        examType: { $regex: "^GROUP_D" }
+      };
+    }
+
+    else if (exam === "GROUP_2") {
+      filter = {
+        examType: { $regex: "^GROUP_2" }
+      };
+    }
 
     const allResults = await Result.find(filter)
-      .populate('userId', 'username');
+      .populate("userId", "username");
 
     const bestScores = {};
 
     allResults.forEach(result => {
-      const userId = result.userId?._id?.toString();
+
+      const userId =
+        result.userId?._id?.toString();
 
       if (!userId) return;
 
@@ -197,26 +218,24 @@ router.get('/leaderboard', protect, async (req, res) => {
       ) {
         bestScores[userId] = result;
       }
+
     });
 
-    const leaderboard = Object.values(bestScores)
-      .sort((a, b) => {
-        if (b.score !== a.score) {
-          return b.score - a.score;
-        }
+    const leaderboard =
+      Object.values(bestScores)
+      .sort((a, b) => b.score - a.score)
+      .slice(0, 100);
 
-        return b.percentage - a.percentage;
-      })
-      .slice(0, 10);
-
-    res.status(200).json(leaderboard);
+    res.json(leaderboard);
 
   } catch (err) {
+
     console.error(err);
 
     res.status(500).json({
-      error: 'Failed compiling ranking datasets securely.'
+      error: "Leaderboard load failed"
     });
+
   }
 });
 
