@@ -233,143 +233,116 @@ document.addEventListener('DOMContentLoaded', async () => {
       alert("Payment initialization failed.");
     }
   });
+async function loadExamCards() {
+  try {
+    const makeMocks = (prefix, label, emoji, freeCount, premiumCount) => {
+      const mocks = [];
 
-  async function loadExamCards() {
-    try {
-      const exams = [
-        {
-          examType: "NTPC",
-          title: "🚆 RRB NTPC Free Mock",
-          desc: "Free Mock Test - Available for all students.",
-          btn: "Start Free NTPC Test",
+      for (let i = 1; i <= freeCount; i++) {
+        mocks.push({
+          examType: `${prefix}_FREE_${i}`,
+          title: `${emoji} ${label} Free Mock Test - ${i}`,
           premium: false
-        },
-        {
-          examType: "GROUP_D",
-          title: "🛤 RRB Group-D Free Mock",
-          desc: "Free Mock Test - Available for all students.",
-          btn: "Start Free Group-D Test",
-          premium: false
-        },
-        {
-          examType: "GROUP_2",
-          title: "🏛 AP Group-2 Free Mock",
-          desc: "Free Mock Test - Available for all students.",
-          btn: "Start Free Group-2 Test",
-          premium: false
-        },
-        {
-          examType: "NTPC_PREMIUM",
-          title: "🔒 Premium NTPC Mock Series",
-          desc: "Premium mock tests for serious NTPC preparation.",
-          btn: "Start Premium NTPC",
+        });
+      }
+
+      for (let i = 1; i <= premiumCount; i++) {
+        mocks.push({
+          examType: `${prefix}_PREMIUM_${i}`,
+          title: `🔒 ${label} Premium Mock Test - ${i}`,
           premium: true
-        },
-        {
-          examType: "GROUP_D_PREMIUM",
-          title: "🔒 Premium Group-D Mock Series",
-          desc: "Premium mock tests for Group-D preparation.",
-          btn: "Start Premium Group-D",
-          premium: true
-        },
-        {
-          examType: "GROUP_2_PREMIUM",
-          title: "🔒 Premium Group-2 Mock Series",
-          desc: "Premium mock tests for AP Group-2 preparation.",
-          btn: "Start Premium Group-2",
-          premium: true
-        }
-      ];
+        });
+      }
 
-      let totalQuestions = 0;
-      let cardsHTML = "";
+      return mocks;
+    };
 
-      for (const exam of exams) {
-        let count = 0;
+    const exams = [
+      ...makeMocks("NTPC", "RRB NTPC", "🚆", 3, 30),
+      ...makeMocks("GROUP_D", "RRB Group-D", "🛤", 3, 30),
+      ...makeMocks("GROUP_2", "AP Group-2", "🏛", 3, 30)
+    ];
 
-        try {
-          const response = await fetch(`${API_BASE}/tests/questions?exam=${exam.examType}`, {
-            method: "GET",
-            headers: { "Authorization": `Bearer ${sessionToken}` }
-          });
+    let totalQuestions = 0;
+    let cardsHTML = "";
 
-          if (response.status === 401) {
-            forceLogout();
-            return;
-          }
+    for (const exam of exams) {
+      let count = 0;
 
-          const data = await response.json();
-          count = Array.isArray(data) ? data.length : 0;
+      try {
+        const response = await fetch(`${API_BASE}/tests/questions?exam=${exam.examType}`, {
+          method: "GET",
+          headers: { "Authorization": `Bearer ${sessionToken}` }
+        });
 
-        } catch (err) {
-          console.error("Question count failed:", exam.examType, err);
+        if (response.status === 401) {
+          forceLogout();
+          return;
         }
 
-        totalQuestions += count;
+        const data = await response.json();
+        count = Array.isArray(data) ? data.length : 0;
 
-        const premiumBadge = exam.premium
-          ? `<span style="background:#f59e0b; color:white; padding:4px 10px; border-radius:20px; font-size:12px;">PREMIUM</span>`
-          : `<span style="background:#16a34a; color:white; padding:4px 10px; border-radius:20px; font-size:12px;">FREE</span>`;
+      } catch (err) {
+        console.error("Question count failed:", exam.examType, err);
+      }
 
-        let actionButton = "";
+      totalQuestions += count;
 
-        if (count <= 0) {
-          actionButton = `
-            <button class="btn" style="background:#94a3b8;" disabled>
-              No Questions Uploaded
-            </button>
-          `;
-        } else if (exam.premium && !userIsPremium) {
-          actionButton = `
-            <button class="btn" style="background:#f59e0b;" onclick="alert('🔒 Premium Membership Required. Upgrade for ₹79 to unlock this mock series.')">
-              🔒 Upgrade Required
-            </button>
-          `;
-        } else {
-          actionButton = `
-            <button class="btn" onclick="window.location.href='test.html?exam=${exam.examType}'">
-              ${exam.btn}
-            </button>
-          `;
-        }
+      let actionButton = "";
 
-        cardsHTML += `
-          <div class="card" style="padding:25px; position:relative;">
-            <div style="display:flex; justify-content:space-between; align-items:center; gap:10px;">
-              <h3>${exam.title}</h3>
-              ${premiumBadge}
-            </div>
-
-            <p style="color:#64748b; margin:10px 0;">
-              ${exam.desc}
-            </p>
-
-            <p style="margin-bottom:15px;">
-              <strong>Total Questions:</strong> ${count}
-            </p>
-
-            ${actionButton}
-          </div>
+      if (count <= 0) {
+        actionButton = `
+          <button class="btn" style="background:#94a3b8; width:auto;" disabled>
+            No Questions
+          </button>
+        `;
+      } else if (exam.premium && !userIsPremium) {
+        actionButton = `
+          <button class="btn" style="background:#f59e0b; width:auto;"
+            onclick="alert('🔒 Premium Membership Required. Upgrade for ₹79 to unlock this mock test.')">
+            🔒 Locked
+          </button>
+        `;
+      } else {
+        actionButton = `
+          <button class="btn" style="width:auto;"
+            onclick="window.location.href='test.html?exam=${exam.examType}'">
+            Attempt Test
+          </button>
         `;
       }
 
-      document.getElementById("questionCountCard").textContent = totalQuestions;
+      cardsHTML += `
+        <div class="card" style="display:flex; align-items:center; justify-content:space-between; gap:20px; padding:22px; margin-bottom:16px;">
+          <div style="display:flex; align-items:center; gap:20px;">
+            <div style="width:110px; height:75px; background:#eaf2ff; border-radius:14px; display:flex; align-items:center; justify-content:center; font-size:38px;">
+              📁
+            </div>
 
-      testContainer.innerHTML = `
-        <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(280px,1fr)); gap:20px;">
-          ${cardsHTML}
+            <div>
+              <h3 style="margin:0 0 8px;">${exam.title}</h3>
+              <p style="margin:0; color:#2563eb;">📄 ${count} Questions</p>
+            </div>
+          </div>
+
+          ${actionButton}
         </div>
       `;
-
-    } catch (err) {
-      console.error("Dashboard multi-exam load error:", err);
-
-      testContainer.innerHTML =
-        `<div class="card" style="border-left:5px solid var(--error); color:var(--error);">
-          Failed to retrieve exam lists.
-        </div>`;
     }
+
+    document.getElementById("questionCountCard").textContent = totalQuestions;
+    testContainer.innerHTML = cardsHTML;
+
+  } catch (err) {
+    console.error("Dashboard multi-exam load error:", err);
+
+    testContainer.innerHTML =
+      `<div class="card" style="border-left:5px solid var(--error); color:var(--error);">
+        Failed to retrieve exam lists.
+      </div>`;
   }
+}
 
   await loadPremiumStatus();
   await loadExamCards();
