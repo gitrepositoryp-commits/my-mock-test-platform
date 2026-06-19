@@ -233,116 +233,128 @@ document.addEventListener('DOMContentLoaded', async () => {
       alert("Payment initialization failed.");
     }
   });
-async function loadExamCards() {
-  try {
-    const makeMocks = (prefix, label, emoji, freeCount, premiumCount) => {
-      const mocks = [];
 
-      for (let i = 1; i <= freeCount; i++) {
-        mocks.push({
-          examType: `${prefix}_FREE_${i}`,
-          title: `${emoji} ${label} Free Mock Test - ${i}`,
-          premium: false
-        });
-      }
-
-      for (let i = 1; i <= premiumCount; i++) {
-        mocks.push({
-          examType: `${prefix}_PREMIUM_${i}`,
-          title: `🔒 ${label} Premium Mock Test - ${i}`,
-          premium: true
-        });
-      }
-
-      return mocks;
-    };
-
-    const exams = [
-      ...makeMocks("NTPC", "RRB NTPC", "🚆", 3, 30),
-      ...makeMocks("GROUP_D", "RRB Group-D", "🛤", 3, 30),
-      ...makeMocks("GROUP_2", "AP Group-2", "🏛", 3, 30)
-    ];
-
-    let totalQuestions = 0;
-    let cardsHTML = "";
-
-    for (const exam of exams) {
-      let count = 0;
-
-      try {
-        const response = await fetch(`${API_BASE}/tests/questions?exam=${exam.examType}`, {
-          method: "GET",
-          headers: { "Authorization": `Bearer ${sessionToken}` }
-        });
-
-        if (response.status === 401) {
-          forceLogout();
-          return;
-        }
-
-        const data = await response.json();
-        count = Array.isArray(data) ? data.length : 0;
-
-      } catch (err) {
-        console.error("Question count failed:", exam.examType, err);
-      }
-
-      totalQuestions += count;
-
-      let actionButton = "";
-
-      if (count <= 0) {
-        actionButton = `
-          <button class="btn" style="background:#94a3b8; width:auto;" disabled>
-            No Questions
-          </button>
-        `;
-      } else if (exam.premium && !userIsPremium) {
-        actionButton = `
-          <button class="btn" style="background:#f59e0b; width:auto;"
-            onclick="alert('🔒 Premium Membership Required. Upgrade for ₹79 to unlock this mock test.')">
-            🔒 Locked
-          </button>
-        `;
-      } else {
-        actionButton = `
-          <button class="btn" style="width:auto;"
-            onclick="window.location.href='test.html?exam=${exam.examType}'">
-            Attempt Test
-          </button>
-        `;
-      }
-
-      cardsHTML += `
-        <div class="card" style="display:flex; align-items:center; justify-content:space-between; gap:20px; padding:22px; margin-bottom:16px;">
-          <div style="display:flex; align-items:center; gap:20px;">
-            <div style="width:110px; height:75px; background:#eaf2ff; border-radius:14px; display:flex; align-items:center; justify-content:center; font-size:38px;">
-              📁
-            </div>
-
-            <div>
-              <h3 style="margin:0 0 8px;">${exam.title}</h3>
-              <p style="margin:0; color:#2563eb;">📄 ${count} Questions</p>
-            </div>
-          </div>
-
-          ${actionButton}
+  async function loadExamCards() {
+    try {
+      testContainer.innerHTML = `
+        <div style="padding:20px;text-align:center;color:#64748b;">
+          Loading mock tests...
         </div>
       `;
+
+      const makeMocks = (prefix, label, emoji, freeCount, premiumCount) => {
+        const mocks = [];
+
+        for (let i = 1; i <= freeCount; i++) {
+          mocks.push({
+            examType: `${prefix}_FREE_${i}`,
+            title: `${emoji} ${label} Free Mock Test - ${i}`,
+            premium: false
+          });
+        }
+
+        for (let i = 1; i <= premiumCount; i++) {
+          mocks.push({
+            examType: `${prefix}_PREMIUM_${i}`,
+            title: `🔒 ${label} Premium Mock Test - ${i}`,
+            premium: true
+          });
+        }
+
+        return mocks;
+      };
+
+      const exams = [
+        ...makeMocks("NTPC", "RRB NTPC", "🚆", 3, 30),
+        ...makeMocks("GROUP_D", "RRB Group-D", "🛤", 3, 30),
+        ...makeMocks("GROUP_2", "AP Group-2", "🏛", 3, 30)
+      ];
+
+      const results = await Promise.all(
+        exams.map(async (exam) => {
+          try {
+            const response = await fetch(`${API_BASE}/tests/questions?exam=${exam.examType}`, {
+              method: "GET",
+              headers: { "Authorization": `Bearer ${sessionToken}` }
+            });
+
+            if (response.status === 401) {
+              forceLogout();
+              return null;
+            }
+
+            const data = await response.json();
+            const count = Array.isArray(data) ? data.length : 0;
+
+            return { ...exam, count };
+
+          } catch (err) {
+            console.error("Question count failed:", exam.examType, err);
+            return { ...exam, count: 0 };
+          }
+        })
+      );
+
+      let totalQuestions = 0;
+      let cardsHTML = "";
+
+      results.filter(Boolean).forEach((exam) => {
+        totalQuestions += exam.count;
+
+        let actionButton = "";
+
+        if (exam.count <= 0) {
+          actionButton = `
+            <button class="btn" style="background:#94a3b8;width:auto;" disabled>
+              No Questions
+            </button>
+          `;
+        } else if (exam.premium && !userIsPremium) {
+          actionButton = `
+            <button class="btn" style="background:#f59e0b;width:auto;"
+              onclick="alert('🔒 Premium Membership Required. Upgrade for ₹79 to unlock this mock test.')">
+              🔒 Locked
+            </button>
+          `;
+        } else {
+          actionButton = `
+            <button class="btn" style="width:auto;"
+              onclick="window.location.href='test.html?exam=${exam.examType}'">
+              Attempt Test
+            </button>
+          `;
+        }
+
+        cardsHTML += `
+          <div class="card" style="display:flex;align-items:center;justify-content:space-between;gap:20px;padding:22px;margin-bottom:16px;">
+            <div style="display:flex;align-items:center;gap:20px;">
+              <div style="width:110px;height:75px;background:#eaf2ff;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:38px;">
+                📁
+              </div>
+
+              <div>
+                <h3 style="margin:0 0 8px;">${exam.title}</h3>
+                <p style="margin:0;color:#2563eb;">📄 ${exam.count} Questions</p>
+              </div>
+            </div>
+
+            ${actionButton}
+          </div>
+        `;
+      });
+
+      document.getElementById("questionCountCard").textContent = totalQuestions;
+      testContainer.innerHTML = cardsHTML;
+
+    } catch (err) {
+      console.error("Dashboard multi-exam load error:", err);
+
+      testContainer.innerHTML =
+        `<div class="card" style="border-left:5px solid var(--error);color:var(--error);">
+          Failed to retrieve exam lists.
+        </div>`;
     }
-
-    document.getElementById("questionCountCard").textContent = totalQuestions;
-    testContainer.innerHTML = cardsHTML;
-
-  } catch (err) {
-    console.error("Dashboard multi-exam load error:", err);
-
-    testContainer.innerHTML =
-      `<div class="card" style="border-left:5px solid var(--error); color:var(--error);">
-        Failed to retrieve exam lists.
-      </div>`;
   }
-}
 
   await loadPremiumStatus();
   await loadExamCards();
