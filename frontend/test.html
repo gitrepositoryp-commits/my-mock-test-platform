@@ -6,64 +6,85 @@
   <title>Live Exam Workspace - MockExam Pro</title>
   <link rel="stylesheet" href="style.css">
 </head>
+
 <body>
 
-  <nav>
-    <div class="container nav-container">
-      <a href="dashboard.html" class="logo">MockExam Pro</a>
-      <div id="timerClock" class="btn" style="width:auto; padding: 8px 20px; font-size:16px; background:#1e293b; pointer-events:none;">10:00</div>
+<nav>
+  <div class="container nav-container">
+    <a href="dashboard.html" class="logo">MockExam Pro</a>
+
+    <div id="timerClock" class="btn"
+      style="width:auto; padding:8px 20px; font-size:16px; background:#1e293b; pointer-events:none;">
+      90:00
     </div>
-  </nav>
+  </div>
+</nav>
 
-  <main class="container" style="margin-top: 30px;">
-    <div class="workspace-grid">
-      
-      <section id="examWorkspaceContainer" class="card">
-      <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:20px;">
-  <button id="prevBtn" class="btn" style="width:140px;background:#64748b;">
-    Previous
-  </button>
+<main class="container" style="margin-top:30px;">
+  <div class="workspace-grid">
 
-  <button id="markReviewBtn" class="btn" style="width:180px;background:#9333ea;">
-    Mark For Review
-  </button>
+    <section id="examWorkspaceContainer" class="card">
 
-  <button id="nextBtn" class="btn" style="width:160px;">
-    Next Question
-  </button>
-</div>
-          <h2 id="examTitle" style="color:#2563eb; margin-bottom:15px;">
-  Loading Exam...
-</h2>
-          <h3 id="questionNumberIndicator" style="color: var(--primary);">Question 0 of 0</h3>
-        </div>
-        
-        <h2 id="questionTextDisplay" style="margin-bottom: 25px; font-size: 22px;">Loading assessment question details...</h2>
-        
-        <div id="optionsContainer" style="margin-bottom: 30px;">
-          </div>
-        
-        <div style="display: flex; justify-content: space-between; gap: 15px; margin-top: 20px;">
-          <button id="prevBtn" class="btn" style="width: 140px; background: #64748b;" disabled>Previous</button>
-          <button id="nextBtn" class="btn" style="width: 160px;">Next Question</button>
-        </div>
-      </section>
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; border-bottom:1px solid var(--border-color); padding-bottom:10px;">
+        <h2 id="examTitle" style="color:#2563eb; margin-bottom:15px;">
+          Loading Exam...
+        </h2>
 
-      <aside class="card" style="height: fit-content;">
-        <h3>Exam Navigation</h3>
-        <p style="font-size: 13px; color: #64748b; margin-top: 5px;">Click numbers to hop straight to any question row.</p>
-        
-        <div id="navigationBubbleContainer" class="bubble-grid" style="margin: 20px 0;">
-          </div>
-        
-        <div style="border-top: 1px solid var(--border-color); padding-top: 20px; margin-top: 20px;">
-          <button id="submitExamBtn" class="btn" style="background-color: var(--success);">Submit Entire Test</button>
-        </div>
-      </aside>
+        <h3 id="questionNumberIndicator" style="color:var(--primary);">
+          Question 0 of 0
+        </h3>
+      </div>
 
-    </div>
-  </main>
+      <h2 id="questionTextDisplay" style="margin-bottom:25px; font-size:22px;">
+        Loading assessment question details...
+      </h2>
 
-  <script src="script.js"></script>
+      <div id="optionsContainer" style="margin-bottom:30px;"></div>
+
+      <div style="display:flex; gap:10px; flex-wrap:wrap; margin-top:20px;">
+        <button id="prevBtn" class="btn" style="width:140px; background:#64748b;" disabled>
+          Previous
+        </button>
+
+        <button id="markReviewBtn" class="btn" style="width:180px; background:#9333ea;">
+          Mark For Review
+        </button>
+
+        <button id="nextBtn" class="btn" style="width:160px;">
+          Next Question
+        </button>
+      </div>
+
+    </section>
+
+    <aside class="card" style="height:fit-content;">
+      <h3>Exam Navigation</h3>
+
+      <p style="font-size:13px; color:#64748b; margin-top:5px;">
+        Click numbers to hop straight to any question row.
+      </p>
+
+      <div style="margin:15px 0; font-size:13px; line-height:1.8;">
+        <span style="display:inline-block;width:14px;height:14px;background:#22c55e;border-radius:50%;"></span> Answered
+        &nbsp;
+        <span style="display:inline-block;width:14px;height:14px;background:#9333ea;border-radius:50%;"></span> Marked
+        &nbsp;
+        <span style="display:inline-block;width:14px;height:14px;background:#e2e8f0;border-radius:50%;border:1px solid #cbd5e1;"></span> Not Visited
+      </div>
+
+      <div id="navigationBubbleContainer" class="bubble-grid" style="margin:20px 0;"></div>
+
+      <div style="border-top:1px solid var(--border-color); padding-top:20px; margin-top:20px;">
+        <button id="submitExamBtn" class="btn" style="background-color:var(--success);">
+          Submit Entire Test
+        </button>
+      </div>
+    </aside>
+
+  </div>
+</main>
+
+<script src="script.js"></script>
+
 </body>
 </html>
