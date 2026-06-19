@@ -61,10 +61,32 @@ const API_BASE = "https://my-mock-test-platform.onrender.com/api";
 let allResults = [];
 
 function getExamName(examType) {
-  if (examType === "NTPC") return "RRB NTPC";
-  if (examType === "GROUP_D") return "RRB Group-D";
-  if (examType === "GROUP_2") return "AP Group-2";
-  return "Mock Test";
+
+  if (examType.startsWith("NTPC_FREE_")) {
+    return `RRB NTPC Free Mock Test - ${examType.split("_").pop()}`;
+  }
+
+  if (examType.startsWith("NTPC_PREMIUM_")) {
+    return `RRB NTPC Premium Mock Test - ${examType.split("_").pop()}`;
+  }
+
+  if (examType.startsWith("GROUP_D_FREE_")) {
+    return `RRB Group-D Free Mock Test - ${examType.split("_").pop()}`;
+  }
+
+  if (examType.startsWith("GROUP_D_PREMIUM_")) {
+    return `RRB Group-D Premium Mock Test - ${examType.split("_").pop()}`;
+  }
+
+  if (examType.startsWith("GROUP_2_FREE_")) {
+    return `AP Group-2 Free Mock Test - ${examType.split("_").pop()}`;
+  }
+
+  if (examType.startsWith("GROUP_2_PREMIUM_")) {
+    return `AP Group-2 Premium Mock Test - ${examType.split("_").pop()}`;
+  }
+
+  return examType;
 }
 
 document.addEventListener("DOMContentLoaded", async () => {
@@ -168,10 +190,9 @@ function filterResults(type) {
     return;
   }
 
-  const filtered = allResults.filter(
-    r => r.examType === type
-  );
-
+const filtered = allResults.filter(
+  r => r.examType && r.examType.startsWith(type)
+);
   renderResults(filtered);
 }
 
