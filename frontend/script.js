@@ -4,6 +4,7 @@ let appState = {
   questions: [],
   currentQuestionIndex: 0,
   selectedAnswers: {},
+reviewQuestions: {},
   timerInterval: null,
   totalSecondsRemaining: 90 * 60
 };
@@ -285,6 +286,8 @@ function updateNavigationBubbles() {
     const questionID = q._id || q.id;
 
     el.className = 'bubble';
+    el.style.background = "";
+    el.style.color = "";
 
     if (index === appState.currentQuestionIndex) {
       el.classList.add('active');
@@ -293,14 +296,21 @@ function updateNavigationBubbles() {
     if (appState.selectedAnswers[questionID]) {
       el.classList.add('answered');
     }
+
+    if (appState.reviewQuestions[questionID]) {
+      el.style.background = "#9333ea";
+      el.style.color = "white";
+    }
   });
 }
 
 // BUTTONS
 function initExamActionButtons() {
+
   const nextBtn = document.getElementById('nextBtn');
   const prevBtn = document.getElementById('prevBtn');
   const submitBtn = document.getElementById('submitExamBtn');
+  const reviewBtn = document.getElementById('markReviewBtn');
 
   if (prevBtn) {
     prevBtn.addEventListener('click', () => {
@@ -314,27 +324,71 @@ function initExamActionButtons() {
 
   if (nextBtn) {
     nextBtn.addEventListener('click', () => {
-      if (appState.currentQuestionIndex < appState.questions.length - 1) {
+
+      if (
+        appState.currentQuestionIndex <
+        appState.questions.length - 1
+      ) {
+
         appState.currentQuestionIndex++;
         renderActiveQuestionCard();
         updateNavigationBubbles();
+
       } else {
-        if (confirm('Are you completely sure you want to finish and submit this test?')) {
+
+        if (
+          confirm(
+            'Are you completely sure you want to finish and submit this test?'
+          )
+        ) {
           submitMockTestResponses();
         }
+
       }
     });
+  }
+
+  if (reviewBtn) {
+
+    reviewBtn.addEventListener('click', () => {
+
+      const currentQ =
+        appState.questions[
+          appState.currentQuestionIndex
+        ];
+
+      const questionID =
+        currentQ._id || currentQ.id;
+
+      appState.reviewQuestions[questionID] = true;
+
+      updateNavigationBubbles();
+
+      alert(
+        `Question ${
+          appState.currentQuestionIndex + 1
+        } marked for review.`
+      );
+
+    });
+
   }
 
   if (submitBtn) {
     submitBtn.addEventListener('click', () => {
-      if (confirm('Are you completely sure you want to finish and submit this test?')) {
+
+      if (
+        confirm(
+          'Are you completely sure you want to finish and submit this test?'
+        )
+      ) {
         submitMockTestResponses();
       }
+
     });
   }
-}
 
+}
 // SUBMIT TEST
 async function submitMockTestResponses() {
   if (appState.timerInterval) {
