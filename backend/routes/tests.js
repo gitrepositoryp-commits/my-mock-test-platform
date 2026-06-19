@@ -174,22 +174,46 @@ router.get('/result/:id', protect, async (req, res) => {
   }
 });
 
-// 5. LEADERBOARD
+// 5. LEADERBOARD (BEST SCORE ONLY)
 router.get('/leaderboard', protect, async (req, res) => {
   try {
     const examType = req.query.exam;
 
     const filter = examType ? { examType } : {};
 
-    const podiumStandings = await Result.find(filter)
-      .populate('userId', 'username')
-      .sort({ score: -1, percentage: -1, createdAt: -1 })
-      .limit(10);
+    const allResults = await Result.find(filter)
+      .populate('userId', 'username');
 
-    res.status(200).json(podiumStandings);
+    const bestScores = {};
+
+    allResults.forEach(result => {
+      const userId = result.userId?._id?.toString();
+
+      if (!userId) return;
+
+      if (
+        !bestScores[userId] ||
+        result.score > bestScores[userId].score
+      ) {
+        bestScores[userId] = result;
+      }
+    });
+
+    const leaderboard = Object.values(bestScores)
+      .sort((a, b) => {
+        if (b.score !== a.score) {
+          return b.score - a.score;
+        }
+
+        return b.percentage - a.percentage;
+      })
+      .slice(0, 10);
+
+    res.status(200).json(leaderboard);
 
   } catch (err) {
     console.error(err);
+
     res.status(500).json({
       error: 'Failed compiling ranking datasets securely.'
     });
