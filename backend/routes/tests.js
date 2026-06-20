@@ -2,6 +2,7 @@ const express = require("express");
 const router = express.Router();
 const Question = require("../models/Question");
 const Result = require("../models/Result");
+const User = require("../models/User");
 const jwt = require("jsonwebtoken");
 
 /* =========================
@@ -27,10 +28,33 @@ const protect = async (req, res, next) => {
 
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
+    const user = await User.findById(decoded.id).select(
+      "username email isPremium premiumExpiresAt"
+    );
+
+    if (!user) {
+      return res.status(401).json({
+        error: "User not found."
+      });
+    }
+
+    const now = new Date();
+
+    if (
+      user.isPremium &&
+      user.premiumExpiresAt &&
+      user.premiumExpiresAt < now
+    ) {
+      user.isPremium = false;
+      await user.save();
+    }
+
     req.user = {
-      id: decoded.id,
-      email: decoded.email,
-      username: decoded.username
+      id: user._id.toString(),
+      email: user.email,
+      username: user.username,
+      isPremium: user.isPremium,
+      premiumExpiresAt: user.premiumExpiresAt
     };
 
     next();
@@ -94,6 +118,18 @@ const adminProtect = async (req, res, next) => {
   }
 };
 
+function isPremiumExam(examType) {
+  return String(examType || "").toUpperCase().includes("PREMIUM");
+}
+
+function hasValidPremium(user) {
+  if (!user || !user.isPremium) return false;
+
+  if (!user.premiumExpiresAt) return true;
+
+  return new Date(user.premiumExpiresAt) > new Date();
+}
+
 /* =========================
    ADMIN: ADD SINGLE QUESTION
 ========================= */
@@ -143,6 +179,12 @@ router.get("/questions", protect, async (req, res) => {
   try {
     const examType = req.query.exam || "NTPC";
 
+    if (isPremiumExam(examType) && !hasValidPremium(req.user)) {
+      return res.status(403).json({
+        error: "Premium subscription required."
+      });
+    }
+
     const databaseQuestions = await Question.find(
       { examType },
       "-correctAnswer"
@@ -168,6 +210,12 @@ router.post("/submit", protect, async (req, res) => {
 
     const submittedAnswers = answers || {};
     const selectedExam = examType || "NTPC";
+
+    if (isPremiumExam(selectedExam) && !hasValidPremium(req.user)) {
+      return res.status(403).json({
+        error: "Premium subscription required."
+      });
+    }
 
     const fullQuestionPool = await Question.find({
       examType: selectedExam
