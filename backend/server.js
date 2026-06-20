@@ -1,71 +1,115 @@
-const express = require('express');
-const mongoose = require('mongoose');
-const cors = require('cors');
-require('dotenv').config();
+const express = require("express");
+const mongoose = require("mongoose");
+const cors = require("cors");
+const helmet = require("helmet");
+const rateLimit = require("express-rate-limit");
+require("dotenv").config();
 
 const app = express();
 
-// CORS CONFIGURATION
+/* =========================
+   SECURITY
+========================= */
+
+app.use(helmet());
+
+const allowedOrigins = [
+  "https://rrbedu.online",
+  "https://www.rrbedu.online"
+];
+
 app.use(cors({
-  origin: '*',
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept']
+  origin: function (origin, callback) {
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error("Not allowed by CORS"));
+    }
+  },
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization"],
+  credentials: true
 }));
 
-// BODY PARSERS
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+const apiLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 100,
+  message: {
+    success: false,
+    message: "Too many requests. Please try again later."
+  }
+});
 
-// DATABASE CONNECTION
+app.use("/api", apiLimiter);
+
+/* =========================
+   BODY PARSER
+========================= */
+
+app.use(express.json({ limit: "10mb" }));
+app.use(express.urlencoded({ extended: true, limit: "10mb" }));
+
+/* =========================
+   DATABASE CONNECTION
+========================= */
+
 const mongoURI = process.env.MONGO_URI;
 
 if (!mongoURI) {
-  console.error("CRITICAL RUNTIME WARNING: MONGO_URI missing.");
+  console.error("CRITICAL ERROR: MONGO_URI missing.");
   process.exit(1);
 }
 
 mongoose.connect(mongoURI)
-.then(() => {
-  console.log('MongoDB Cloud Database Connected Successfully.');
-})
-.catch((err) => {
-  console.error('Database connection error cascade:', err.message);
-});
+  .then(() => {
+    console.log("MongoDB Cloud Database Connected Successfully.");
+  })
+  .catch((err) => {
+    console.error("Database connection error:", err.message);
+  });
 
-// ROUTES
-const authRoutes = require('./routes/auth');
-const testRoutes = require('./routes/tests');
-const paymentRoutes = require('./routes/payment');
+/* =========================
+   ROUTES
+========================= */
 
-// API ROUTES
-app.use('/api/auth', authRoutes);
-app.use('/api/tests', testRoutes);
-app.use('/api/payment', paymentRoutes);
+const authRoutes = require("./routes/auth");
+const testRoutes = require("./routes/tests");
+const paymentRoutes = require("./routes/payment");
 
-// HEALTH CHECK
-app.get('/', (req, res) => {
+app.use("/api/auth", authRoutes);
+app.use("/api/tests", testRoutes);
+app.use("/api/payment", paymentRoutes);
+
+/* =========================
+   HEALTH CHECK
+========================= */
+
+app.get("/", (req, res) => {
   res.json({
-    message: "Mock Test API is running smoothly."
+    success: true,
+    message: "RRB EDU Mock Test API is running securely."
   });
 });
 
-// GLOBAL ERROR HANDLER
+/* =========================
+   GLOBAL ERROR HANDLER
+========================= */
+
 app.use((err, req, res, next) => {
-  console.error(
-    "UNHANDLED SYSTEM RUNTIME FAULT DETECTED:",
-    err.stack
-  );
+  console.error("SERVER ERROR:", err.message);
 
   res.status(500).json({
-    error: "Internal Server Error Cascade",
-    message: err.message
+    success: false,
+    message: "Internal Server Error"
   });
 });
 
-// SERVER START
+/* =========================
+   SERVER START
+========================= */
+
 const PORT = process.env.PORT || 5000;
 
 app.listen(PORT, () => {
-  console.log(`Server executing seamlessly on port ${PORT}`);
+  console.log(`Server running securely on port ${PORT}`);
 });
-//Force Sync Deployment for Universal JSON Workspace Array v5.0
