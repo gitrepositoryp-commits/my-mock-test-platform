@@ -1,43 +1,116 @@
-const express = require('express');
+const express = require("express");
 const router = express.Router();
-const Question = require('../models/Question');
-const Result = require('../models/Result');
-const jwt = require('jsonwebtoken');
+const Question = require("../models/Question");
+const Result = require("../models/Result");
+const jwt = require("jsonwebtoken");
+
+/* =========================
+   USER JWT PROTECTION
+========================= */
 
 const protect = async (req, res, next) => {
   try {
     let token;
 
-    if (req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
-      token = req.headers.authorization.split(' ')[1];
+    if (
+      req.headers.authorization &&
+      req.headers.authorization.startsWith("Bearer")
+    ) {
+      token = req.headers.authorization.split(" ")[1];
     }
 
     if (!token) {
-      return res.status(401).json({ error: 'Authorization token credentials missing.' });
+      return res.status(401).json({
+        error: "Authorization token missing."
+      });
     }
 
-    const decoded = jwt.verify(
-      token,
-      process.env.JWT_SECRET || 'super_secret_mock_test_key_2026'
-    );
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
-    req.user = { id: decoded.id };
+    req.user = {
+      id: decoded.id,
+      email: decoded.email,
+      username: decoded.username
+    };
+
     next();
 
   } catch (err) {
-    console.error("MIDDLEWARE EXCEPTION BLOCK:", err.message);
-    return res.status(401).json({ error: 'Session signature invalid or expired.' });
+    console.error("AUTH ERROR:", err.message);
+    return res.status(401).json({
+      error: "Session invalid or expired."
+    });
   }
 };
 
-// 1. ADD SINGLE QUESTION
-router.post('/questions', async (req, res) => {
+/* =========================
+   ADMIN JWT PROTECTION
+========================= */
+
+const adminProtect = async (req, res, next) => {
+  try {
+    let token;
+
+    if (
+      req.headers.authorization &&
+      req.headers.authorization.startsWith("Bearer")
+    ) {
+      token = req.headers.authorization.split(" ")[1];
+    }
+
+    if (!token) {
+      return res.status(401).json({
+        error: "Admin token required."
+      });
+    }
+
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+
+    if (!process.env.ADMIN_EMAIL) {
+      return res.status(500).json({
+        error: "ADMIN_EMAIL is not configured on server."
+      });
+    }
+
+    if (decoded.email !== process.env.ADMIN_EMAIL) {
+      return res.status(403).json({
+        error: "Admin access only."
+      });
+    }
+
+    req.user = {
+      id: decoded.id,
+      email: decoded.email,
+      username: decoded.username
+    };
+
+    next();
+
+  } catch (err) {
+    console.error("ADMIN AUTH ERROR:", err.message);
+    return res.status(401).json({
+      error: "Invalid admin session."
+    });
+  }
+};
+
+/* =========================
+   ADMIN: ADD SINGLE QUESTION
+========================= */
+
+router.post("/questions", adminProtect, async (req, res) => {
   try {
     const { question, options, correctAnswer, examType } = req.body;
 
-    if (!question || !options || !correctAnswer) {
+    if (
+      !question ||
+      !options ||
+      !Array.isArray(options) ||
+      options.length !== 4 ||
+      !correctAnswer
+    ) {
       return res.status(400).json({
-        error: 'Missing mandatory questionnaire properties.'
+        error: "Question, 4 options, and correct answer are required."
       });
     }
 
@@ -51,41 +124,48 @@ router.post('/questions', async (req, res) => {
     await newQuestion.save();
 
     res.status(201).json({
-      message: 'Question saved successfully!'
+      message: "Question saved successfully!"
     });
 
   } catch (err) {
-    console.error(err);
+    console.error("ADD QUESTION ERROR:", err.message);
     res.status(500).json({
-      error: 'Failed to write query record to collection.'
+      error: "Failed to save question."
     });
   }
 });
 
-// 2. GET QUESTIONS BY EXAM TYPE
-router.get('/questions', protect, async (req, res) => {
+/* =========================
+   USER: GET QUESTIONS
+========================= */
+
+router.get("/questions", protect, async (req, res) => {
   try {
     const examType = req.query.exam || "NTPC";
 
     const databaseQuestions = await Question.find(
       { examType },
-      '-correctAnswer'
+      "-correctAnswer"
     );
 
     res.status(200).json(databaseQuestions);
 
   } catch (err) {
-    console.error(err);
+    console.error("GET QUESTIONS ERROR:", err.message);
     res.status(500).json({
-      error: 'Failed to retrieve test bank entries securely.'
+      error: "Failed to retrieve questions."
     });
   }
 });
 
-// 3. SUBMIT TEST BY EXAM TYPE
-router.post('/submit', protect, async (req, res) => {
+/* =========================
+   USER: SUBMIT TEST
+========================= */
+
+router.post("/submit", protect, async (req, res) => {
   try {
     const { answers, examType } = req.body;
+
     const submittedAnswers = answers || {};
     const selectedExam = examType || "NTPC";
 
@@ -97,14 +177,11 @@ router.post('/submit', protect, async (req, res) => {
     const dynamicBreakdown = [];
 
     fullQuestionPool.forEach((q) => {
-      const qIDString = q._id
-        ? q._id.toString()
-        : (q.id ? q.id.toString() : "");
-
+      const qIDString = q._id.toString();
       const studentSelection = submittedAnswers[qIDString] || "";
 
       const isCorrectMatch =
-        studentSelection.trim() === q.correctAnswer.trim();
+        studentSelection.trim() === (q.correctAnswer || "").trim();
 
       if (isCorrectMatch) {
         calculatedScore++;
@@ -122,7 +199,9 @@ router.post('/submit', protect, async (req, res) => {
 
     const accuracyPercentage =
       fullQuestionPool.length > 0
-        ? parseFloat(((calculatedScore / fullQuestionPool.length) * 100).toFixed(2))
+        ? parseFloat(
+            ((calculatedScore / fullQuestionPool.length) * 100).toFixed(2)
+          )
         : 0;
 
     const resultRecord = new Result({
@@ -137,7 +216,7 @@ router.post('/submit', protect, async (req, res) => {
     const savedResult = await resultRecord.save();
 
     res.status(200).json({
-      message: "Assessment evaluation finalized cleanly.",
+      message: "Assessment evaluation completed.",
       score: calculatedScore,
       totalQuestions: fullQuestionPool.length,
       percentage: accuracyPercentage,
@@ -146,58 +225,58 @@ router.post('/submit', protect, async (req, res) => {
     });
 
   } catch (err) {
-    console.error('BACKEND GRADING EVALUATION CRASHED:', err.stack);
+    console.error("SUBMIT TEST ERROR:", err.message);
     res.status(500).json({
-      error: 'Evaluation engine crash on transaction save execution.'
+      error: "Evaluation failed."
     });
   }
 });
 
-// 4. GET SINGLE RESULT
-router.get('/result/:id', protect, async (req, res) => {
-  try {
-    const logFile = await Result.findById(req.params.id);
+/* =========================
+   USER: GET SINGLE RESULT
+========================= */
 
-    if (!logFile) {
+router.get("/result/:id", protect, async (req, res) => {
+  try {
+    const result = await Result.findById(req.params.id);
+
+    if (!result) {
       return res.status(404).json({
-        error: 'Assessment scorecard query not found.'
+        error: "Result not found."
       });
     }
 
-    res.status(200).json(logFile);
+    if (result.userId.toString() !== req.user.id) {
+      return res.status(403).json({
+        error: "You are not allowed to view this result."
+      });
+    }
+
+    res.status(200).json(result);
 
   } catch (err) {
-    console.error(err);
+    console.error("GET RESULT ERROR:", err.message);
     res.status(500).json({
-      error: 'Internal system log retrieval failure.'
+      error: "Failed to retrieve result."
     });
   }
 });
 
-// 5. LEADERBOARD (BEST SCORE ONLY)
-router.get('/leaderboard', protect, async (req, res) => {
+/* =========================
+   USER: LEADERBOARD
+========================= */
+
+router.get("/leaderboard", protect, async (req, res) => {
   try {
-
     const exam = req.query.exam;
-
     let filter = {};
 
     if (exam === "NTPC") {
-      filter = {
-        examType: { $regex: "^NTPC" }
-      };
-    }
-
-    else if (exam === "GROUP_D") {
-      filter = {
-        examType: { $regex: "^GROUP_D" }
-      };
-    }
-
-    else if (exam === "GROUP_2") {
-      filter = {
-        examType: { $regex: "^GROUP_2" }
-      };
+      filter = { examType: { $regex: "^NTPC" } };
+    } else if (exam === "GROUP_D") {
+      filter = { examType: { $regex: "^GROUP_D" } };
+    } else if (exam === "GROUP_2") {
+      filter = { examType: { $regex: "^GROUP_2" } };
     }
 
     const allResults = await Result.find(filter)
@@ -205,10 +284,8 @@ router.get('/leaderboard', protect, async (req, res) => {
 
     const bestScores = {};
 
-    allResults.forEach(result => {
-
-      const userId =
-        result.userId?._id?.toString();
+    allResults.forEach((result) => {
+      const userId = result.userId?._id?.toString();
 
       if (!userId) return;
 
@@ -218,35 +295,37 @@ router.get('/leaderboard', protect, async (req, res) => {
       ) {
         bestScores[userId] = result;
       }
-
     });
 
-    const leaderboard =
-      Object.values(bestScores)
+    const leaderboard = Object.values(bestScores)
       .sort((a, b) => b.score - a.score)
       .slice(0, 100);
 
     res.json(leaderboard);
 
   } catch (err) {
-
-    console.error(err);
-
+    console.error("LEADERBOARD ERROR:", err.message);
     res.status(500).json({
-      error: "Leaderboard load failed"
+      error: "Leaderboard load failed."
     });
-
   }
 });
 
-// 6. BULK UPLOAD QUESTIONS BY EXAM TYPE
-router.post('/bulk-questions', async (req, res) => {
+/* =========================
+   ADMIN: BULK UPLOAD QUESTIONS
+========================= */
+
+router.post("/bulk-questions", adminProtect, async (req, res) => {
   try {
     const { questionsArray, examType } = req.body;
 
-    if (!questionsArray || !Array.isArray(questionsArray) || questionsArray.length === 0) {
+    if (
+      !questionsArray ||
+      !Array.isArray(questionsArray) ||
+      questionsArray.length === 0
+    ) {
       return res.status(400).json({
-        error: 'Payload must be a non-empty array of structured questions.'
+        error: "Payload must be a non-empty questions array."
       });
     }
 
@@ -259,36 +338,40 @@ router.post('/bulk-questions', async (req, res) => {
         !q.correctAnswer
       ) {
         return res.status(400).json({
-          error: 'One or more questions are structurally invalid. Ensure each has text, 4 options, and a correct answer match.'
+          error: "Each question must have text, 4 options, and correct answer."
         });
       }
     }
 
-    const finalQuestions = questionsArray.map(q => ({
-      ...q,
+    const finalQuestions = questionsArray.map((q) => ({
+      question: q.question,
+      options: q.options,
+      correctAnswer: q.correctAnswer,
       examType: examType || q.examType || "NTPC"
     }));
 
     const insertedQuestions = await Question.insertMany(finalQuestions);
 
     res.status(201).json({
-      message: `Successfully bulk-uploaded ${insertedQuestions.length} questions into ${examType || "NTPC"} database cluster!`,
+      message: `Successfully bulk-uploaded ${insertedQuestions.length} questions.`,
       count: insertedQuestions.length
     });
 
   } catch (err) {
-    console.error('CRITICAL BULK UPLOAD CRASH:', err.message);
+    console.error("BULK UPLOAD ERROR:", err.message);
     res.status(500).json({
-      error: 'Database transaction failed during batch insertion operations.'
+      error: "Bulk upload failed."
     });
   }
 });
 
-// 7. DELETE ALL QUESTIONS OR BY EXAM TYPE
-router.delete('/questions/delete-all', async (req, res) => {
+/* =========================
+   ADMIN: DELETE QUESTIONS
+========================= */
+
+router.delete("/questions/delete-all", adminProtect, async (req, res) => {
   try {
     const examType = req.query.exam;
-
     const filter = examType ? { examType } : {};
 
     const result = await Question.deleteMany(filter);
@@ -301,15 +384,18 @@ router.delete('/questions/delete-all', async (req, res) => {
     });
 
   } catch (err) {
-    console.error("DELETE ALL ERROR:", err);
+    console.error("DELETE QUESTIONS ERROR:", err.message);
     res.status(500).json({
       error: "Failed to delete questions."
     });
   }
 });
 
-// 8. DELETE ALL RESULTS
-router.delete('/results/delete-all', async (req, res) => {
+/* =========================
+   ADMIN: DELETE ALL RESULTS
+========================= */
+
+router.delete("/results/delete-all", adminProtect, async (req, res) => {
   try {
     const result = await Result.deleteMany({});
 
@@ -319,18 +405,20 @@ router.delete('/results/delete-all', async (req, res) => {
     });
 
   } catch (err) {
-    console.error("DELETE RESULTS ERROR:", err);
+    console.error("DELETE RESULTS ERROR:", err.message);
     res.status(500).json({
       error: "Failed to delete results."
     });
   }
 });
 
-// 9. ADMIN GET QUESTIONS WITH ANSWERS
-router.get('/admin/questions', async (req, res) => {
+/* =========================
+   ADMIN: GET QUESTIONS WITH ANSWERS
+========================= */
+
+router.get("/admin/questions", adminProtect, async (req, res) => {
   try {
     const examType = req.query.exam;
-
     const filter = examType ? { examType } : {};
 
     const questions = await Question.find(filter).sort({
@@ -340,15 +428,18 @@ router.get('/admin/questions', async (req, res) => {
     res.status(200).json(questions);
 
   } catch (err) {
-    console.error("ADMIN QUESTIONS ERROR:", err);
+    console.error("ADMIN QUESTIONS ERROR:", err.message);
     res.status(500).json({
       error: "Failed to fetch admin questions."
     });
   }
 });
 
-// 10. ADMIN UPDATE SINGLE QUESTION
-router.put('/admin/questions/:id', async (req, res) => {
+/* =========================
+   ADMIN: UPDATE SINGLE QUESTION
+========================= */
+
+router.put("/admin/questions/:id", adminProtect, async (req, res) => {
   try {
     const { question, options, correctAnswer, examType } = req.body;
 
@@ -387,15 +478,18 @@ router.put('/admin/questions/:id', async (req, res) => {
     });
 
   } catch (err) {
-    console.error("UPDATE QUESTION ERROR:", err);
+    console.error("UPDATE QUESTION ERROR:", err.message);
     res.status(500).json({
       error: "Failed to update question."
     });
   }
 });
 
-// 11. ADMIN DELETE SINGLE QUESTION
-router.delete('/admin/questions/:id', async (req, res) => {
+/* =========================
+   ADMIN: DELETE SINGLE QUESTION
+========================= */
+
+router.delete("/admin/questions/:id", adminProtect, async (req, res) => {
   try {
     const deletedQuestion = await Question.findByIdAndDelete(req.params.id);
 
@@ -410,36 +504,41 @@ router.delete('/admin/questions/:id', async (req, res) => {
     });
 
   } catch (err) {
-    console.error("DELETE QUESTION ERROR:", err);
+    console.error("DELETE QUESTION ERROR:", err.message);
     res.status(500).json({
       error: "Failed to delete question."
     });
   }
 });
 
-// 12. ADMIN GET ALL RESULTS
-router.get('/admin/results', async (req, res) => {
+/* =========================
+   ADMIN: GET ALL RESULTS
+========================= */
+
+router.get("/admin/results", adminProtect, async (req, res) => {
   try {
     const examType = req.query.exam;
-
     const filter = examType ? { examType } : {};
 
     const results = await Result.find(filter)
-      .populate('userId', 'username email')
+      .populate("userId", "username email")
       .sort({ createdAt: -1 });
 
     res.status(200).json(results);
 
   } catch (err) {
-    console.error(err);
+    console.error("ADMIN RESULTS ERROR:", err.message);
     res.status(500).json({
-      error: 'Failed to fetch results.'
+      error: "Failed to fetch results."
     });
   }
 });
 
-// 13. ADMIN DELETE SINGLE RESULT
-router.delete('/admin/results/:id', async (req, res) => {
+/* =========================
+   ADMIN: DELETE SINGLE RESULT
+========================= */
+
+router.delete("/admin/results/:id", adminProtect, async (req, res) => {
   try {
     const deletedResult = await Result.findByIdAndDelete(req.params.id);
 
@@ -454,7 +553,7 @@ router.delete('/admin/results/:id', async (req, res) => {
     });
 
   } catch (err) {
-    console.error("DELETE RESULT ERROR:", err);
+    console.error("DELETE RESULT ERROR:", err.message);
     res.status(500).json({
       error: "Failed to delete result."
     });
