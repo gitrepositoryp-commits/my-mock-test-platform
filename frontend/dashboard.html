@@ -76,12 +76,12 @@
 </main>
 
 <script>
-document.addEventListener('DOMContentLoaded', async () => {
+document.addEventListener("DOMContentLoaded", async () => {
   const API_BASE = "https://my-mock-test-platform.onrender.com/api";
 
-  const sessionToken = localStorage.getItem('mock_test_token');
-  const cachedUserData = localStorage.getItem('mock_test_user');
-  const testContainer = document.getElementById('availableTestsContainer');
+  const sessionToken = localStorage.getItem("mock_test_token");
+  const cachedUserData = localStorage.getItem("mock_test_user");
+  const testContainer = document.getElementById("availableTestsContainer");
 
   let currentUser = null;
   let userIsPremium = false;
@@ -110,8 +110,8 @@ document.addEventListener('DOMContentLoaded', async () => {
       return;
     }
 
-    document.getElementById('welcomeGreeting').textContent =
-      `Welcome back, ${currentUser.username || 'Student'}! 👋`;
+    document.getElementById("welcomeGreeting").textContent =
+      `Welcome back, ${currentUser.username || "Student"}! 👋`;
 
   } catch (e) {
     forceLogout();
@@ -123,12 +123,6 @@ document.addEventListener('DOMContentLoaded', async () => {
   async function loadPremiumStatus() {
     try {
       const response = await fetch(`${API_BASE}/auth/premium-status/${currentUser.id}`);
-
-      if (response.status === 401 || response.status === 404) {
-        forceLogout();
-        return;
-      }
-
       const data = await response.json();
 
       if (response.ok && data.isPremium) {
@@ -273,24 +267,25 @@ document.addEventListener('DOMContentLoaded', async () => {
       const results = await Promise.all(
         exams.map(async (exam) => {
           try {
-            const response = await fetch(`${API_BASE}/tests/questions?exam=${exam.examType}`, {
-              method: "GET",
-              headers: { "Authorization": `Bearer ${sessionToken}` }
-            });
-
-            if (response.status === 401) {
-              forceLogout();
-              return null;
-            }
-
+            const response = await fetch(`${API_BASE}/tests/count/${exam.examType}`);
             const data = await response.json();
-            const count = Array.isArray(data) ? data.length : 0;
 
-            return { ...exam, count };
+            const count =
+              response.ok && typeof data.count === "number"
+                ? data.count
+                : 0;
+
+            return {
+              ...exam,
+              count
+            };
 
           } catch (err) {
             console.error("Question count failed:", exam.examType, err);
-            return { ...exam, count: 0 };
+            return {
+              ...exam,
+              count: 0
+            };
           }
         })
       );
@@ -299,7 +294,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       let cardsHTML = "";
 
       results.filter(Boolean).forEach((exam) => {
-        totalQuestions += exam.count;
+        totalQuestions += Number(exam.count || 0);
 
         let actionButton = "";
 

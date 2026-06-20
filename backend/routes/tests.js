@@ -174,7 +174,28 @@ router.post("/questions", adminProtect, async (req, res) => {
 /* =========================
    USER: GET QUESTIONS
 ========================= */
+/* =========================
+   PUBLIC: QUESTION COUNT ONLY
+========================= */
 
+router.get("/count/:examType", async (req, res) => {
+  try {
+    const examType = req.params.examType;
+
+    const count = await Question.countDocuments({ examType });
+
+    res.status(200).json({
+      examType,
+      count
+    });
+
+  } catch (err) {
+    console.error("COUNT ERROR:", err.message);
+    res.status(500).json({
+      error: "Failed to count questions."
+    });
+  }
+});
 router.get("/questions", protect, async (req, res) => {
   try {
     const examType = req.query.exam || "NTPC";
