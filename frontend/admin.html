@@ -27,29 +27,29 @@
     <div style="margin:20px 0;">
       <label style="font-weight:bold;">Select Exam Type</label>
       <select id="examType" style="width:100%;padding:12px;margin-top:8px;border-radius:8px;">
-      <option value="NTPC_FREE_1">RRB NTPC Free Mock 1</option>
-<option value="NTPC_FREE_2">RRB NTPC Free Mock 2</option>
-<option value="NTPC_FREE_3">RRB NTPC Free Mock 3</option>
+        <option value="NTPC_FREE_1">RRB NTPC Free Mock 1</option>
+        <option value="NTPC_FREE_2">RRB NTPC Free Mock 2</option>
+        <option value="NTPC_FREE_3">RRB NTPC Free Mock 3</option>
 
-<option value="NTPC_PREMIUM_1">🔒 RRB NTPC Premium Mock 1</option>
-<option value="NTPC_PREMIUM_2">🔒 RRB NTPC Premium Mock 2</option>
-<option value="NTPC_PREMIUM_3">🔒 RRB NTPC Premium Mock 3</option>
+        <option value="NTPC_PREMIUM_1">🔒 RRB NTPC Premium Mock 1</option>
+        <option value="NTPC_PREMIUM_2">🔒 RRB NTPC Premium Mock 2</option>
+        <option value="NTPC_PREMIUM_3">🔒 RRB NTPC Premium Mock 3</option>
 
-<option value="GROUP_D_FREE_1">RRB Group-D Free Mock 1</option>
-<option value="GROUP_D_FREE_2">RRB Group-D Free Mock 2</option>
-<option value="GROUP_D_FREE_3">RRB Group-D Free Mock 3</option>
+        <option value="GROUP_D_FREE_1">RRB Group-D Free Mock 1</option>
+        <option value="GROUP_D_FREE_2">RRB Group-D Free Mock 2</option>
+        <option value="GROUP_D_FREE_3">RRB Group-D Free Mock 3</option>
 
-<option value="GROUP_D_PREMIUM_1">🔒 RRB Group-D Premium Mock 1</option>
-<option value="GROUP_D_PREMIUM_2">🔒 RRB Group-D Premium Mock 2</option>
-<option value="GROUP_D_PREMIUM_3">🔒 RRB Group-D Premium Mock 3</option>
+        <option value="GROUP_D_PREMIUM_1">🔒 RRB Group-D Premium Mock 1</option>
+        <option value="GROUP_D_PREMIUM_2">🔒 RRB Group-D Premium Mock 2</option>
+        <option value="GROUP_D_PREMIUM_3">🔒 RRB Group-D Premium Mock 3</option>
 
-<option value="GROUP_2_FREE_1">AP Group-2 Free Mock 1</option>
-<option value="GROUP_2_FREE_2">AP Group-2 Free Mock 2</option>
-<option value="GROUP_2_FREE_3">AP Group-2 Free Mock 3</option>
+        <option value="GROUP_2_FREE_1">AP Group-2 Free Mock 1</option>
+        <option value="GROUP_2_FREE_2">AP Group-2 Free Mock 2</option>
+        <option value="GROUP_2_FREE_3">AP Group-2 Free Mock 3</option>
 
-<option value="GROUP_2_PREMIUM_1">🔒 AP Group-2 Premium Mock 1</option>
-<option value="GROUP_2_PREMIUM_2">🔒 AP Group-2 Premium Mock 2</option>
-<option value="GROUP_2_PREMIUM_3">🔒 AP Group-2 Premium Mock 3</option>
+        <option value="GROUP_2_PREMIUM_1">🔒 AP Group-2 Premium Mock 1</option>
+        <option value="GROUP_2_PREMIUM_2">🔒 AP Group-2 Premium Mock 2</option>
+        <option value="GROUP_2_PREMIUM_3">🔒 AP Group-2 Premium Mock 3</option>
       </select>
     </div>
 
@@ -127,15 +127,32 @@
 </main>
 
 <script>
-if (localStorage.getItem("admin_logged_in") !== "true") {
+const LIVE_BACKEND_URL = "https://my-mock-test-platform.onrender.com/api";
+
+function getAdminToken() {
+  return localStorage.getItem("token") ||
+         localStorage.getItem("adminToken") ||
+         localStorage.getItem("authToken");
+}
+
+function adminHeaders() {
+  const token = getAdminToken();
+
+  return {
+    "Content-Type": "application/json",
+    "Authorization": `Bearer ${token}`
+  };
+}
+
+if (localStorage.getItem("admin_logged_in") !== "true" || !getAdminToken()) {
+  alert("Admin session expired. Please login again.");
   window.location.href = "admin-login.html";
 }
 
-const pdfjsLib = window['pdfjs-dist/build/pdf'];
+const pdfjsLib = window["pdfjs-dist/build/pdf"];
 pdfjsLib.GlobalWorkerOptions.workerSrc =
-  'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
+  "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js";
 
-const LIVE_BACKEND_URL = 'https://my-mock-test-platform.onrender.com/api';
 let allQuestions = [];
 
 function getSelectedExam() {
@@ -143,17 +160,7 @@ function getSelectedExam() {
 }
 
 function getExamLabel() {
-  const exam = getSelectedExam();
-
-  if (exam === "NTPC") return "RRB NTPC Free";
-  if (exam === "GROUP_D") return "RRB Group-D Free";
-  if (exam === "GROUP_2") return "AP Group-2 Free";
-
-  if (exam === "NTPC_PREMIUM") return "RRB NTPC Premium";
-  if (exam === "GROUP_D_PREMIUM") return "RRB Group-D Premium";
-  if (exam === "GROUP_2_PREMIUM") return "AP Group-2 Premium";
-
-  return exam;
+  return getSelectedExam();
 }
 
 /* QUESTION COUNTER */
@@ -162,7 +169,8 @@ async function loadQuestionCount() {
     const exam = getSelectedExam();
 
     const response = await fetch(
-      `${LIVE_BACKEND_URL}/tests/admin/questions?exam=${exam}`
+      `${LIVE_BACKEND_URL}/tests/admin/questions?exam=${exam}`,
+      { headers: adminHeaders() }
     );
 
     const data = await response.json();
@@ -172,7 +180,7 @@ async function loadQuestionCount() {
         `${getExamLabel()} Questions: ${data.length}`;
     } else {
       document.getElementById("questionCountDisplay").textContent =
-        "Total Questions: Unable to load";
+        data.error || "Total Questions: Unable to load";
     }
 
   } catch (err) {
@@ -183,9 +191,9 @@ async function loadQuestionCount() {
 }
 
 /* READ PDF */
-document.getElementById('readPdfBtn').addEventListener('click', async () => {
-  const fileInput = document.getElementById('pdfFileInput');
-  const consoleArea = document.getElementById('editorConsole');
+document.getElementById("readPdfBtn").addEventListener("click", async () => {
+  const fileInput = document.getElementById("pdfFileInput");
+  const consoleArea = document.getElementById("editorConsole");
 
   if (fileInput.files.length === 0) {
     alert("Please choose PDF first.");
@@ -296,8 +304,8 @@ function parseQuestions(text) {
 }
 
 /* CONVERT */
-document.getElementById('smartParseBtn').addEventListener('click', () => {
-  const consoleArea = document.getElementById('editorConsole');
+document.getElementById("smartParseBtn").addEventListener("click", () => {
+  const consoleArea = document.getElementById("editorConsole");
   const text = consoleArea.value.trim();
 
   if (!text) {
@@ -317,8 +325,8 @@ document.getElementById('smartParseBtn').addEventListener('click', () => {
 });
 
 /* BULK UPLOAD */
-document.getElementById('executeUploadBtn').addEventListener('click', async () => {
-  const consoleArea = document.getElementById('editorConsole');
+document.getElementById("executeUploadBtn").addEventListener("click", async () => {
+  const consoleArea = document.getElementById("editorConsole");
   const examType = getSelectedExam();
 
   let questionsArray;
@@ -343,9 +351,7 @@ document.getElementById('executeUploadBtn').addEventListener('click', async () =
   try {
     const response = await fetch(`${LIVE_BACKEND_URL}/tests/bulk-questions`, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
+      headers: adminHeaders(),
       body: JSON.stringify({
         examType,
         questionsArray
@@ -370,7 +376,7 @@ document.getElementById('executeUploadBtn').addEventListener('click', async () =
 });
 
 /* DELETE SELECTED EXAM QUESTIONS */
-document.getElementById('deleteAllBtn').addEventListener('click', async () => {
+document.getElementById("deleteAllBtn").addEventListener("click", async () => {
   const exam = getSelectedExam();
 
   const confirmDelete = confirm(
@@ -383,7 +389,8 @@ document.getElementById('deleteAllBtn').addEventListener('click', async () => {
     const response = await fetch(
       `${LIVE_BACKEND_URL}/tests/questions/delete-all?exam=${exam}`,
       {
-        method: "DELETE"
+        method: "DELETE",
+        headers: adminHeaders()
       }
     );
 
@@ -409,7 +416,8 @@ async function loadQuestionsPreview() {
     const exam = getSelectedExam();
 
     const response = await fetch(
-      `${LIVE_BACKEND_URL}/tests/admin/questions?exam=${exam}`
+      `${LIVE_BACKEND_URL}/tests/admin/questions?exam=${exam}`,
+      { headers: adminHeaders() }
     );
 
     const data = await response.json();
@@ -488,9 +496,7 @@ async function updateQuestion(id) {
   try {
     const response = await fetch(`${LIVE_BACKEND_URL}/tests/admin/questions/${id}`, {
       method: "PUT",
-      headers: {
-        "Content-Type": "application/json"
-      },
+      headers: adminHeaders(),
       body: JSON.stringify({
         examType,
         question,
@@ -525,7 +531,8 @@ async function deleteSingleQuestion(id) {
     const response = await fetch(
       `${LIVE_BACKEND_URL}/tests/admin/questions/${id}`,
       {
-        method: "DELETE"
+        method: "DELETE",
+        headers: adminHeaders()
       }
     );
 
@@ -565,13 +572,14 @@ async function loadAdminResults() {
 
   try {
     const response = await fetch(
-      `${LIVE_BACKEND_URL}/tests/admin/results?exam=${exam}`
+      `${LIVE_BACKEND_URL}/tests/admin/results?exam=${exam}`,
+      { headers: adminHeaders() }
     );
 
     const results = await response.json();
 
     if (!response.ok) {
-      container.innerHTML = "Failed to load results.";
+      container.innerHTML = results.error || "Failed to load results.";
       return;
     }
 
@@ -611,7 +619,8 @@ async function deleteSingleResult(id) {
 
   try {
     const response = await fetch(`${LIVE_BACKEND_URL}/tests/admin/results/${id}`, {
-      method: "DELETE"
+      method: "DELETE",
+      headers: adminHeaders()
     });
 
     const data = await response.json();
@@ -636,7 +645,8 @@ async function loadAdminAnalytics() {
     const exam = getSelectedExam();
 
     const response = await fetch(
-      `${LIVE_BACKEND_URL}/tests/admin/results?exam=${exam}`
+      `${LIVE_BACKEND_URL}/tests/admin/results?exam=${exam}`,
+      { headers: adminHeaders() }
     );
 
     const results = await response.json();
@@ -690,6 +700,10 @@ document.getElementById("examType").addEventListener("change", async () => {
 /* ADMIN LOGOUT */
 document.getElementById("adminLogoutBtn").addEventListener("click", () => {
   localStorage.removeItem("admin_logged_in");
+  localStorage.removeItem("token");
+  localStorage.removeItem("adminToken");
+  localStorage.removeItem("authToken");
+
   alert("Admin logged out successfully.");
   window.location.href = "admin-login.html";
 });
