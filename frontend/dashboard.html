@@ -379,6 +379,7 @@ async function loadExamCards() {
       </div>`;
   }
 }
+});
 
 function toggleFolder(prefix) {
   const folder = document.getElementById(`folder-${prefix}`);
@@ -391,7 +392,6 @@ function toggleFolder(prefix) {
 
   await loadPremiumStatus();
   await loadExamCards();
-});
 </script>
 
 </body>
