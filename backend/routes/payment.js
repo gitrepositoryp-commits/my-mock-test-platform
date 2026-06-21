@@ -1,3 +1,4 @@
+const Payment = require("../models/Payment");
 const express = require("express");
 const Razorpay = require("razorpay");
 const crypto = require("crypto");
@@ -64,6 +65,16 @@ router.post("/verify-payment", async (req, res) => {
     if (!user) {
       return res.status(404).json({ error: "User not found" });
     }
+    await Payment.create({
+  userId: user._id,
+  razorpayOrderId: razorpay_order_id,
+  razorpayPaymentId: razorpay_payment_id,
+  amount: 79,
+  currency: "INR",
+  status: "success",
+  premiumStartedAt: startedAt,
+  premiumExpiresAt: expiresAt
+});
 
     res.status(200).json({
       message: "Payment verified and premium activated",
