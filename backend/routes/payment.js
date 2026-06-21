@@ -2,6 +2,7 @@ const Payment = require("../models/Payment");
 const express = require("express");
 const Razorpay = require("razorpay");
 const crypto = require("crypto");
+const nodemailer = require("nodemailer");
 const User = require("../models/User");
 
 const router = express.Router();
@@ -9,6 +10,13 @@ const router = express.Router();
 const razorpay = new Razorpay({
   key_id: process.env.RAZORPAY_KEY_ID,
   key_secret: process.env.RAZORPAY_KEY_SECRET
+});
+const transporter = nodemailer.createTransport({
+  service: "gmail",
+  auth: {
+    user: process.env.EMAIL_USER,
+    pass: process.env.EMAIL_PASS
+  }
 });
 
 router.post("/create-order", async (req, res) => {
@@ -74,6 +82,33 @@ router.post("/verify-payment", async (req, res) => {
   status: "success",
   premiumStartedAt: startedAt,
   premiumExpiresAt: expiresAt
+});
+await transporter.sendMail({
+  from: process.env.EMAIL_USER,
+  to: user.email,
+  subject: "RRB EDU Premium Activated Successfully",
+  html: `
+    <h2>Premium Membership Activated ✅</h2>
+
+    <p>Hello ${user.username},</p>
+
+    <p>Your RRB EDU Premium Membership has been activated successfully.</p>
+
+    <hr>
+
+    <p><strong>Payment ID:</strong> ${razorpay_payment_id}</p>
+
+    <p><strong>Amount:</strong> ₹79</p>
+
+    <p><strong>Premium Valid Until:</strong>
+    ${expiresAt.toLocaleDateString()}</p>
+
+    <hr>
+
+    <p>Thank you for choosing RRB EDU.</p>
+
+    <p>Website: https://rrbedu.online</p>
+  `
 });
 
     res.status(200).json({
