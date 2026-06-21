@@ -87,5 +87,19 @@ router.post("/verify-payment", async (req, res) => {
     res.status(500).json({ error: "Payment verification failed" });
   }
 });
+router.get("/admin/payments", async (req, res) => {
+  try {
+    const payments = await Payment.find()
+      .populate("userId", "username email")
+      .sort({ createdAt: -1 });
 
+    res.status(200).json(payments);
+
+  } catch (err) {
+    console.error("ADMIN PAYMENTS ERROR:", err);
+    res.status(500).json({
+      error: "Failed to load payments"
+    });
+  }
+});
 module.exports = router;
