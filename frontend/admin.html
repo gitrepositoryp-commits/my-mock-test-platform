@@ -104,6 +104,15 @@
       </button>
       <div id="resultsContainer" style="margin-top:20px;"></div>
     </div>
+    <div class="card" style="margin-top:20px;padding:20px;">
+  <h3>💰 Premium Payments</h3>
+
+  <button id="loadPaymentsBtn" class="btn" style="background:#16a34a;margin-top:10px;">
+    Load Payments
+  </button>
+
+  <div id="paymentsContainer" style="margin-top:20px;"></div>
+</div>
 
     <div class="card" style="margin-top:20px;padding:20px;">
       <h3>🔍 Search Questions</h3>
@@ -721,6 +730,71 @@ document.getElementById("adminLogoutBtn").addEventListener("click", () => {
   alert("Admin logged out successfully.");
   window.location.href = "admin-login.html";
 });
+
+//load payments//
+
+async function loadPayments() {
+  const container = document.getElementById("paymentsContainer");
+
+  container.innerHTML = "Loading payments...";
+
+  try {
+    const response = await fetch(
+      `${LIVE_BACKEND_URL}/payment/admin/payments`,
+      {
+        headers: adminHeaders()
+      }
+    );
+
+    const payments = await response.json();
+
+    if (!response.ok) {
+      container.innerHTML = payments.error || "Failed to load payments.";
+      return;
+    }
+
+    if (payments.length === 0) {
+      container.innerHTML = `
+        <div style="padding:15px;background:#f8fafc;border-radius:8px;">
+          No payment records found yet.
+        </div>
+      `;
+      return;
+    }
+
+    container.innerHTML = payments.map((p, index) => `
+      <div style="border:1px solid #ddd;padding:12px;margin-bottom:12px;border-radius:8px;">
+        <h4>#${index + 1}</h4>
+
+        <p><strong>Student:</strong> ${p.userId?.username || "Unknown"}</p>
+
+        <p><strong>Email:</strong> ${p.userId?.email || "N/A"}</p>
+
+        <p><strong>Amount:</strong> ₹${p.amount}</p>
+
+        <p><strong>Status:</strong> ${p.status}</p>
+
+        <p><strong>Payment ID:</strong> ${p.razorpayPaymentId}</p>
+
+        <p><strong>Expiry:</strong>
+          ${new Date(p.premiumExpiresAt).toLocaleDateString()}
+        </p>
+
+        <p><strong>Date:</strong>
+          ${new Date(p.createdAt).toLocaleString()}
+        </p>
+      </div>
+    `).join("");
+
+  } catch (err) {
+    console.error("PAYMENTS ERROR:", err);
+    container.innerHTML = "Network error while loading payments.";
+  }
+}
+
+document
+  .getElementById("loadPaymentsBtn")
+  .addEventListener("click", loadPayments);
 
 /* AUTO LOAD */
 loadQuestionCount();
