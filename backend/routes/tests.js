@@ -130,6 +130,32 @@ function hasValidPremium(user) {
   return new Date(user.premiumExpiresAt) > new Date();
 }
 
+function getMonthRange() {
+  const now = new Date();
+
+  const start = new Date(now.getFullYear(), now.getMonth(), 1);
+  const end = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+
+  return { start, end };
+}
+
+async function getMonthlyAttemptCount(userId, examType) {
+  const { start, end } = getMonthRange();
+
+  return await Result.countDocuments({
+    userId,
+    examType,
+    createdAt: {
+      $gte: start,
+      $lt: end
+    }
+  });
+}
+
+function getAttemptLimit(user) {
+  return user.isPremium ? 10 : 3;
+}
+
 /* =========================
    ADMIN: ADD SINGLE QUESTION
 ========================= */
@@ -254,6 +280,16 @@ router.get("/questions", protect, async (req, res) => {
         error: "Premium subscription required."
       });
     }
+    const monthlyAttempts = await getMonthlyAttemptCount(req.user.id, examType);
+const attemptLimit = getAttemptLimit(req.user);
+
+if (monthlyAttempts >= attemptLimit) {
+  return res.status(403).json({
+    error: `Monthly attempt limit reached. You can attempt this mock ${attemptLimit} times per month.`,
+    attemptsUsed: monthlyAttempts,
+    attemptLimit
+  });
+}
 
     const databaseQuestions = await Question.find(
       { examType },
