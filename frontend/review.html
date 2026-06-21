@@ -5,27 +5,35 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Review Answers</title>
   <link rel="stylesheet" href="style.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 </head>
 
 <body>
 
 <nav>
   <div class="container nav-container">
-    <a href="dashboard.html" class="logo">MockExam Pro (Review)</a>
-    <button onclick="window.location.href='./result.html'" class="btn" style="width:auto; padding:5px 15px;">Back to Result</button>
+    <a href="dashboard.html" class="logo">RRB EDU Review</a>
+    <div style="display:flex;gap:10px;">
+      <button onclick="window.location.href='results-history.html'" class="btn" style="width:auto;padding:5px 15px;">History</button>
+      <button onclick="window.location.href='dashboard.html'" class="btn" style="width:auto;padding:5px 15px;">Dashboard</button>
+    </div>
   </div>
 </nav>
 
-<main class="container" style="max-width:900px; margin-top:40px;">
+<main class="container" style="max-width:900px;margin-top:40px;">
 
   <div class="card" style="margin-bottom:25px;">
     <h2>Question-by-Question Review</h2>
-    <p style="color:#64748b; margin-top:5px;">
+    <p style="color:#64748b;margin-top:5px;">
       Green = Correct, Red = Wrong, Gray = Unanswered.
     </p>
+
+    <button id="downloadPdfBtn" class="btn" style="background:#16a34a;width:auto;margin-top:15px;display:none;">
+      Download Answer Sheet PDF
+    </button>
   </div>
 
-  <div id="summaryBox" class="card" style="display:grid; grid-template-columns:repeat(3, 1fr); gap:15px; margin-bottom:25px; text-align:center;">
+  <div id="summaryBox" class="card" style="display:grid;grid-template-columns:repeat(3,1fr);gap:15px;margin-bottom:25px;text-align:center;">
     <div>
       <h3 id="correctCount" style="color:green;">0</h3>
       <p>Correct</p>
@@ -41,7 +49,7 @@
   </div>
 
   <div id="reviewContainer">
-    <div style="text-align:center; padding:30px; color:#64748b;">
+    <div style="text-align:center;padding:30px;color:#64748b;">
       Loading review...
     </div>
   </div>
@@ -49,23 +57,50 @@
 </main>
 
 <script>
-document.addEventListener('DOMContentLoaded', async () => {
+let loadedResultData = null;
+let loadedBreakdown = [];
+
+function getExamName(examType) {
+  if (!examType) return "Mock Test";
+
+  if (examType.startsWith("NTPC_PG_FREE_")) return `RRB NTPC Graduate Free Mock Test - ${examType.split("_").pop()}`;
+  if (examType.startsWith("NTPC_PG_PREMIUM_")) return `RRB NTPC Graduate Premium Mock Test - ${examType.split("_").pop()}`;
+
+  if (examType.startsWith("NTPC_UG_FREE_")) return `RRB NTPC Undergraduate Free Mock Test - ${examType.split("_").pop()}`;
+  if (examType.startsWith("NTPC_UG_PREMIUM_")) return `RRB NTPC Undergraduate Premium Mock Test - ${examType.split("_").pop()}`;
+
+  if (examType.startsWith("ALP_FREE_")) return `RRB ALP Free Mock Test - ${examType.split("_").pop()}`;
+  if (examType.startsWith("ALP_PREMIUM_")) return `RRB ALP Premium Mock Test - ${examType.split("_").pop()}`;
+
+  if (examType.startsWith("TECH_G1_FREE_")) return `Technician Grade-1 Free Mock Test - ${examType.split("_").pop()}`;
+  if (examType.startsWith("TECH_G1_PREMIUM_")) return `Technician Grade-1 Premium Mock Test - ${examType.split("_").pop()}`;
+
+  if (examType.startsWith("TECH_G3_FREE_")) return `Technician Grade-3 Free Mock Test - ${examType.split("_").pop()}`;
+  if (examType.startsWith("TECH_G3_PREMIUM_")) return `Technician Grade-3 Premium Mock Test - ${examType.split("_").pop()}`;
+
+  if (examType.startsWith("GROUP_D_FREE_")) return `RRB Group-D Free Mock Test - ${examType.split("_").pop()}`;
+  if (examType.startsWith("GROUP_D_PREMIUM_")) return `RRB Group-D Premium Mock Test - ${examType.split("_").pop()}`;
+
+  return examType;
+}
+
+document.addEventListener("DOMContentLoaded", async () => {
   const urlParams = new URLSearchParams(window.location.search);
-  const resultId = urlParams.get('id') || localStorage.getItem('last_result_id');
-  const token = localStorage.getItem('mock_test_token');
-  const container = document.getElementById('reviewContainer');
+  const resultId = urlParams.get("id") || localStorage.getItem("last_result_id");
+  const token = localStorage.getItem("mock_test_token");
+  const container = document.getElementById("reviewContainer");
 
   if (!token) {
-    window.location.href = 'login.html';
+    window.location.href = "login.html";
     return;
   }
 
   if (!resultId || resultId === "session_saved") {
     container.innerHTML = `
-      <div class="card" style="text-align:center; border-left:6px solid red;">
+      <div class="card" style="text-align:center;border-left:6px solid red;">
         <h3>Review Data Missing</h3>
-        <p>Please open review from your result page.</p>
-        <button onclick="window.location.href='dashboard.html'" class="btn" style="width:auto; margin-top:15px;">Dashboard</button>
+        <p>Please open review from your result history page.</p>
+        <button onclick="window.location.href='results-history.html'" class="btn" style="width:auto;margin-top:15px;">History</button>
       </div>
     `;
     return;
@@ -74,7 +109,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   try {
     const response = await fetch(`https://my-mock-test-platform.onrender.com/api/tests/result/${resultId}`, {
       headers: {
-        'Authorization': `Bearer ${token}`
+        Authorization: `Bearer ${token}`
       }
     });
 
@@ -82,70 +117,69 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     if (!response.ok || !data.answersBreakdown) {
       container.innerHTML = `
-        <div class="card" style="color:red; border-left:6px solid red;">
+        <div class="card" style="color:red;border-left:6px solid red;">
           Failed to load review details.
         </div>
       `;
       return;
     }
 
-    const breakdown = data.answersBreakdown;
+    loadedResultData = data;
+    loadedBreakdown = data.answersBreakdown;
 
-    const correct = breakdown.filter(q => q.isCorrect).length;
-    const unanswered = breakdown.filter(q => !q.selectedAnswer).length;
-    const wrong = breakdown.length - correct - unanswered;
+    const correct = loadedBreakdown.filter(q => q.isCorrect).length;
+    const unanswered = loadedBreakdown.filter(q => !q.selectedAnswer).length;
+    const wrong = loadedBreakdown.length - correct - unanswered;
 
-    document.getElementById('correctCount').textContent = correct;
-    document.getElementById('wrongCount').textContent = wrong;
-    document.getElementById('unansweredCount').textContent = unanswered;
+    document.getElementById("correctCount").textContent = correct;
+    document.getElementById("wrongCount").textContent = wrong;
+    document.getElementById("unansweredCount").textContent = unanswered;
+    document.getElementById("downloadPdfBtn").style.display = "inline-block";
 
-    container.innerHTML = '';
+    container.innerHTML = "";
 
-    breakdown.forEach((item, index) => {
+    loadedBreakdown.forEach((item, index) => {
       const isUnanswered = !item.selectedAnswer;
 
-      const card = document.createElement('div');
-      card.className = 'card';
-      card.style.padding = '20px';
-      card.style.margin = '18px 0';
+      const card = document.createElement("div");
+      card.className = "card";
+      card.style.padding = "20px";
+      card.style.margin = "18px 0";
 
       if (item.isCorrect) {
-        card.style.borderLeft = '6px solid green';
-        card.style.background = '#f0fdf4';
+        card.style.borderLeft = "6px solid green";
+        card.style.background = "#f0fdf4";
       } else if (isUnanswered) {
-        card.style.borderLeft = '6px solid #64748b';
-        card.style.background = '#f8fafc';
+        card.style.borderLeft = "6px solid #64748b";
+        card.style.background = "#f8fafc";
       } else {
-        card.style.borderLeft = '6px solid red';
-        card.style.background = '#fef2f2';
+        card.style.borderLeft = "6px solid red";
+        card.style.background = "#fef2f2";
       }
 
       card.innerHTML = `
-        <h3 style="font-size:18px; margin-bottom:12px;">
+        <h3 style="font-size:18px;margin-bottom:12px;">
           Q${index + 1}. ${item.questionText}
         </h3>
 
-        <p>
-          <strong>Status:</strong>
+        <p><strong>Status:</strong>
           ${
             item.isCorrect
-              ? '<span style="color:green; font-weight:bold;">Correct ✅</span>'
+              ? '<span style="color:green;font-weight:bold;">Correct ✅</span>'
               : isUnanswered
-                ? '<span style="color:#475569; font-weight:bold;">Unanswered ⚪</span>'
-                : '<span style="color:red; font-weight:bold;">Wrong ❌</span>'
+                ? '<span style="color:#475569;font-weight:bold;">Unanswered ⚪</span>'
+                : '<span style="color:red;font-weight:bold;">Wrong ❌</span>'
           }
         </p>
 
-        <p>
-          <strong>Your Answer:</strong>
-          <span style="font-weight:bold; color:${item.isCorrect ? 'green' : isUnanswered ? '#475569' : 'red'};">
-            ${item.selectedAnswer || 'Not Answered'}
+        <p><strong>Your Answer:</strong>
+          <span style="font-weight:bold;color:${item.isCorrect ? 'green' : isUnanswered ? '#475569' : 'red'};">
+            ${item.selectedAnswer || "Not Answered"}
           </span>
         </p>
 
-        <p>
-          <strong>Correct Answer:</strong>
-          <span style="font-weight:bold; color:green;">
+        <p><strong>Correct Answer:</strong>
+          <span style="font-weight:bold;color:green;">
             ${item.correctAnswer}
           </span>
         </p>
@@ -157,11 +191,70 @@ document.addEventListener('DOMContentLoaded', async () => {
   } catch (err) {
     console.error("Review error:", err);
     container.innerHTML = `
-      <div class="card" style="color:red; border-left:6px solid red;">
+      <div class="card" style="color:red;border-left:6px solid red;">
         Network error while loading review.
       </div>
     `;
   }
+});
+
+document.getElementById("downloadPdfBtn").addEventListener("click", () => {
+  if (!loadedResultData || !loadedBreakdown.length) {
+    alert("Review data not loaded yet.");
+    return;
+  }
+
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF();
+
+  let username = "Student";
+  try {
+    const userData = JSON.parse(localStorage.getItem("mock_test_user"));
+    username = userData?.username || "Student";
+  } catch (e) {}
+
+  const examName = getExamName(loadedResultData.examType);
+  const correct = loadedBreakdown.filter(q => q.isCorrect).length;
+  const unanswered = loadedBreakdown.filter(q => !q.selectedAnswer).length;
+  const wrong = loadedBreakdown.length - correct - unanswered;
+
+  let y = 15;
+
+  doc.setFontSize(16);
+  doc.text("RRB EDU - Answer Sheet Review", 105, y, { align: "center" });
+
+  y += 12;
+  doc.setFontSize(11);
+  doc.text(`Student: ${username}`, 15, y); y += 7;
+  doc.text(`Exam: ${examName}`, 15, y); y += 7;
+  doc.text(`Score: ${loadedResultData.score} / ${loadedResultData.totalQuestions}`, 15, y); y += 7;
+  doc.text(`Percentage: ${loadedResultData.percentage}%`, 15, y); y += 7;
+  doc.text(`Correct: ${correct} | Wrong: ${wrong} | Unanswered: ${unanswered}`, 15, y); y += 10;
+
+  loadedBreakdown.forEach((item, index) => {
+    const status = item.isCorrect
+      ? "Correct"
+      : !item.selectedAnswer
+        ? "Unanswered"
+        : "Wrong";
+
+    const lines = doc.splitTextToSize(`Q${index + 1}. ${item.questionText}`, 180);
+
+    if (y + lines.length * 6 + 25 > 280) {
+      doc.addPage();
+      y = 15;
+    }
+
+    doc.setFontSize(10);
+    doc.text(lines, 15, y);
+    y += lines.length * 6;
+
+    doc.text(`Status: ${status}`, 15, y); y += 6;
+    doc.text(`Your Answer: ${item.selectedAnswer || "Not Answered"}`, 15, y); y += 6;
+    doc.text(`Correct Answer: ${item.correctAnswer || ""}`, 15, y); y += 9;
+  });
+
+  doc.save("RRB_EDU_Answer_Sheet.pdf");
 });
 </script>
 
