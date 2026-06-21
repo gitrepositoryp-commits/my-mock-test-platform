@@ -100,7 +100,11 @@ document.addEventListener("DOMContentLoaded", async () => {
   }
 
   try {
-    const response = await fetch(`${API_BASE}/tests/admin/results`);
+    const response = await fetch(`${API_BASE}/tests/my-results`, {
+  headers: {
+    Authorization: `Bearer ${token}`
+  }
+});
     const results = await response.json();
     const user = JSON.parse(userData);
 
@@ -112,9 +116,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       return;
     }
 
-    allResults = results.filter(
-      r => r.userId?._id === user.id
-    );
+   allResults = results;
 
     renderResults(allResults);
 
