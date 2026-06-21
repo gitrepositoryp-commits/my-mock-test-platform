@@ -27,9 +27,7 @@
 
   <div class="card" style="margin-bottom:30px;">
     <h2 id="welcomeGreeting">Welcome back, Student! 👋</h2>
-    <p style="color:#64748b;margin-top:5px;">
-      Choose your exam folder and start mock tests.
-    </p>
+    <p style="color:#64748b;margin-top:5px;">Choose your exam folder and start mock tests.</p>
   </div>
 
   <div class="card" style="margin-bottom:30px;border-left:6px solid #f59e0b;">
@@ -68,9 +66,7 @@
   <h2>📁 RRB Exam Folders</h2>
 
   <div id="availableTestsContainer" style="margin-top:20px;">
-    <div style="padding:20px;text-align:center;color:#64748b;">
-      Loading exam folders...
-    </div>
+    <div style="padding:20px;text-align:center;color:#64748b;">Loading exam folders...</div>
   </div>
 
 </main>
@@ -138,35 +134,26 @@ document.addEventListener("DOMContentLoaded", async () => {
 
       if (response.ok && data.isPremium) {
         userIsPremium = true;
-
         document.getElementById("premiumCard").textContent = "ACTIVE";
         document.getElementById("premiumCard").style.color = "green";
         document.getElementById("premiumStatusText").textContent = "✅ Premium Active";
         document.getElementById("premiumStatusText").style.color = "green";
         document.getElementById("premiumExpiryText").textContent =
-          data.premiumExpiresAt
-            ? `Expires on: ${new Date(data.premiumExpiresAt).toLocaleDateString()}`
-            : "";
-
+          data.premiumExpiresAt ? `Expires on: ${new Date(data.premiumExpiresAt).toLocaleDateString()}` : "";
         document.getElementById("activatePremiumBtn").style.display = "none";
-
       } else {
         userIsPremium = false;
-
         document.getElementById("premiumCard").textContent = "FREE";
         document.getElementById("premiumCard").style.color = "red";
         document.getElementById("premiumStatusText").textContent = "❌ Free Account";
         document.getElementById("premiumStatusText").style.color = "red";
-        document.getElementById("premiumExpiryText").textContent =
-          "Upgrade to unlock premium mock tests.";
-
+        document.getElementById("premiumExpiryText").textContent = "Upgrade to unlock premium mock tests.";
         document.getElementById("activatePremiumBtn").style.display = "inline-block";
       }
 
     } catch (err) {
       console.error("PREMIUM STATUS ERROR:", err);
-      document.getElementById("premiumStatusText").textContent =
-        "Unable to check premium status.";
+      document.getElementById("premiumStatusText").textContent = "Unable to check premium status.";
     }
   }
 
@@ -238,21 +225,6 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
   });
 
-  async function getCount(examType) {
-    try {
-      const response = await fetch(`${API_BASE}/tests/count/${examType}`);
-      const data = await response.json();
-
-      return response.ok && typeof data.count === "number"
-        ? data.count
-        : 0;
-
-    } catch (err) {
-      console.error("COUNT ERROR:", examType, err);
-      return 0;
-    }
-  }
-
   function renderFolders() {
     let html = "";
 
@@ -285,7 +257,6 @@ document.addEventListener("DOMContentLoaded", async () => {
     const totalText = document.getElementById(`folder-total-${prefix}`);
 
     if (!folderBox || !totalText) return;
-
     if (loadedFolders[prefix]) return;
 
     folderBox.innerHTML = `
@@ -294,26 +265,37 @@ document.addEventListener("DOMContentLoaded", async () => {
       </div>
     `;
 
+    let counts = {};
+
+    try {
+      const response = await fetch(`${API_BASE}/tests/folder-counts/${prefix}`);
+      const data = await response.json();
+
+      if (response.ok && data.counts) {
+        counts = data.counts;
+      }
+    } catch (err) {
+      console.error("FOLDER COUNT ERROR:", err);
+    }
+
     const mocks = [];
 
     for (let i = 1; i <= 3; i++) {
       const examType = `${prefix}_FREE_${i}`;
-      const count = await getCount(examType);
       mocks.push({
         examType,
         title: `Free Mock Test - ${i}`,
-        count,
+        count: counts[examType] || 0,
         premium: false
       });
     }
 
     for (let i = 1; i <= 30; i++) {
       const examType = `${prefix}_PREMIUM_${i}`;
-      const count = await getCount(examType);
       mocks.push({
         examType,
         title: `🔒 Premium Mock Test - ${i}`,
-        count,
+        count: counts[examType] || 0,
         premium: true
       });
     }
