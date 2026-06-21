@@ -177,7 +177,56 @@ router.post("/questions", adminProtect, async (req, res) => {
 /* =========================
    PUBLIC: QUESTION COUNT ONLY
 ========================= */
+router.get("/folder-counts/:prefix", async (req, res) => {
+  try {
+    const prefix = req.params.prefix;
 
+    const examTypes = [];
+
+    for (let i = 1; i <= 3; i++) {
+      examTypes.push(`${prefix}_FREE_${i}`);
+    }
+
+    for (let i = 1; i <= 30; i++) {
+      examTypes.push(`${prefix}_PREMIUM_${i}`);
+    }
+
+    const counts = await Question.aggregate([
+      {
+        $match: {
+          examType: { $in: examTypes }
+        }
+      },
+      {
+        $group: {
+          _id: "$examType",
+          count: { $sum: 1 }
+        }
+      }
+    ]);
+
+    const result = {};
+
+    examTypes.forEach((type) => {
+      result[type] = 0;
+    });
+
+    counts.forEach((item) => {
+      result[item._id] = item.count;
+    });
+
+    res.json({
+      prefix,
+      counts: result
+    });
+
+  } catch (err) {
+    console.error("FOLDER COUNT ERROR:", err.message);
+    res.status(500).json({
+      error: "Failed to load folder counts."
+    });
+  }
+});
 router.get("/count/:examType", async (req, res) => {
   try {
     const examType = req.params.examType;
