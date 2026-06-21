@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Student Control Center - Dashboard</title>
+  <title>Student Dashboard</title>
   <link rel="stylesheet" href="style.css">
   <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
 </head>
@@ -12,13 +12,13 @@
 
 <nav>
   <div class="container nav-container">
-    <a href="dashboard.html" class="logo">MockExam Pro (Dashboard)</a>
+    <a href="dashboard.html" class="logo">RRB EDU Dashboard</a>
 
-    <div style="display:flex; gap:10px; flex-wrap:wrap;">
-      <a href="leaderboard.html" class="btn" style="width:auto; padding:8px 15px; background:#1e293b; text-decoration:none;">Leaderboard</a>
-      <a href="profile.html" class="btn" style="width:auto; padding:8px 15px; background:#7c3aed; text-decoration:none;">Profile</a>
-      <a href="results-history.html" class="btn" style="width:auto; padding:8px 15px; background:#0f766e; text-decoration:none;">History</a>
-      <button id="logoutBtn" class="btn" style="width:auto; padding:8px 15px; background:var(--error);">Log Out</button>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;">
+      <a href="leaderboard.html" class="btn" style="width:auto;padding:8px 15px;background:#1e293b;text-decoration:none;">Leaderboard</a>
+      <a href="profile.html" class="btn" style="width:auto;padding:8px 15px;background:#7c3aed;text-decoration:none;">Profile</a>
+      <a href="results-history.html" class="btn" style="width:auto;padding:8px 15px;background:#0f766e;text-decoration:none;">History</a>
+      <button id="logoutBtn" class="btn" style="width:auto;padding:8px 15px;background:var(--error);">Log Out</button>
     </div>
   </div>
 </nav>
@@ -27,17 +27,17 @@
 
   <div class="card" style="margin-bottom:30px;">
     <h2 id="welcomeGreeting">Welcome back, Student! 👋</h2>
-    <p style="color:#64748b; margin-top:5px;">
-      Manage your profile, browse current testing windows, and track performance scores.
+    <p style="color:#64748b;margin-top:5px;">
+      Choose your exam folder and start mock tests.
     </p>
   </div>
 
-  <div class="card" style="margin-bottom:30px; border-left:6px solid #f59e0b;">
+  <div class="card" style="margin-bottom:30px;border-left:6px solid #f59e0b;">
     <h2>Premium Status</h2>
 
-    <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:20px; margin:20px 0 30px;">
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:20px;margin:20px 0 30px;">
       <div class="card">
-        <h3>📚 Questions</h3>
+        <h3>📚 Loaded Questions</h3>
         <h1 id="questionCountCard">0</h1>
       </div>
 
@@ -57,18 +57,18 @@
       </div>
     </div>
 
-    <p id="premiumStatusText" style="margin-top:10px; font-weight:bold;">Checking premium status...</p>
+    <p id="premiumStatusText" style="margin-top:10px;font-weight:bold;">Checking premium status...</p>
     <p id="premiumExpiryText" style="color:#64748b;"></p>
 
-    <button id="activatePremiumBtn" class="btn" style="background:#16a34a; margin-top:15px;">
+    <button id="activatePremiumBtn" class="btn" style="background:#16a34a;margin-top:15px;">
       Upgrade Premium ₹79 / 30 Days
     </button>
   </div>
 
-  <h2>Available Mock Evaluations</h2>
+  <h2>📁 RRB Exam Folders</h2>
 
   <div id="availableTestsContainer" style="margin-top:20px;">
-    <div style="padding:20px; text-align:center; color:#64748b;">
+    <div style="padding:20px;text-align:center;color:#64748b;">
       Loading exam folders...
     </div>
   </div>
@@ -85,6 +85,17 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   let currentUser = null;
   let userIsPremium = false;
+  let totalLoadedQuestions = 0;
+  const loadedFolders = {};
+
+  const folders = [
+    { title: "RRB NTPC Graduate", icon: "🎓", prefix: "NTPC_PG" },
+    { title: "RRB NTPC Undergraduate", icon: "📘", prefix: "NTPC_UG" },
+    { title: "RRB ALP", icon: "🚂", prefix: "ALP" },
+    { title: "Technician Grade-1", icon: "🔧", prefix: "TECH_G1" },
+    { title: "Technician Grade-3", icon: "🛠", prefix: "TECH_G3" },
+    { title: "RRB Group-D", icon: "🛤", prefix: "GROUP_D" }
+  ];
 
   function forceLogout() {
     localStorage.removeItem("mock_test_token");
@@ -132,7 +143,6 @@ document.addEventListener("DOMContentLoaded", async () => {
         document.getElementById("premiumCard").style.color = "green";
         document.getElementById("premiumStatusText").textContent = "✅ Premium Active";
         document.getElementById("premiumStatusText").style.color = "green";
-
         document.getElementById("premiumExpiryText").textContent =
           data.premiumExpiresAt
             ? `Expires on: ${new Date(data.premiumExpiresAt).toLocaleDateString()}`
@@ -178,7 +188,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         key: "rzp_live_T2MrPs8NDb7UcH",
         amount: order.amount,
         currency: order.currency,
-        name: "MockExam Pro",
+        name: "RRB EDU",
         description: "Premium Plan - 30 Days",
         order_id: order.id,
 
@@ -200,7 +210,7 @@ document.addEventListener("DOMContentLoaded", async () => {
             if (verifyResponse.ok) {
               alert("Payment successful. Premium activated!");
               await loadPremiumStatus();
-              await loadExamFolders();
+              renderFolders();
             } else {
               alert(verifyData.error || "Payment verification failed.");
             }
@@ -243,145 +253,141 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
   }
 
-  async function loadExamFolders() {
-    try {
-      testContainer.innerHTML = `
-        <div style="padding:20px;text-align:center;color:#64748b;">
-          Loading exam folders...
+  function renderFolders() {
+    let html = "";
+
+    folders.forEach(folder => {
+      html += `
+        <div class="card" style="margin-bottom:25px;padding:0;overflow:hidden;">
+          <div onclick="toggleFolder('${folder.prefix}')"
+            style="cursor:pointer;background:#eef2ff;padding:22px;display:flex;justify-content:space-between;align-items:center;">
+            <div>
+              <h2 style="margin:0;">📁 ${folder.icon} ${folder.title}</h2>
+              <p id="folder-total-${folder.prefix}" style="margin:6px 0 0;color:#2563eb;font-weight:bold;">
+                Click to load mocks
+              </p>
+            </div>
+            <div id="arrow-${folder.prefix}" style="font-size:28px;font-weight:bold;color:#4f46e5;">▼</div>
+          </div>
+
+          <div id="folder-${folder.prefix}" style="display:none;padding:20px;">
+            <div style="padding:15px;color:#64748b;">Open folder to load mock exams...</div>
+          </div>
         </div>
       `;
+    });
 
-      const folders = [
-        { title: "RRB NTPC Graduate", icon: "🎓", prefix: "NTPC_PG" },
-        { title: "RRB NTPC Undergraduate", icon: "📘", prefix: "NTPC_UG" },
-        { title: "RRB ALP", icon: "🚂", prefix: "ALP" },
-        { title: "Technician Grade-1", icon: "🔧", prefix: "TECH_G1" },
-        { title: "Technician Grade-3", icon: "🛠", prefix: "TECH_G3" },
-        { title: "RRB Group-D", icon: "🛤", prefix: "GROUP_D" }
-      ];
+    testContainer.innerHTML = html;
+  }
 
-      let totalQuestions = 0;
-      let html = "";
+  async function loadFolderMocks(prefix) {
+    const folderBox = document.getElementById(`folder-${prefix}`);
+    const totalText = document.getElementById(`folder-total-${prefix}`);
 
-      for (const folder of folders) {
-        const mocks = [];
+    if (!folderBox || !totalText) return;
 
-        for (let i = 1; i <= 3; i++) {
-          const examType = `${folder.prefix}_FREE_${i}`;
-          const count = await getCount(examType);
+    if (loadedFolders[prefix]) return;
 
-          mocks.push({
-            examType,
-            title: `Free Mock Test - ${i}`,
-            count,
-            premium: false
-          });
-        }
+    folderBox.innerHTML = `
+      <div style="padding:15px;text-align:center;color:#64748b;">
+        Loading mocks...
+      </div>
+    `;
 
-        for (let i = 1; i <= 30; i++) {
-          const examType = `${folder.prefix}_PREMIUM_${i}`;
-          const count = await getCount(examType);
+    const mocks = [];
 
-          mocks.push({
-            examType,
-            title: `🔒 Premium Mock Test - ${i}`,
-            count,
-            premium: true
-          });
-        }
+    for (let i = 1; i <= 3; i++) {
+      const examType = `${prefix}_FREE_${i}`;
+      const count = await getCount(examType);
+      mocks.push({
+        examType,
+        title: `Free Mock Test - ${i}`,
+        count,
+        premium: false
+      });
+    }
 
-        const folderTotal = mocks.reduce(
-          (sum, mock) => sum + Number(mock.count || 0),
-          0
-        );
+    for (let i = 1; i <= 30; i++) {
+      const examType = `${prefix}_PREMIUM_${i}`;
+      const count = await getCount(examType);
+      mocks.push({
+        examType,
+        title: `🔒 Premium Mock Test - ${i}`,
+        count,
+        premium: true
+      });
+    }
 
-        totalQuestions += folderTotal;
+    const folderTotal = mocks.reduce((sum, m) => sum + Number(m.count || 0), 0);
+    totalLoadedQuestions += folderTotal;
 
-        html += `
-          <div class="card" style="margin-bottom:25px;padding:0;overflow:hidden;">
-            <div onclick="toggleFolder('${folder.prefix}')"
-              style="cursor:pointer;background:#eef2ff;padding:22px;display:flex;justify-content:space-between;align-items:center;">
-              <div>
-                <h2 style="margin:0;">📁 ${folder.icon} ${folder.title}</h2>
-                <p style="margin:6px 0 0;color:#2563eb;font-weight:bold;">
-                  ${folderTotal} Questions Available
-                </p>
-              </div>
-              <div style="font-size:28px;font-weight:bold;color:#4f46e5;">▼</div>
-            </div>
+    document.getElementById("questionCountCard").textContent = totalLoadedQuestions;
+    totalText.textContent = `${folderTotal} Questions Available`;
 
-            <div id="folder-${folder.prefix}" style="display:none;padding:20px;">
+    let mockHTML = "";
+
+    mocks.forEach(mock => {
+      let actionButton = "";
+
+      if (mock.count <= 0) {
+        actionButton = `
+          <button class="btn" style="background:#94a3b8;width:auto;" disabled>
+            No Questions
+          </button>
         `;
-
-        mocks.forEach((mock) => {
-          let actionButton = "";
-
-          if (mock.count <= 0) {
-            actionButton = `
-              <button class="btn" style="background:#94a3b8;width:auto;" disabled>
-                No Questions
-              </button>
-            `;
-          } else if (mock.premium && !userIsPremium) {
-            actionButton = `
-              <button class="btn" style="background:#f59e0b;width:auto;"
-                onclick="alert('🔒 Premium Membership Required. Upgrade for ₹79 to unlock this mock test.')">
-                🔒 Locked
-              </button>
-            `;
-          } else {
-            actionButton = `
-              <button class="btn" style="width:auto;"
-                onclick="window.location.href='test.html?exam=${mock.examType}'">
-                Attempt Test
-              </button>
-            `;
-          }
-
-          html += `
-            <div style="display:flex;align-items:center;justify-content:space-between;gap:20px;padding:15px;border:1px solid #e2e8f0;border-radius:12px;margin-bottom:12px;background:white;">
-              <div>
-                <h3 style="margin:0 0 6px;">${mock.title}</h3>
-                <p style="margin:0;color:#2563eb;">📄 ${mock.count} Questions</p>
-              </div>
-              ${actionButton}
-            </div>
-          `;
-        });
-
-        html += `
-            </div>
-          </div>
+      } else if (mock.premium && !userIsPremium) {
+        actionButton = `
+          <button class="btn" style="background:#f59e0b;width:auto;"
+            onclick="alert('🔒 Premium Membership Required. Upgrade for ₹79 to unlock this mock test.')">
+            🔒 Locked
+          </button>
+        `;
+      } else {
+        actionButton = `
+          <button class="btn" style="width:auto;"
+            onclick="window.location.href='test.html?exam=${mock.examType}'">
+            Attempt Test
+          </button>
         `;
       }
 
-      document.getElementById("questionCountCard").textContent = totalQuestions;
-      testContainer.innerHTML = html;
-
-    } catch (err) {
-      console.error("DASHBOARD FOLDER ERROR:", err);
-      testContainer.innerHTML = `
-        <div class="card" style="border-left:5px solid var(--error);color:var(--error);">
-          Failed to retrieve exam folders.
+      mockHTML += `
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:20px;padding:15px;border:1px solid #e2e8f0;border-radius:12px;margin-bottom:12px;background:white;">
+          <div>
+            <h3 style="margin:0 0 6px;">${mock.title}</h3>
+            <p style="margin:0;color:#2563eb;">📄 ${mock.count} Questions</p>
+          </div>
+          ${actionButton}
         </div>
       `;
-    }
+    });
+
+    folderBox.innerHTML = mockHTML;
+    loadedFolders[prefix] = true;
   }
 
+  window.toggleFolder = async function(prefix) {
+    const folder = document.getElementById(`folder-${prefix}`);
+    const arrow = document.getElementById(`arrow-${prefix}`);
+
+    if (!folder) return;
+
+    const isClosed = folder.style.display === "none" || folder.style.display === "";
+
+    folder.style.display = isClosed ? "block" : "none";
+
+    if (arrow) {
+      arrow.textContent = isClosed ? "▲" : "▼";
+    }
+
+    if (isClosed) {
+      await loadFolderMocks(prefix);
+    }
+  };
+
   await loadPremiumStatus();
-  await loadExamFolders();
+  renderFolders();
 });
-
-window.toggleFolder = function(prefix) {
-  const folder = document.getElementById(`folder-${prefix}`);
-
-  if (!folder) return;
-
-  folder.style.display =
-    folder.style.display === "none" || folder.style.display === ""
-      ? "block"
-      : "none";
-};
 </script>
 
 </body>
