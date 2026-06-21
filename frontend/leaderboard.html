@@ -3,35 +3,34 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Global Leaderboard Rankings</title>
+  <title>Exam Leaderboards</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-  <nav>
-    <div class="container nav-container">
-      <a href="dashboard.html" class="logo">MockExam Pro (Standings)</a>
-      <button onclick="window.location.href='dashboard.html'" class="btn" style="width:auto; padding: 5px 15px;">Exit Standings</button>
-    </div>
-  </nav>
+<nav>
+  <div class="container nav-container">
+    <a href="dashboard.html" class="logo">RRB EDU Leaderboard</a>
+    <button onclick="window.location.href='dashboard.html'" class="btn" style="width:auto;padding:5px 15px;">
+      Dashboard
+    </button>
+  </div>
+</nav>
 
- <main class="container" style="max-width:900px; margin-top:40px;">
+<main class="container" style="max-width:950px;margin-top:40px;">
 
-  <div class="card" style="text-align:center; margin-bottom:25px;">
+  <div class="card" style="text-align:center;margin-bottom:25px;">
     <h2 style="font-size:28px;">🏆 Exam Leaderboards</h2>
 
-    <div style="display:flex; gap:10px; justify-content:center; flex-wrap:wrap; margin-top:20px;">
-      <button class="btn" onclick="loadLeaderboard('NTPC')">
-        🚆 NTPC
-      </button>
-
-      <button class="btn" onclick="loadLeaderboard('GROUP_D')">
-        🛤 Group-D
-      </button>
-
-      <button class="btn" onclick="loadLeaderboard('GROUP_2')">
-        🏛 Group-2
-      </button>
+    <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:20px;">
+      <button class="btn" onclick="loadLeaderboard('NTPC')">🚆 NTPC</button>
+      <button class="btn" onclick="loadLeaderboard('NTPC_PG')">🎓 NTPC Graduate</button>
+      <button class="btn" onclick="loadLeaderboard('NTPC_UG')">📘 NTPC UG</button>
+      <button class="btn" onclick="loadLeaderboard('ALP')">🚂 ALP</button>
+      <button class="btn" onclick="loadLeaderboard('TECH_G1')">🔧 Technician G-1</button>
+      <button class="btn" onclick="loadLeaderboard('TECH_G3')">🛠 Technician G-3</button>
+      <button class="btn" onclick="loadLeaderboard('GROUP_D')">🛤 Group-D</button>
+      <button class="btn" onclick="loadLeaderboard('GROUP_2')">🏛 Group-2</button>
     </div>
 
     <h3 id="leaderboardTitle" style="margin-top:20px;">
@@ -40,11 +39,12 @@
   </div>
 
   <div class="card">
-    <table style="width:100%; border-collapse:collapse; text-align:left;">
+    <table style="width:100%;border-collapse:collapse;text-align:left;">
       <thead>
         <tr>
           <th style="padding:12px;">Rank</th>
           <th style="padding:12px;">Student</th>
+          <th style="padding:12px;">Exam</th>
           <th style="padding:12px;">Score</th>
           <th style="padding:12px;">Accuracy</th>
         </tr>
@@ -52,9 +52,7 @@
 
       <tbody id="leaderboardRowsContainer">
         <tr>
-          <td colspan="4" style="padding:30px; text-align:center;">
-            Loading...
-          </td>
+          <td colspan="5" style="padding:30px;text-align:center;">Loading...</td>
         </tr>
       </tbody>
     </table>
@@ -63,85 +61,94 @@
 </main>
 
 <script>
+const API = "https://my-mock-test-platform.onrender.com/api";
 
-const API =
-"https://my-mock-test-platform.onrender.com/api";
+const examTitles = {
+  NTPC: "🚆 RRB NTPC Leaderboard",
+  NTPC_PG: "🎓 RRB NTPC Graduate Leaderboard",
+  NTPC_UG: "📘 RRB NTPC Undergraduate Leaderboard",
+  ALP: "🚂 RRB ALP Leaderboard",
+  TECH_G1: "🔧 Technician Grade-1 Leaderboard",
+  TECH_G3: "🛠 Technician Grade-3 Leaderboard",
+  GROUP_D: "🛤 RRB Group-D Leaderboard",
+  GROUP_2: "🏛 AP Group-2 Leaderboard"
+};
+
+function getExamName(examType) {
+  if (!examType) return "Mock Test";
+
+  if (examType.startsWith("NTPC_PG_FREE_")) return `NTPC Graduate Free ${examType.split("_").pop()}`;
+  if (examType.startsWith("NTPC_PG_PREMIUM_")) return `NTPC Graduate Premium ${examType.split("_").pop()}`;
+
+  if (examType.startsWith("NTPC_UG_FREE_")) return `NTPC UG Free ${examType.split("_").pop()}`;
+  if (examType.startsWith("NTPC_UG_PREMIUM_")) return `NTPC UG Premium ${examType.split("_").pop()}`;
+
+  if (examType.startsWith("ALP_FREE_")) return `ALP Free ${examType.split("_").pop()}`;
+  if (examType.startsWith("ALP_PREMIUM_")) return `ALP Premium ${examType.split("_").pop()}`;
+
+  if (examType.startsWith("TECH_G1_FREE_")) return `Technician G-1 Free ${examType.split("_").pop()}`;
+  if (examType.startsWith("TECH_G1_PREMIUM_")) return `Technician G-1 Premium ${examType.split("_").pop()}`;
+
+  if (examType.startsWith("TECH_G3_FREE_")) return `Technician G-3 Free ${examType.split("_").pop()}`;
+  if (examType.startsWith("TECH_G3_PREMIUM_")) return `Technician G-3 Premium ${examType.split("_").pop()}`;
+
+  if (examType.startsWith("GROUP_D_FREE_")) return `Group-D Free ${examType.split("_").pop()}`;
+  if (examType.startsWith("GROUP_D_PREMIUM_")) return `Group-D Premium ${examType.split("_").pop()}`;
+
+  if (examType.startsWith("GROUP_2_FREE_")) return `Group-2 Free ${examType.split("_").pop()}`;
+  if (examType.startsWith("GROUP_2_PREMIUM_")) return `Group-2 Premium ${examType.split("_").pop()}`;
+
+  if (examType.startsWith("NTPC_FREE_")) return `NTPC Free ${examType.split("_").pop()}`;
+  if (examType.startsWith("NTPC_PREMIUM_")) return `NTPC Premium ${examType.split("_").pop()}`;
+
+  return examType;
+}
 
 async function loadLeaderboard(examType = "NTPC") {
-
-  const token =
-    localStorage.getItem("mock_test_token");
-
-  const tableBody =
-    document.getElementById(
-      "leaderboardRowsContainer"
-    );
-
-  const title =
-    document.getElementById(
-      "leaderboardTitle"
-    );
+  const token = localStorage.getItem("mock_test_token");
+  const tableBody = document.getElementById("leaderboardRowsContainer");
+  const title = document.getElementById("leaderboardTitle");
 
   if (!token) {
-    window.location.href =
-      "login.html";
+    window.location.href = "login.html";
     return;
   }
 
-  if (examType === "NTPC")
-    title.textContent =
-      "🚆 RRB NTPC Leaderboard";
+  title.textContent = examTitles[examType] || "🏆 Leaderboard";
 
-  if (examType === "GROUP_D")
-    title.textContent =
-      "🛤 RRB Group-D Leaderboard";
-
-  if (examType === "GROUP_2")
-    title.textContent =
-      "🏛 AP Group-2 Leaderboard";
-
-  tableBody.innerHTML =
-    `<tr><td colspan="4" style="padding:20px;text-align:center;">Loading...</td></tr>`;
+  tableBody.innerHTML = `
+    <tr>
+      <td colspan="5" style="padding:20px;text-align:center;">
+        Loading...
+      </td>
+    </tr>
+  `;
 
   try {
+    const response = await fetch(`${API}/tests/leaderboard?exam=${examType}`, {
+      method: "GET",
+      headers: {
+        Authorization: `Bearer ${token}`
+      }
+    });
 
-    const response =
-      await fetch(
-        `${API}/tests/leaderboard?exam=${examType}`,
-        {
-          method: "GET",
-          headers: {
-            "Authorization":
-              `Bearer ${token}`
-          }
-        }
-      );
+    const ranks = await response.json();
 
-    const ranks =
-      await response.json();
-
-    if (
-      response.ok &&
-      Array.isArray(ranks)
-    ) {
-
+    if (response.ok && Array.isArray(ranks)) {
       if (ranks.length === 0) {
-
-        tableBody.innerHTML =
-          `<tr>
-             <td colspan="4"
-             style="padding:20px;text-align:center;">
-             No results found.
-             </td>
-           </tr>`;
-
+        tableBody.innerHTML = `
+          <tr>
+            <td colspan="5" style="padding:20px;text-align:center;">
+              No results found.
+            </td>
+          </tr>
+        `;
         return;
       }
 
       tableBody.innerHTML = "";
 
       ranks.forEach((row, index) => {
-
         let rank = index + 1;
 
         if (index === 0) rank = "🥇";
@@ -150,58 +157,42 @@ async function loadLeaderboard(examType = "NTPC") {
 
         tableBody.innerHTML += `
           <tr>
-            <td style="padding:12px;">
-              ${rank}
-            </td>
-
-            <td style="padding:12px;">
-              ${row.userId?.username ||
-                "Student"}
-            </td>
-
-            <td style="padding:12px;">
-              ${row.score}
-            </td>
-
-            <td style="padding:12px;">
-              ${row.percentage}%
-            </td>
+            <td style="padding:12px;">${rank}</td>
+            <td style="padding:12px;">${row.userId?.username || "Student"}</td>
+            <td style="padding:12px;">${getExamName(row.examType)}</td>
+            <td style="padding:12px;">${row.score} / ${row.totalQuestions}</td>
+            <td style="padding:12px;">${row.percentage}%</td>
           </tr>
         `;
       });
 
     } else {
-
-      tableBody.innerHTML =
-        `<tr>
-           <td colspan="4"
-           style="padding:20px;text-align:center;">
-           Failed to load leaderboard.
-           </td>
-         </tr>`;
+      tableBody.innerHTML = `
+        <tr>
+          <td colspan="5" style="padding:20px;text-align:center;">
+            Failed to load leaderboard.
+          </td>
+        </tr>
+      `;
     }
 
   } catch (err) {
-
     console.error(err);
 
-    tableBody.innerHTML =
-      `<tr>
-         <td colspan="4"
-         style="padding:20px;text-align:center;">
-         Failed to load leaderboard.
-         </td>
-       </tr>`;
+    tableBody.innerHTML = `
+      <tr>
+        <td colspan="5" style="padding:20px;text-align:center;">
+          Failed to load leaderboard.
+        </td>
+      </tr>
+    `;
   }
 }
 
-document.addEventListener(
-  "DOMContentLoaded",
-  () => {
-    loadLeaderboard("NTPC");
-  }
-);
-
+document.addEventListener("DOMContentLoaded", () => {
+  loadLeaderboard("NTPC");
+});
 </script>
+
 </body>
 </html>
