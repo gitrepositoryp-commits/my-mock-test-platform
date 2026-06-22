@@ -1,15 +1,48 @@
-const Payment = require("../models/Payment");
 const express = require("express");
+const router = express.Router();
 const Razorpay = require("razorpay");
 const crypto = require("crypto");
 const nodemailer = require("nodemailer");
+const jwt = require("jsonwebtoken");
+
 const User = require("../models/User");
-const router = express.Router();
-const protect = require("../middleware/auth");
+const Payment = require("../models/Payment");
+
+/* =========================
+   LOCAL PROTECT MIDDLEWARE
+========================= */
+const protect = async (req, res, next) => {
+  try {
+    const authHeader = req.headers.authorization;
+
+    if (!authHeader || !authHeader.startsWith("Bearer ")) {
+      return res.status(401).json({ error: "Not authorized, token missing" });
+    }
+
+    const token = authHeader.split(" ")[1];
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+
+    req.user = {
+      id: decoded.id || decoded.userId || decoded._id
+    };
+
+    next();
+  } catch (err) {
+    return res.status(401).json({ error: "Not authorized, token failed" });
+  }
+};
+
+/* =========================
+   RAZORPAY CONFIG
+========================= */
 const razorpay = new Razorpay({
   key_id: process.env.RAZORPAY_KEY_ID,
   key_secret: process.env.RAZORPAY_KEY_SECRET
 });
+
+/* =========================
+   EMAIL CONFIG
+========================= */
 const transporter = nodemailer.createTransport({
   service: "gmail",
   auth: {
@@ -18,6 +51,9 @@ const transporter = nodemailer.createTransport({
   }
 });
 
+/* =========================
+   CREATE ORDER
+========================= */
 router.post("/create-order", async (req, res) => {
   try {
     const options = {
@@ -35,6 +71,9 @@ router.post("/create-order", async (req, res) => {
   }
 });
 
+/* =========================
+   VERIFY PAYMENT
+========================= */
 router.post("/verify-payment", async (req, res) => {
   try {
     const {
@@ -72,44 +111,38 @@ router.post("/verify-payment", async (req, res) => {
     if (!user) {
       return res.status(404).json({ error: "User not found" });
     }
+
     await Payment.create({
-  userId: user._id,
-  razorpayOrderId: razorpay_order_id,
-  razorpayPaymentId: razorpay_payment_id,
-  amount: 79,
-  currency: "INR",
-  status: "success",
-  premiumStartedAt: startedAt,
-  premiumExpiresAt: expiresAt
-});
-await transporter.sendMail({
-  from: process.env.EMAIL_USER,
-  to: user.email,
-  subject: "RRB EDU Premium Activated Successfully",
-  html: `
-    <h2>Premium Membership Activated ✅</h2>
+      userId: user._id,
+      razorpayOrderId: razorpay_order_id,
+      razorpayPaymentId: razorpay_payment_id,
+      amount: 79,
+      currency: "INR",
+      status: "success",
+      premiumStartedAt: startedAt,
+      premiumExpiresAt: expiresAt
+    });
 
-    <p>Hello ${user.username},</p>
+    await transporter.sendMail({
+      from: process.env.EMAIL_USER,
+      to: user.email,
+      subject: "RRB EDU Premium Activated Successfully",
+      html: `
+        <h2>Premium Membership Activated ✅</h2>
+        <p>Hello ${user.username || "Student"},</p>
+        <p>Your RRB EDU Premium Membership has been activated successfully.</p>
+        <hr>
+        <p><strong>Payment ID:</strong> ${razorpay_payment_id}</p>
+        <p><strong>Amount:</strong> ₹79</p>
+        <p><strong>Premium Valid Until:</strong> ${expiresAt.toLocaleDateString()}</p>
+        <hr>
+        <p>Thank you for choosing RRB EDU.</p>
+        <p>Website: https://rrbedu.online</p>
+      `
+    });
 
-    <p>Your RRB EDU Premium Membership has been activated successfully.</p>
+    console.log("PAYMENT RECEIPT EMAIL SENT TO:", user.email);
 
-    <hr>
-
-    <p><strong>Payment ID:</strong> ${razorpay_payment_id}</p>
-
-    <p><strong>Amount:</strong> ₹79</p>
-
-    <p><strong>Premium Valid Until:</strong>
-    ${expiresAt.toLocaleDateString()}</p>
-
-    <hr>
-
-    <p>Thank you for choosing RRB EDU.</p>
-
-    <p>Website: https://rrbedu.online</p>
-  `
-});
-console.log("PAYMENT RECEIPT EMAIL SENT TO:", user.email);
     res.status(200).json({
       message: "Payment verified and premium activated",
       isPremium: user.isPremium,
@@ -121,6 +154,10 @@ console.log("PAYMENT RECEIPT EMAIL SENT TO:", user.email);
     res.status(500).json({ error: "Payment verification failed" });
   }
 });
+
+/* =========================
+   USER PAYMENT HISTORY
+========================= */
 router.get("/my-payments", protect, async (req, res) => {
   try {
     const payments = await Payment.find({
@@ -128,13 +165,18 @@ router.get("/my-payments", protect, async (req, res) => {
     }).sort({ createdAt: -1 });
 
     res.status(200).json(payments);
+
   } catch (err) {
+    console.error("MY PAYMENTS ERROR:", err);
     res.status(500).json({
       error: "Failed to load payments"
     });
   }
 });
 
+/* =========================
+   ADMIN PAYMENTS
+========================= */
 router.get("/admin/payments", async (req, res) => {
   try {
     const payments = await Payment.find()
@@ -150,4 +192,5 @@ router.get("/admin/payments", async (req, res) => {
     });
   }
 });
+
 module.exports = router;
