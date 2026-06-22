@@ -159,6 +159,7 @@ router.post("/verify-payment", async (req, res) => {
    USER PAYMENT HISTORY
 ========================= */
 router.get("/my-payments", protect, async (req, res) => {
+  console.log("USER:", req.user);
   try {
     const payments = await Payment.find({
       userId: req.user.id
