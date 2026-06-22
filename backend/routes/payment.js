@@ -206,5 +206,22 @@ router.get("/admin/payments", async (req, res) => {
     });
   }
 });
+router.get("/test-email", async (req, res) => {
+  try {
+    await transporter.sendMail({
+      from: process.env.EMAIL_USER,
+      to: process.env.EMAIL_USER,
+      subject: "RRB EDU Test Email",
+      html: "<h2>RRB EDU email system is working ✅</h2>"
+    });
+
+    console.log("TEST EMAIL SENT TO:", process.env.EMAIL_USER);
+    res.status(200).json({ message: "Test email sent successfully" });
+
+  } catch (err) {
+    console.error("TEST EMAIL ERROR:", err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
 
 module.exports = router;
