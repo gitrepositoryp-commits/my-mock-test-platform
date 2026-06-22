@@ -12,11 +12,11 @@ app.set("trust proxy", 1);
    SECURITY
 ========================= */
 
-app.use(helmet());
-
 const allowedOrigins = [
   "https://rrbedu.online",
-  "https://www.rrbedu.online"
+  "https://www.rrbedu.online",
+  "https://my-mock-test-platform.pages.dev",
+  "https://my-mock-test-platform.gitrepositoryp.workers.dev"
 ];
 
 app.use(cors({
