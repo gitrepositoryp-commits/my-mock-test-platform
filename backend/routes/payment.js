@@ -110,7 +110,7 @@ await transporter.sendMail({
     <p>Website: https://rrbedu.online</p>
   `
 });
-
+console.log("PAYMENT RECEIPT EMAIL SENT TO:", user.email);
     res.status(200).json({
       message: "Payment verified and premium activated",
       isPremium: user.isPremium,
