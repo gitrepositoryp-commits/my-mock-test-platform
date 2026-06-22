@@ -259,69 +259,41 @@ document.getElementById("readPdfBtn").addEventListener("click", async () => {
 
 /* PARSER */
 function parseQuestions(text) {
-  text = text.replace(/\s+/g, " ").trim();
+  text = text.replace(/\r/g, " ").replace(/\s+/g, " ").trim();
 
-  let blocks = text.split(/(?=Q\.?\s*\d+)/gi);
-
-  if (blocks.length <= 1) {
-    blocks = text.split(/(?=\b\d+\s*[\.\)]\s+)/g);
-  }
-
+  const blocks = text.split(/(?=Q\.?\s*\d+)/gi);
   const questions = [];
   const examType = getSelectedExam();
 
   blocks.forEach(block => {
     block = block.trim();
-    if (block.length < 20) return;
+    if (!/^Q\.?\s*\d+/i.test(block)) return;
 
     let questionText = "";
     let options = [];
-    let correctAnswer = "";
 
-    const qMatch = block.match(/Q\.?\s*\d+\.?\s*([\s\S]*?)(?=\s+(?:Ans|Answer|Correct Answer)\s+|\s+1[\.\)]\s+)/i);
+    const qMatch = block.match(/Q\.?\s*\d+\.?\s*([\s\S]*?)(?=\s+Ans\s+A\.|\s+A\.)/i);
 
     if (qMatch) {
       questionText = qMatch[1].trim();
     } else {
-      questionText = block.replace(/^Q\.?\s*\d+\.?/i, "").trim();
+      return;
     }
 
-    const optionRegex = /(?:^|\s)([1-4])[\.\)]\s*(.*?)(?=\s+[1-4][\.\)]\s*|$)/g;
-    let match;
+    const optionMatches = [...block.matchAll(/(?:Ans\s+)?([A-D])\.\s*([\s\S]*?)(?=\s+[A-D]\.\s*|\s+Q\.?\s*\d+|$)/gi)];
 
-    while ((match = optionRegex.exec(block)) !== null) {
-      let opt = match[2].trim();
-
-      opt = opt
-        .replace(/(?:Ans|Answer|Correct Answer).*/i, "")
-        .trim();
-
-      if (opt.length > 0) {
-        options.push(opt);
-      }
-    }
-
-    const ansMatch = block.match(/(?:Ans|Answer|Correct Answer)[\s\:\.\-]*([1-4A-D])/i);
-
-    if (ansMatch) {
-      const ans = ansMatch[1].toUpperCase();
-
-      if (ans === "1" || ans === "A") correctAnswer = options[0];
-      if (ans === "2" || ans === "B") correctAnswer = options[1];
-      if (ans === "3" || ans === "C") correctAnswer = options[2];
-      if (ans === "4" || ans === "D") correctAnswer = options[3];
-    }
-
-    if (!correctAnswer) {
-      correctAnswer = options[0];
-    }
+    optionMatches.forEach(m => {
+      let opt = m[2].trim();
+      opt = opt.replace(/Section\s*:.*/i, "").trim();
+      if (opt.length > 0) options.push(opt);
+    });
 
     if (questionText && options.length >= 4) {
       questions.push({
         examType,
         question: questionText,
         options: options.slice(0, 4),
-        correctAnswer,
+        correctAnswer: options[0], // check/edit correct answer if needed
         category: "General"
       });
     }
