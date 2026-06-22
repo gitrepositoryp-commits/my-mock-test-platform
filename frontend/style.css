@@ -239,3 +239,23 @@ nav {
   background:#115e59;
   transform:translateY(-2px);
 }
+.footer{
+  text-align:center;
+  padding:20px;
+  margin-top:40px;
+  border-top:1px solid #dbe4ee;
+  background:#ffffff;
+}
+
+.footer a{
+  color:#2563eb;
+  text-decoration:none;
+  margin:0 12px;
+  font-weight:600;
+  font-size:15px;
+}
+
+.footer a:hover{
+  color:#1d4ed8;
+  text-decoration:underline;
+}
