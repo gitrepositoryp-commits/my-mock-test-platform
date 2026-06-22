@@ -68,6 +68,11 @@ mongoose.connect(mongoURI)
   .catch((err) => {
     console.error("Database connection error:", err.message);
   });
+  app.use((req, res, next) => {
+  console.log("REQUEST ORIGIN:", req.headers.origin);
+  console.log("REQUEST URL:", req.method, req.originalUrl);
+  next();
+});
 
 /* =========================
    ROUTES
