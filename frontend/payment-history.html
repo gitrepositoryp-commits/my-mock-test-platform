@@ -70,7 +70,7 @@ async function loadPayments() {
     body.innerHTML = data.map(p => `
       <tr>
         <td>${new Date(p.createdAt).toLocaleDateString()}</td>
-        <td>₹${p.amount}</td>
+        <td>&#8377;${p.amount}</td>
         <td>${p.razorpayPaymentId || "-"}</td>
         <td>${p.status}</td>
         <td>${p.premiumExpiresAt ? new Date(p.premiumExpiresAt).toLocaleDateString() : "-"}</td>
