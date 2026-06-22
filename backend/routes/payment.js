@@ -158,17 +158,30 @@ router.post("/verify-payment", async (req, res) => {
 /* =========================
    USER PAYMENT HISTORY
 ========================= */
-router.get("/my-payments", protect, async (req, res) => {
-  console.log("USER:", req.user);
+router.get("/my-payments", async (req, res) => {
   try {
+    const authHeader = req.headers.authorization;
+
+    if (!authHeader || !authHeader.startsWith("Bearer ")) {
+      return res.status(401).json({ error: "Token missing" });
+    }
+
+    const token = authHeader.split(" ")[1];
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+
+    const userId = decoded.id || decoded.userId || decoded._id;
+
+    console.log("PAYMENT HISTORY USER ID:", userId);
+
     const payments = await Payment.find({
-      userId: req.user.id
+      userId: userId
     }).sort({ createdAt: -1 });
 
     res.status(200).json(payments);
 
   } catch (err) {
-    console.error("MY PAYMENTS ERROR:", err);
+    console.error("MY PAYMENTS ERROR:", err.message);
+
     res.status(500).json({
       error: "Failed to load payments"
     });
