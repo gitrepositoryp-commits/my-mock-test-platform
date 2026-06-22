@@ -26,45 +26,7 @@
 
     <div style="margin:20px 0;">
       <label style="font-weight:bold;">Select Exam Type</label>
-      <select id="examType" style="width:100%;padding:12px;margin-top:8px;border-radius:8px;">
-        <option value="NTPC_FREE_1">RRB NTPC Free Mock 1</option>
-        <option value="NTPC_FREE_2">RRB NTPC Free Mock 2</option>
-        <option value="NTPC_FREE_3">RRB NTPC Free Mock 3</option>
-
-        <option value="NTPC_PREMIUM_1">🔒 RRB NTPC Premium Mock 1</option>
-        <option value="NTPC_PREMIUM_2">🔒 RRB NTPC Premium Mock 2</option>
-        <option value="NTPC_PREMIUM_3">🔒 RRB NTPC Premium Mock 3</option>
-        <option value="NTPC_PG_FREE_1">RRB NTPC Graduate Free Mock 1</option>
-<option value="NTPC_PG_PREMIUM_1">🔒 RRB NTPC Graduate Premium Mock 1</option>
-
-<option value="NTPC_UG_FREE_1">RRB NTPC Undergraduate Free Mock 1</option>
-<option value="NTPC_UG_PREMIUM_1">🔒 RRB NTPC Undergraduate Premium Mock 1</option>
-
-<option value="ALP_FREE_1">RRB ALP Free Mock 1</option>
-<option value="ALP_PREMIUM_1">🔒 RRB ALP Premium Mock 1</option>
-
-<option value="TECH_G1_FREE_1">Technician Grade-1 Free Mock 1</option>
-<option value="TECH_G1_PREMIUM_1">🔒 Technician Grade-1 Premium Mock 1</option>
-
-<option value="TECH_G3_FREE_1">Technician Grade-3 Free Mock 1</option>
-<option value="TECH_G3_PREMIUM_1">🔒 Technician Grade-3 Premium Mock 1</option>
-
-        <option value="GROUP_D_FREE_1">RRB Group-D Free Mock 1</option>
-        <option value="GROUP_D_FREE_2">RRB Group-D Free Mock 2</option>
-        <option value="GROUP_D_FREE_3">RRB Group-D Free Mock 3</option>
-
-        <option value="GROUP_D_PREMIUM_1">🔒 RRB Group-D Premium Mock 1</option>
-        <option value="GROUP_D_PREMIUM_2">🔒 RRB Group-D Premium Mock 2</option>
-        <option value="GROUP_D_PREMIUM_3">🔒 RRB Group-D Premium Mock 3</option>
-
-        <option value="GROUP_2_FREE_1">AP Group-2 Free Mock 1</option>
-        <option value="GROUP_2_FREE_2">AP Group-2 Free Mock 2</option>
-        <option value="GROUP_2_FREE_3">AP Group-2 Free Mock 3</option>
-
-        <option value="GROUP_2_PREMIUM_1">🔒 AP Group-2 Premium Mock 1</option>
-        <option value="GROUP_2_PREMIUM_2">🔒 AP Group-2 Premium Mock 2</option>
-        <option value="GROUP_2_PREMIUM_3">🔒 AP Group-2 Premium Mock 3</option>
-      </select>
+   <select id="examType" style="width:100%;padding:12px;margin-top:8px;border-radius:8px;"></select>
     </div>
 
     <div style="text-align:center; margin:15px 0; padding:15px; background:#f1f5f9; border-radius:8px;">
@@ -177,6 +139,48 @@ pdfjsLib.GlobalWorkerOptions.workerSrc =
   "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js";
 
 let allQuestions = [];
+const examGroups = [
+  { label: "RRB NTPC Graduate", prefix: "NTPC_PG" },
+  { label: "RRB NTPC Undergraduate", prefix: "NTPC_UG" },
+  { label: "RRB ALP", prefix: "ALP" },
+  { label: "Technician Grade-1", prefix: "TECH_G1" },
+  { label: "Technician Grade-3", prefix: "TECH_G3" },
+  { label: "RRB Group-D", prefix: "GROUP_D" },
+  { label: "AP Group-2", prefix: "GROUP_2" }
+];
+
+function populateExamDropdown() {
+  const select = document.getElementById("examType");
+
+  examGroups.forEach(group => {
+
+    const freeHeader = document.createElement("optgroup");
+    freeHeader.label = `${group.label} - FREE`;
+
+    for (let i = 1; i <= 3; i++) {
+      const option = document.createElement("option");
+      option.value = `${group.prefix}_FREE_${i}`;
+      option.textContent = `${group.label} Free Mock ${i}`;
+      freeHeader.appendChild(option);
+    }
+
+    select.appendChild(freeHeader);
+
+    const premiumHeader = document.createElement("optgroup");
+    premiumHeader.label = `${group.label} - PREMIUM`;
+
+    for (let i = 1; i <= 30; i++) {
+      const option = document.createElement("option");
+      option.value = `${group.prefix}_PREMIUM_${i}`;
+      option.textContent = `🔒 ${group.label} Premium Mock ${i}`;
+      premiumHeader.appendChild(option);
+    }
+
+    select.appendChild(premiumHeader);
+  });
+}
+
+populateExamDropdown();
 
 function getSelectedExam() {
   return document.getElementById("examType").value;
