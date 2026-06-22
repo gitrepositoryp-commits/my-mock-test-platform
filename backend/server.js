@@ -4,6 +4,7 @@ const cors = require("cors");
 const helmet = require("helmet");
 const rateLimit = require("express-rate-limit");
 require("dotenv").config();
+require("dns").setDefaultResultOrder("ipv4first");
 
 const app = express();
 app.set("trust proxy", 1);
