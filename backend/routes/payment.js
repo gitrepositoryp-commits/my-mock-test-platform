@@ -122,6 +122,20 @@ console.log("PAYMENT RECEIPT EMAIL SENT TO:", user.email);
     res.status(500).json({ error: "Payment verification failed" });
   }
 });
+router.get("/my-payments", protect, async (req, res) => {
+  try {
+    const payments = await Payment.find({
+      userId: req.user.id
+    }).sort({ createdAt: -1 });
+
+    res.status(200).json(payments);
+  } catch (err) {
+    res.status(500).json({
+      error: "Failed to load payments"
+    });
+  }
+});
+
 router.get("/admin/payments", async (req, res) => {
   try {
     const payments = await Payment.find()
