@@ -259,3 +259,27 @@ nav {
   color:#1d4ed8;
   text-decoration:underline;
 }
+
+.home-info{
+  max-width:1000px;
+  margin:40px auto;
+  padding:30px;
+  background:#ffffff;
+  border-radius:15px;
+  box-shadow:0 2px 10px rgba(0,0,0,0.08);
+}
+
+.home-info h2{
+  color:#2563eb;
+  margin:20px 0 10px;
+}
+
+.home-info p,
+.home-info li{
+  color:#444;
+  line-height:1.8;
+}
+
+.home-info ul{
+  padding-left:20px;
+}
