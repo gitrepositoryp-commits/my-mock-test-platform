@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Payment History - RRB EDU</title>
+  <style>
+    body{font-family:Arial;background:#f1f5f9;padding:30px}
+    .box{max-width:900px;margin:auto;background:white;padding:25px;border-radius:15px}
+    table{width:100%;border-collapse:collapse}
+    th,td{padding:12px;border-bottom:1px solid #ddd;text-align:left}
+    th{background:#2563eb;color:white}
+    .back{margin-bottom:20px;padding:10px 18px;background:#111827;color:white;border:0;border-radius:8px}
+  </style>
+</head>
+<body>
+
+<div class="box">
+  <button class="back" onclick="location.href='dashboard.html'">← Back</button>
+  <h2>Payment History</h2>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Date</th>
+        <th>Amount</th>
+        <th>Payment ID</th>
+        <th>Status</th>
+        <th>Premium Expiry</th>
+      </tr>
+    </thead>
+    <tbody id="paymentBody">
+      <tr><td colspan="5">Loading...</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<script>
+const API_BASE = "https://my-mock-test-platform.onrender.com/api/payment";
+const token = localStorage.getItem("token");
+
+if (!token) {
+  alert("Please login first");
+  location.href = "login.html";
+}
+
+async function loadPayments() {
+  try {
+    const res = await fetch(`${API_BASE}/my-payments`, {
+      headers: {
+        Authorization: `Bearer ${token}`
+      }
+    });
+
+    const data = await res.json();
+    const body = document.getElementById("paymentBody");
+
+    if (!res.ok) {
+      body.innerHTML = `<tr><td colspan="5">Failed to load payments</td></tr>`;
+      return;
+    }
+
+    if (!data.length) {
+      body.innerHTML = `<tr><td colspan="5">No payments found</td></tr>`;
+      return;
+    }
+
+    body.innerHTML = data.map(p => `
+      <tr>
+        <td>${new Date(p.createdAt).toLocaleDateString()}</td>
+        <td>₹${p.amount}</td>
+        <td>${p.razorpayPaymentId || "-"}</td>
+        <td>${p.status}</td>
+        <td>${p.premiumExpiresAt ? new Date(p.premiumExpiresAt).toLocaleDateString() : "-"}</td>
+      </tr>
+    `).join("");
+
+  } catch (err) {
+    document.getElementById("paymentBody").innerHTML =
+      `<tr><td colspan="5">Network error</td></tr>`;
+  }
+}
+
+loadPayments();
+</script>
+
+</body>
+</html>
