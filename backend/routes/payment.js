@@ -9,30 +9,6 @@ const User = require("../models/User");
 const Payment = require("../models/Payment");
 
 /* =========================
-   LOCAL PROTECT MIDDLEWARE
-========================= */
-const protect = async (req, res, next) => {
-  try {
-    const authHeader = req.headers.authorization;
-
-    if (!authHeader || !authHeader.startsWith("Bearer ")) {
-      return res.status(401).json({ error: "Not authorized, token missing" });
-    }
-
-    const token = authHeader.split(" ")[1];
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
-
-    req.user = {
-      id: decoded.id || decoded.userId || decoded._id
-    };
-
-    next();
-  } catch (err) {
-    return res.status(401).json({ error: "Not authorized, token failed" });
-  }
-};
-
-/* =========================
    RAZORPAY CONFIG
 ========================= */
 const razorpay = new Razorpay({
@@ -41,10 +17,13 @@ const razorpay = new Razorpay({
 });
 
 /* =========================
-   EMAIL CONFIG
+   EMAIL CONFIG WITH TIMEOUT
 ========================= */
 const transporter = nodemailer.createTransport({
   service: "gmail",
+  connectionTimeout: 10000,
+  greetingTimeout: 10000,
+  socketTimeout: 10000,
   auth: {
     user: process.env.EMAIL_USER,
     pass: process.env.EMAIL_PASS
@@ -66,7 +45,7 @@ router.post("/create-order", async (req, res) => {
     res.status(200).json(order);
 
   } catch (err) {
-    console.error("RAZORPAY ORDER ERROR:", err);
+    console.error("RAZORPAY ORDER ERROR:", err.message);
     res.status(500).json({ error: "Failed to create payment order" });
   }
 });
@@ -123,25 +102,30 @@ router.post("/verify-payment", async (req, res) => {
       premiumExpiresAt: expiresAt
     });
 
-    await transporter.sendMail({
-      from: process.env.EMAIL_USER,
-      to: user.email,
-      subject: "RRB EDU Premium Activated Successfully",
-      html: `
-        <h2>Premium Membership Activated ✅</h2>
-        <p>Hello ${user.username || "Student"},</p>
-        <p>Your RRB EDU Premium Membership has been activated successfully.</p>
-        <hr>
-        <p><strong>Payment ID:</strong> ${razorpay_payment_id}</p>
-        <p><strong>Amount:</strong> ₹79</p>
-        <p><strong>Premium Valid Until:</strong> ${expiresAt.toLocaleDateString()}</p>
-        <hr>
-        <p>Thank you for choosing RRB EDU.</p>
-        <p>Website: https://rrbedu.online</p>
-      `
-    });
+    try {
+      await transporter.sendMail({
+        from: `"RRB EDU" <${process.env.EMAIL_USER}>`,
+        to: user.email,
+        subject: "RRB EDU Premium Activated Successfully",
+        html: `
+          <h2>Premium Membership Activated ✅</h2>
+          <p>Hello ${user.username || "Student"},</p>
+          <p>Your RRB EDU Premium Membership has been activated successfully.</p>
+          <hr>
+          <p><strong>Payment ID:</strong> ${razorpay_payment_id}</p>
+          <p><strong>Amount:</strong> ₹79</p>
+          <p><strong>Premium Valid Until:</strong> ${expiresAt.toLocaleDateString()}</p>
+          <hr>
+          <p>Thank you for choosing RRB EDU.</p>
+          <p>Website: https://rrbedu.online</p>
+        `
+      });
 
-    console.log("PAYMENT RECEIPT EMAIL SENT TO:", user.email);
+      console.log("PAYMENT RECEIPT EMAIL SENT TO:", user.email);
+
+    } catch (emailErr) {
+      console.error("EMAIL RECEIPT FAILED:", emailErr.message);
+    }
 
     res.status(200).json({
       message: "Payment verified and premium activated",
@@ -150,7 +134,7 @@ router.post("/verify-payment", async (req, res) => {
     });
 
   } catch (err) {
-    console.error("PAYMENT VERIFY ERROR:", err);
+    console.error("PAYMENT VERIFY ERROR:", err.message);
     res.status(500).json({ error: "Payment verification failed" });
   }
 });
@@ -171,8 +155,6 @@ router.get("/my-payments", async (req, res) => {
 
     const userId = decoded.id || decoded.userId || decoded._id;
 
-    console.log("PAYMENT HISTORY USER ID:", userId);
-
     const payments = await Payment.find({
       userId: userId
     }).sort({ createdAt: -1 });
@@ -181,10 +163,7 @@ router.get("/my-payments", async (req, res) => {
 
   } catch (err) {
     console.error("MY PAYMENTS ERROR:", err.message);
-
-    res.status(500).json({
-      error: "Failed to load payments"
-    });
+    res.status(500).json({ error: "Failed to load payments" });
   }
 });
 
@@ -200,16 +179,18 @@ router.get("/admin/payments", async (req, res) => {
     res.status(200).json(payments);
 
   } catch (err) {
-    console.error("ADMIN PAYMENTS ERROR:", err);
-    res.status(500).json({
-      error: "Failed to load payments"
-    });
+    console.error("ADMIN PAYMENTS ERROR:", err.message);
+    res.status(500).json({ error: "Failed to load payments" });
   }
 });
+
+/* =========================
+   TEST EMAIL
+========================= */
 router.get("/test-email", async (req, res) => {
   try {
     await transporter.sendMail({
-      from: process.env.EMAIL_USER,
+      from: `"RRB EDU" <${process.env.EMAIL_USER}>`,
       to: process.env.EMAIL_USER,
       subject: "RRB EDU Test Email",
       html: "<h2>RRB EDU email system is working ✅</h2>"
