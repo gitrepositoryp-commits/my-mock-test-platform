@@ -241,47 +241,91 @@ document.getElementById("readPdfBtn").addEventListener("click", async () => {
 });
 
 function parseQuestions(text) {
-  text = text.replace(/\r/g, " ").replace(/\s+/g, " ").trim();
-  const blocks = text.split(/(?=Q\.\s*\d+)/gi); const questions = []; const examType = getSelectedExam();
+  text = text
+    .replace(/\r/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+
+  const examType = getSelectedExam();
+  const questions = [];
+
+  let currentCategory = "General Awareness";
+
+  function detectCategoryFromSection(block) {
+    if (/Section\s*:\s*General Science/i.test(block)) return "General Science";
+    if (/Section\s*:\s*Mathematics/i.test(block)) return "Maths";
+    if (/Section\s*:\s*General Intelligence and Reasoning/i.test(block)) return "Reasoning";
+    if (/Section\s*:\s*General Awareness/i.test(block)) return "General Awareness";
+    if (/Section\s*:\s*General Awareness and Current Affairs/i.test(block)) return "General Awareness";
+    return null;
+  }
+
+  function fallbackCategoryByExamAndNumber(qNo) {
+    if (examType.includes("GROUP_D")) {
+      if (qNo >= 1 && qNo <= 25) return "General Science";
+      if (qNo >= 26 && qNo <= 50) return "Maths";
+      if (qNo >= 51 && qNo <= 80) return "Reasoning";
+      if (qNo >= 81 && qNo <= 100) return "General Awareness";
+    }
+
+    return currentCategory || "General Awareness";
+  }
+
+  const blocks = text.split(/(?=Section\s*:|Q\.?\s*\d+)/gi);
 
   blocks.forEach(block => {
-    block = block.trim(); if (!block || !/^Q\.\s*\d+/i.test(block)) return;
-    const qNoMatch = block.match(/Q\.\s*(\d+)/i); const qNo = qNoMatch ? Number(qNoMatch[1]) : 0;
-    if (qNo === 0) return;
+    block = block.trim();
+    if (!block) return;
 
-    let assignedCategory = "General Awareness"; 
-    if ((qNo >= 2 && qNo <= 3) || qNo === 7 || qNo === 11 || qNo === 13 || qNo === 18 || qNo === 19 || qNo === 24 || qNo === 26 || qNo === 29 || qNo === 31 || qNo === 33 || qNo === 44 || qNo === 45 || qNo === 47 || qNo === 49 || qNo === 50 || qNo === 51 || qNo === 52 || qNo === 53 || qNo === 56 || qNo === 58 || qNo === 63 || qNo === 70 || qNo === 73 || qNo === 77 || qNo === 83 || qNo === 88) {
-      assignedCategory = "Maths";
-    } else if (qNo === 5 || qNo === 9 || qNo === 10 || qNo === 17 || qNo === 23 || qNo === 25 || qNo === 27 || qNo === 28 || qNo === 30 || qNo === 35 || qNo === 36 || qNo === 37 || qNo === 41 || qNo === 46 || qNo === 57 || qNo === 59 || qNo === 62 || qNo === 65 || qNo === 71 || qNo === 76 || qNo === 78 || qNo === 80 || qNo === 81 || qNo === 82 || qNo === 84 || qNo === 86 || qNo === 93 || qNo === 99 || qNo === 100) {
-      assignedCategory = "Reasoning";
-    } else if (qNo === 4 || qNo === 42 || qNo === 43 || qNo === 60) {
-      assignedCategory = "General Science";
+    const sectionFound = detectCategoryFromSection(block);
+    if (sectionFound) {
+      currentCategory = sectionFound;
     }
 
-    let questionText = ""; const qMatch = block.match(/Q\.\s*\d+\s+([\s\S]*?)(?=\s+(?:Ans|A\.)\s*)/i);
-    if (qMatch) questionText = qMatch[1].trim().replace(/\(Use the empirical formula to find the answer\)/gi, "").trim(); else return;
+    if (!/^Q\.?\s*\d+/i.test(block)) return;
 
-    const options = []; let correctOptionText = "";
-    const optionMatches = [...block.matchAll(/(?:X|☑|✔)*\s*([A-D])\.\s*([\s\S]*?)(?=\s+(?:[A-D]\.|Ans|Q\.)|$)/gi)];
-    const rawChoices = {}; let matchedCorrectLetter = "";
+    const qNoMatch = block.match(/^Q\.?\s*(\d+)/i);
+    const qNo = qNoMatch ? Number(qNoMatch[1]) : 0;
 
-    if (block.includes("✔")) {
-      const correctLetterMatch = block.match(/✔+(A|B|C|D)/i); if (correctLetterMatch) matchedCorrectLetter = correctLetterMatch[1].toUpperCase();
-    }
-    optionMatches.forEach(m => {
-      const letter = m[1].toUpperCase(); let optBody = m[2].trim().replace(/Adda\s*247|A\s*Google\s*Play/gi, "").trim();
-      if (optBody && !rawChoices[letter]) rawChoices[letter] = optBody;
+    let category = fallbackCategoryByExamAndNumber(qNo);
+
+    const qMatch = block.match(
+      /Q\.?\s*\d+\.?\s*([\s\S]*?)(?=\s+Ans\s+(?:A\.|1\.)|\s+(?:A\.|1\.))/i
+    );
+
+    if (!qMatch) return;
+
+    let questionText = qMatch[1]
+      .replace(/Test Date.*$/i, "")
+      .replace(/Section\s*:.*$/i, "")
+      .trim();
+
+    const optionPattern = /(?:Ans\s+)?([A-D1-4])\.\s*([\s\S]*?)(?=\s+(?:[A-D1-4])\.\s*|\s+Q\.?\s*\d+|$)/gi;
+    const matches = [...block.matchAll(optionPattern)];
+
+    const options = [];
+
+    matches.forEach(m => {
+      let opt = m[2]
+        .replace(/Section\s*:.*$/i, "")
+        .replace(/Adda\s*247/gi, "")
+        .replace(/Google\s*Play/gi, "")
+        .trim();
+
+      if (opt) options.push(opt);
     });
-    ["A", "B", "C", "D"].forEach(letter => {
-      if (rawChoices[letter]) {
-        options.push(rawChoices[letter]); if (letter === matchedCorrectLetter) correctOptionText = rawChoices[letter];
-      }
-    });
-    if (!correctOptionText && options.length > 0) correctOptionText = options[0];
+
     if (questionText && options.length >= 4) {
-      questions.push({ examType, question: questionText, options: options.slice(0, 4), correctAnswer: correctOptionText, category: assignedCategory });
+      questions.push({
+        examType,
+        question: questionText,
+        options: options.slice(0, 4),
+        correctAnswer: options[0],
+        category
+      });
     }
   });
+
   return questions;
 }
 
