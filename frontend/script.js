@@ -219,6 +219,8 @@ function renderActiveQuestionCard() {
 
   document.getElementById('questionTextDisplay').textContent =
     currentQ.question;
+    document.getElementById("sectionNameDisplay").textContent =
+  "Section: " + (currentQuestion.category || "General");
 
   const optionsWrapper = document.getElementById('optionsContainer');
   optionsWrapper.innerHTML = '';
