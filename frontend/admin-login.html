@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Admin Login - MockExam Pro</title>
+<title>Admin Login - RRB EDU</title>
 
 <style>
 *{
@@ -134,14 +134,8 @@ body{
 }
 
 @media(max-width:768px){
-  .brand{
-    display:none;
-  }
-
-  .login-card{
-    width:90%;
-    padding:30px;
-  }
+  .brand{ display:none; }
+  .login-card{ width:90%; padding:30px; }
 }
 </style>
 </head>
@@ -153,7 +147,7 @@ body{
 <div class="brand">
   <div class="logo-box">🎓</div>
   <div>
-    <h2>MockExam Pro</h2>
+    <h2>RRB EDU</h2>
     <p>Admin Panel</p>
   </div>
 </div>
@@ -179,7 +173,7 @@ body{
     </button>
 
     <div class="footer-text">
-      🔐 Secure Access • MockExam Pro Admin Panel
+      🔐 Secure Access • RRB EDU Admin Panel
     </div>
 
   </div>
@@ -188,9 +182,19 @@ body{
 <script>
 const LIVE_BACKEND_URL = "https://my-mock-test-platform.onrender.com/api";
 
+function clearAdminStorage() {
+  localStorage.removeItem("token");
+  localStorage.removeItem("authToken");
+  localStorage.removeItem("adminToken");
+  localStorage.removeItem("admin_logged_in");
+}
+
+clearAdminStorage();
+
 document.getElementById("adminLoginBtn").addEventListener("click", async () => {
   const email = document.getElementById("adminEmail").value.trim();
   const password = document.getElementById("adminPassword").value.trim();
+  const btn = document.getElementById("adminLoginBtn");
 
   if (!email || !password) {
     alert("Please enter admin email and password.");
@@ -198,25 +202,31 @@ document.getElementById("adminLoginBtn").addEventListener("click", async () => {
   }
 
   try {
+    btn.disabled = true;
+    btn.textContent = "Checking...";
+
     const response = await fetch(`${LIVE_BACKEND_URL}/auth/login`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json"
       },
-      body: JSON.stringify({
-        email,
-        password
-      })
+      body: JSON.stringify({ email, password })
     });
 
     const data = await response.json();
 
     if (!response.ok) {
-      alert(data.error || "Invalid admin credentials.");
+      clearAdminStorage();
+      alert(data.error || "Invalid login details.");
       return;
     }
 
-    localStorage.setItem("token", data.token);
+    if (!data.isAdmin && !data.user?.isAdmin) {
+      clearAdminStorage();
+      alert("Access denied. This is not an admin account.");
+      return;
+    }
+
     localStorage.setItem("adminToken", data.token);
     localStorage.setItem("admin_logged_in", "true");
 
@@ -224,7 +234,11 @@ document.getElementById("adminLoginBtn").addEventListener("click", async () => {
 
   } catch (err) {
     console.error("ADMIN LOGIN ERROR:", err);
+    clearAdminStorage();
     alert("Login error. Please try again.");
+  } finally {
+    btn.disabled = false;
+    btn.textContent = "Login";
   }
 });
 </script>

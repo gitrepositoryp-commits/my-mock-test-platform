@@ -16,9 +16,9 @@ const protect = async (req, res, next) => {
       return res.status(401).json({ error: "Authorization token missing." });
     }
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    const user = await User.findById(decoded.id).select(
-      "username email isPremium premiumExpiresAt"
-    );
+   const user = await User.findById(decoded.id).select(
+  "username email isPremium premiumExpiresAt isAdmin"
+);
     if (!user) {
       return res.status(401).json({ error: "User not found." });
     }
@@ -27,13 +27,14 @@ const protect = async (req, res, next) => {
       user.isPremium = false;
       await user.save();
     }
-    req.user = {
-      id: user._id.toString(),
-      email: user.email,
-      username: user.username,
-      isPremium: user.isPremium,
-      premiumExpiresAt: user.premiumExpiresAt
-    };
+   req.user = {
+  id: user._id.toString(),
+  email: user.email,
+  username: user.username,
+  isPremium: user.isPremium,
+  premiumExpiresAt: user.premiumExpiresAt,
+  isAdmin: user.isAdmin || false
+};
     next();
   } catch (err) {
     console.error("AUTH ERROR:", err.message);
