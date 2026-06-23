@@ -347,14 +347,33 @@ function parseQuestions(text) {
   const questions = [];
   const examType = getSelectedExam();
 
+  function detectCategory(block) {
+    if (/Section\s*:\s*Mathematics/i.test(block)) return "Maths";
+    if (/Section\s*:\s*General Intelligence and Reasoning/i.test(block)) return "Reasoning";
+    if (/Section\s*:\s*General Awareness and Current Affairs/i.test(block)) return "General Awareness";
+    if (/Section\s*:\s*General Science/i.test(block)) return "General Science";
+    return null;
+  }
+
+  let currentCategory = "General";
+
   blocks.forEach(block => {
     block = block.trim();
+    if (!block) return;
+
+    const foundCategory = detectCategory(block);
+    if (foundCategory) {
+      currentCategory = foundCategory;
+    }
+
     if (!/^Q\.?\s*\d+/i.test(block)) return;
 
     let questionText = "";
     let options = [];
 
-    const qMatch = block.match(/Q\.?\s*\d+\.?\s*([\s\S]*?)(?=\s+Ans\s+A\.|\s+A\.)/i);
+    const qMatch = block.match(
+      /Q\.?\s*\d+\.?\s*([\s\S]*?)(?=\s+Ans\s+A\.|\s+A\.)/i
+    );
 
     if (qMatch) {
       questionText = qMatch[1].trim();
@@ -362,12 +381,19 @@ function parseQuestions(text) {
       return;
     }
 
-    const optionMatches = [...block.matchAll(/(?:Ans\s+)?([A-D])\.\s*([\s\S]*?)(?=\s+[A-D]\.\s*|\s+Q\.?\s*\d+|$)/gi)];
+    const optionMatches = [
+      ...block.matchAll(
+        /(?:Ans\s+)?([A-D])\.\s*([\s\S]*?)(?=\s+[A-D]\.\s*|\s+Q\.?\s*\d+|$)/gi
+      )
+    ];
 
     optionMatches.forEach(m => {
       let opt = m[2].trim();
       opt = opt.replace(/Section\s*:.*/i, "").trim();
-      if (opt.length > 0) options.push(opt);
+
+      if (opt.length > 0) {
+        options.push(opt);
+      }
     });
 
     if (questionText && options.length >= 4) {
@@ -375,8 +401,8 @@ function parseQuestions(text) {
         examType,
         question: questionText,
         options: options.slice(0, 4),
-        correctAnswer: options[0], // check/edit correct answer if needed
-        category: "General"
+        correctAnswer: options[0],
+        category: currentCategory
       });
     }
   });
