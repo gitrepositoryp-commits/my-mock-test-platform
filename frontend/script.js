@@ -331,21 +331,46 @@ function initExamActionButtons() {
 
 async function submitMockTestResponses() {
   if (appState.timerInterval) clearInterval(appState.timerInterval);
-  const token = localStorage.getItem('mock_test_token'); const examType = getCurrentExamType();
+
+  const token = localStorage.getItem('mock_test_token');
+  const examType = getCurrentExamType();
+
+  if (!token) {
+    alert("Login expired. Please login again.");
+    window.location.href = "login.html";
+    return;
+  }
 
   try {
     const response = await fetch(`${API_BASE_URL}/tests/submit`, {
-      method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-      body: JSON.stringify({ examType, answers: appState.selectedAnswers || {} })
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
+      body: JSON.stringify({
+        examType,
+        answers: appState.selectedAnswers || {}
+      })
     });
+
     const data = await response.json();
-    if (response.ok && data) {
-      localStorage.setItem('last_score', data.score !== undefined ? data.score : 0);
-      localStorage.setItem('last_total', data.totalQuestions !== undefined ? data.totalQuestions : appState.masterQuestions.length);
-      localStorage.setItem('last_percentage', data.percentage !== undefined ? data.percentage : 0);
-      localStorage.setItem('last_result_id', data.resultId || data._id);
-      localStorage.setItem('last_exam_type', examType);
-      window.location.href = 'result.html';
+
+    if (!response.ok) {
+      alert(data.error || "Submit failed. Please try again.");
+      return;
     }
-  } catch (err) { alert('Submission pipeline compilation exception.'); }
+
+    localStorage.setItem('last_score', data.score ?? 0);
+    localStorage.setItem('last_total', data.totalQuestions ?? appState.masterQuestions.length);
+    localStorage.setItem('last_percentage', data.percentage ?? 0);
+    localStorage.setItem('last_result_id', data.resultId || data._id || "");
+    localStorage.setItem('last_exam_type', examType);
+
+    window.location.href = "result.html";
+
+  } catch (err) {
+    console.error("SUBMIT ERROR:", err);
+    alert("Network error while submitting test.");
+  }
 }
