@@ -1,12 +1,14 @@
 const API_BASE_URL = 'https://my-mock-test-platform.onrender.com/api';
 
 let appState = {
-  questions: [],
+  masterQuestions: [],       // Holds ALL 100 questions unmodified
+  questions: [],             // Active/Filtered pool currently visible to the student
   currentQuestionIndex: 0,
   selectedAnswers: {},
   reviewQuestions: {},
   timerInterval: null,
-  totalSecondsRemaining: 90 * 60
+  totalSecondsRemaining: 90 * 60,
+  currentActiveSection: "ALL" // Track current section filter view state
 };
 
 function getCurrentExamType() {
@@ -104,13 +106,18 @@ async function bootstrapQuizEngine() {
     });
 
     if (response.ok) {
-      appState.questions = await response.json();
-      if (appState.questions.length === 0) {
+      const serverData = await response.json();
+      if (serverData.length === 0) {
         alert(`Question data stack empty for ${getCurrentExamTitle()}.`);
         window.location.href = 'dashboard.html'; return;
       }
       
-      // Inject the dynamic section selection tab buttons layout panel
+      // Store questions globally
+      appState.masterQuestions = serverData;
+      // Default initial view includes all items
+      appState.questions = [...appState.masterQuestions];
+      
+      // Inject the subject filter navigation panel
       createExamSectionTabs();
       
       startExamTimer();
@@ -123,58 +130,69 @@ async function bootstrapQuizEngine() {
   } catch (err) { alert('Quiz initialization workflow exception tracking error.'); }
 }
 
-// INJECTS CLICKABLE SUBJECT SECTION BUTTONS LIKE THE DEMO SCREENSHOT IMAGE
+// INJECTS ISOLATED SUBJECT SECTION BUTTONS LIKE THE DEMO SCREENSHOT
 function createExamSectionTabs() {
   const workspace = document.getElementById("examWorkspaceContainer");
   if (!workspace) return;
 
-  // Prevent duplicated tab groups
   if (document.getElementById("studentSectionTabsContainer")) return;
 
   const tabsRow = document.createElement("div");
   tabsRow.id = "studentSectionTabsContainer";
-  tabsRow.style.cssText = "display:flex; gap:10px; margin-bottom:20px; background:#f8fafc; padding:10px; border-radius:8px; border:1px solid #e2e8f0;";
+  tabsRow.style.cssText = "display:flex; gap:10px; margin-bottom:20px; background:#f1f5f9; padding:12px; border-radius:8px; border:1px solid #cbd5e1; flex-wrap:wrap;";
 
-  // Extract sections that exist in the loaded question paper
-  const uniqueSections = ["All Sections"];
-  appState.questions.forEach(q => {
-    const cat = q.category || "General Awareness";
-    if (!uniqueSections.includes(cat)) uniqueSections.push(cat);
-  });
+  // Define explicitly mapped standard section groups
+  const sectionFilters = [
+    { id: "ALL", label: "ALL SECTIONS" },
+    { id: "Maths", label: "MATHS" },
+    { id: "Reasoning", label: "REASONING" },
+    { id: "General Science", label: "GENERAL SCIENCE" },
+    { id: "General Awareness", label: "GENERAL AWARENESS" }
+  ];
 
-  uniqueSections.forEach(sectionTitle => {
+  sectionFilters.forEach(filter => {
+    // Only generate buttons for sections that contain at least one question in this paper
+    const hasQuestions = filter.id === "ALL" || appState.masterQuestions.some(q => (q.category || "General Awareness") === filter.id);
+    if (!hasQuestions) return;
+
     const btn = document.createElement("button");
     btn.className = "section-nav-tab-btn";
-    btn.style.cssText = "padding:8px 16px; border:none; background:#cbd5e1; color:#334155; font-weight:bold; border-radius:4px; cursor:pointer; transition:all 0.2s;";
-    btn.textContent = sectionTitle.toUpperCase();
+    btn.id = `tab-filter-${filter.id.replace(/\s+/g, "-")}`;
+    btn.style.cssText = "padding:10px 18px; border:none; background:#e2e8f0; color:#475569; font-weight:bold; border-radius:6px; cursor:pointer; transition:all 0.2s; font-size:14px; text-transform:uppercase; letter-spacing:0.5px;";
+    btn.textContent = filter.label;
 
-    if (sectionTitle === "All Sections") {
-      btn.style.background = "#1e3a8a"; btn.style.color = "white";
+    // Highlight initial "ALL SECTIONS" default active tab layout state
+    if (filter.id === "ALL") {
+      btn.style.background = "#0f172a"; 
+      btn.style.color = "#ffffff";
     }
 
     btn.addEventListener("click", () => {
-      // Highlight the active selection button
+      // Toggle color state styles across alternative non-selected elements
       document.querySelectorAll(".section-nav-tab-btn").forEach(b => {
-        b.style.background = "#cbd5e1"; b.style.color = "#334155";
+        b.style.background = "#e2e8f0"; b.style.color = "#475569";
       });
-      btn.style.background = "#1e3a8a"; btn.style.color = "white";
+      btn.style.background = "#0f172a"; btn.style.color = "#ffffff";
 
-      if (sectionTitle === "All Sections") {
-        appState.currentQuestionIndex = 0;
+      // Execute dynamic isolation array filter operation
+      appState.currentActiveSection = filter.id;
+      if (filter.id === "ALL") {
+        appState.questions = [...appState.masterQuestions];
       } else {
-        // Find the index of the first question belonging to the clicked section
-        const targetIndex = appState.questions.findIndex(q => (q.category || "General Awareness") === sectionTitle);
-        if (targetIndex !== -1) appState.currentQuestionIndex = targetIndex;
+        appState.questions = appState.masterQuestions.filter(q => (q.category || "General Awareness") === filter.id);
       }
+
+      // Reset cursor position state to head of new structural view slice cleanly
+      appState.currentQuestionIndex = 0;
       
+      // Force instant updates across display layout configurations
       renderActiveQuestionCard();
-      updateNavigationBubbles();
+      generateNavigationGrid();
     });
 
     tabsRow.appendChild(btn);
   });
 
-  // Insert header right under the workspace card container header lines
   workspace.insertBefore(tabsRow, document.getElementById("sectionNameDisplay"));
 }
 
@@ -198,9 +216,12 @@ function renderActiveQuestionCard() {
   if (appState.questions.length === 0) return;
 
   const currentQ = appState.questions[appState.currentQuestionIndex];
-  const questionID = currentQ._id || currentQ.id;
+  
+  // Locate unique item mapping key across root pool reference safely
+  const masterIndex = appState.masterQuestions.findIndex(mq => mq._id === currentQ._id);
+  const displaysNumber = masterIndex !== -1 ? (masterIndex + 1) : (appState.currentQuestionIndex + 1);
 
-  document.getElementById('questionNumberIndicator').textContent = `Question ${appState.currentQuestionIndex + 1} of ${appState.questions.length}`;
+  document.getElementById('questionNumberIndicator').textContent = `Question ${displaysNumber} (#${appState.currentQuestionIndex + 1} of ${appState.questions.length})`;
   document.getElementById('questionTextDisplay').textContent = currentQ.question;
 
   const sectionBadge = document.getElementById("sectionNameDisplay");
@@ -217,15 +238,6 @@ function renderActiveQuestionCard() {
     } else {
       sectionBadge.style.background = "#dcfce7"; sectionBadge.style.color = "#166534";
     }
-
-    // Automatically sync active top category tab header states during Next/Prev button navigation
-    document.querySelectorAll(".section-nav-tab-btn").forEach(btn => {
-      if (btn.textContent.trim() === category.toUpperCase()) {
-        btn.style.background = "#1e3a8a"; btn.style.color = "white";
-      } else if (btn.textContent.trim() !== "ALL SECTIONS") {
-        btn.style.background = "#cbd5e1"; btn.style.color = "#334155";
-      }
-    });
   }
 
   const optionsWrapper = document.getElementById('optionsContainer');
@@ -233,17 +245,17 @@ function renderActiveQuestionCard() {
 
   currentQ.options.forEach((option) => {
     const label = document.createElement('label'); label.className = 'option-label';
-    const isChecked = appState.selectedAnswers[questionID] === option ? 'checked' : '';
+    const isChecked = appState.selectedAnswers[currentQ._id] === option ? 'checked' : '';
 
     label.innerHTML = `<input type="radio" name="quizOption" value="${option}" ${isChecked}> <span>${option}</span>`;
     label.querySelector('input').addEventListener('change', (e) => {
-      appState.selectedAnswers[questionID] = e.target.value; updateNavigationBubbles();
+      appState.selectedAnswers[currentQ._id] = e.target.value; updateNavigationBubbles();
     });
     optionsWrapper.appendChild(label);
   });
 
   document.getElementById('prevBtn').disabled = appState.currentQuestionIndex === 0;
-  document.getElementById('nextBtn').textContent = appState.currentQuestionIndex === appState.questions.length - 1 ? 'Finish Exam' : 'Next Question';
+  document.getElementById('nextBtn').textContent = appState.currentQuestionIndex === appState.questions.length - 1 ? 'Finish Section' : 'Next Question';
 }
 
 function generateNavigationGrid() {
@@ -251,7 +263,12 @@ function generateNavigationGrid() {
   if (!container) return; container.innerHTML = '';
 
   appState.questions.forEach((q, index) => {
-    const bubble = document.createElement('div'); bubble.className = 'bubble'; bubble.id = `bubble-nav-${index}`; bubble.textContent = index + 1;
+    const bubble = document.createElement('div'); bubble.className = 'bubble'; bubble.id = `bubble-nav-${index}`;
+    
+    // Find absolute question number from master list
+    const masterIndex = appState.masterQuestions.findIndex(mq => mq._id === q._id);
+    bubble.textContent = masterIndex !== -1 ? (masterIndex + 1) : (index + 1);
+
     bubble.addEventListener('click', () => {
       appState.currentQuestionIndex = index; renderActiveQuestionCard(); updateNavigationBubbles();
     });
@@ -263,11 +280,11 @@ function generateNavigationGrid() {
 function updateNavigationBubbles() {
   appState.questions.forEach((q, index) => {
     const el = document.getElementById(`bubble-nav-${index}`); if (!el) return;
-    const questionID = q._id || q.id; el.className = 'bubble';
+    el.className = 'bubble';
 
     if (index === appState.currentQuestionIndex) el.classList.add('active');
-    if (appState.selectedAnswers[questionID]) el.classList.add('answered');
-    if (appState.reviewQuestions[questionID]) {
+    if (appState.selectedAnswers[q._id]) el.classList.add('answered');
+    if (appState.reviewQuestions[q._id]) {
       el.style.background = "#9333ea"; el.style.color = "white";
     } else {
       el.style.background = ""; el.style.color = "";
@@ -291,18 +308,25 @@ function initExamActionButtons() {
     nextBtn.addEventListener('click', () => {
       if (appState.currentQuestionIndex < appState.questions.length - 1) {
         appState.currentQuestionIndex++; renderActiveQuestionCard(); updateNavigationBubbles();
-      } else { if (confirm('Finish and submit test?')) submitMockTestResponses(); }
+      } else { 
+        if (appState.currentActiveSection !== "ALL") {
+          alert("You have reached the end of this section! Switching view back to All Sections.");
+          document.getElementById("tab-filter-ALL").click();
+        } else {
+          if (confirm('Finish and submit entire test?')) submitMockTestResponses(); 
+        }
+      }
     });
   }
 
   if (reviewBtn) {
     reviewBtn.addEventListener('click', () => {
       const currentQ = appState.questions[appState.currentQuestionIndex];
-      appState.reviewQuestions[currentQ._id || currentQ.id] = true; updateNavigationBubbles();
+      appState.reviewQuestions[currentQ._id] = true; updateNavigationBubbles();
     });
   }
 
-  if (submitBtn) { submitBtn.addEventListener('click', () => { if (confirm('Submit test results?')) submitMockTestResponses(); }); }
+  if (submitBtn) { submitBtn.addEventListener('click', () => { if (confirm('Submit complete test results?')) submitMockTestResponses(); }); }
 }
 
 async function submitMockTestResponses() {
@@ -317,7 +341,7 @@ async function submitMockTestResponses() {
     const data = await response.json();
     if (response.ok && data) {
       localStorage.setItem('last_score', data.score !== undefined ? data.score : 0);
-      localStorage.setItem('last_total', data.totalQuestions !== undefined ? data.totalQuestions : appState.questions.length);
+      localStorage.setItem('last_total', data.totalQuestions !== undefined ? data.totalQuestions : appState.masterQuestions.length);
       localStorage.setItem('last_percentage', data.percentage !== undefined ? data.percentage : 0);
       localStorage.setItem('last_result_id', data.resultId || data._id);
       localStorage.setItem('last_exam_type', examType);
