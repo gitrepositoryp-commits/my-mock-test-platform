@@ -7,7 +7,6 @@ const jwt = require("jsonwebtoken");
 
 const User = require("../models/User");
 const Payment = require("../models/Payment");
-const adminProtect = require("../middleware/adminProtect");
 
 const razorpay = new Razorpay({
   key_id: process.env.RAZORPAY_KEY_ID,
@@ -37,7 +36,6 @@ function getUserIdFromToken(req) {
   return decoded.id || decoded.userId || decoded._id;
 }
 
-/* CREATE ORDER */
 router.post("/create-order", async (req, res) => {
   try {
     const options = {
@@ -48,14 +46,12 @@ router.post("/create-order", async (req, res) => {
 
     const order = await razorpay.orders.create(options);
     res.status(200).json(order);
-
   } catch (err) {
     console.error("RAZORPAY ORDER ERROR:", err.message);
     res.status(500).json({ error: "Failed to create payment order" });
   }
 });
 
-/* VERIFY PAYMENT */
 router.post("/verify-payment", async (req, res) => {
   try {
     const userId = getUserIdFromToken(req);
@@ -64,22 +60,11 @@ router.post("/verify-payment", async (req, res) => {
       return res.status(401).json({ error: "Token missing or invalid" });
     }
 
-   const {
-  razorpay_order_id,
-  razorpay_payment_id,
-  razorpay_signature
-} = req.body;
-
-const authHeader = req.headers.authorization;
-
-if (!authHeader || !authHeader.startsWith("Bearer ")) {
-  return res.status(401).json({ error: "Token missing" });
-}
-
-const token = authHeader.split(" ")[1];
-const decoded = jwt.verify(token, process.env.JWT_SECRET);
-
-const userId = decoded.id || decoded.userId || decoded._id;
+    const {
+      razorpay_order_id,
+      razorpay_payment_id,
+      razorpay_signature
+    } = req.body;
 
     if (!razorpay_order_id || !razorpay_payment_id || !razorpay_signature) {
       return res.status(400).json({ error: "Payment details missing" });
@@ -152,14 +137,12 @@ const userId = decoded.id || decoded.userId || decoded._id;
       isPremium: user.isPremium,
       premiumExpiresAt: user.premiumExpiresAt
     });
-
   } catch (err) {
     console.error("PAYMENT VERIFY ERROR:", err.message);
     res.status(500).json({ error: "Payment verification failed" });
   }
 });
 
-/* USER PAYMENT HISTORY */
 router.get("/my-payments", async (req, res) => {
   try {
     const userId = getUserIdFromToken(req);
@@ -171,14 +154,12 @@ router.get("/my-payments", async (req, res) => {
     const payments = await Payment.find({ userId }).sort({ createdAt: -1 });
 
     res.status(200).json(payments);
-
   } catch (err) {
     console.error("MY PAYMENTS ERROR:", err.message);
     res.status(500).json({ error: "Failed to load payments" });
   }
 });
 
-/* ADMIN PAYMENTS */
 router.get("/admin/payments", async (req, res) => {
   try {
     const payments = await Payment.find()
@@ -186,7 +167,6 @@ router.get("/admin/payments", async (req, res) => {
       .sort({ createdAt: -1 });
 
     res.status(200).json(payments);
-
   } catch (err) {
     console.error("ADMIN PAYMENTS ERROR:", err.message);
     res.status(500).json({ error: "Failed to load payments" });
