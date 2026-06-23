@@ -370,6 +370,15 @@ function parseQuestions(text) {
 
     let questionText = "";
     let options = [];
+    const qNoMatch = block.match(/Q\.?\s*(\d+)/i);
+const qNo = qNoMatch ? Number(qNoMatch[1]) : 0;
+
+let autoCategory = "General";
+
+if (qNo >= 1 && qNo <= 25) autoCategory = "General Science";
+else if (qNo >= 26 && qNo <= 50) autoCategory = "Maths";
+else if (qNo >= 51 && qNo <= 80) autoCategory = "Reasoning";
+else if (qNo >= 81 && qNo <= 100) autoCategory = "General Awareness";
 
     const qMatch = block.match(
       /Q\.?\s*\d+\.?\s*([\s\S]*?)(?=\s+Ans\s+A\.|\s+A\.)/i
@@ -402,7 +411,7 @@ function parseQuestions(text) {
         question: questionText,
         options: options.slice(0, 4),
         correctAnswer: options[0],
-        category: currentCategory
+        category: autoCategory
       });
     }
   });
