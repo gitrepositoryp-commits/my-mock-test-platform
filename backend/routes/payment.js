@@ -7,18 +7,13 @@ const jwt = require("jsonwebtoken");
 
 const User = require("../models/User");
 const Payment = require("../models/Payment");
+const adminProtect = require("../middleware/adminProtect");
 
-/* =========================
-   RAZORPAY CONFIG
-========================= */
 const razorpay = new Razorpay({
   key_id: process.env.RAZORPAY_KEY_ID,
   key_secret: process.env.RAZORPAY_KEY_SECRET
 });
 
-/* =========================
-   EMAIL CONFIG WITH TIMEOUT
-========================= */
 const transporter = nodemailer.createTransport({
   host: "smtp-relay.brevo.com",
   port: 587,
@@ -29,9 +24,20 @@ const transporter = nodemailer.createTransport({
   }
 });
 
-/* =========================
-   CREATE ORDER
-========================= */
+function getUserIdFromToken(req) {
+  const authHeader = req.headers.authorization;
+
+  if (!authHeader || !authHeader.startsWith("Bearer ")) {
+    return null;
+  }
+
+  const token = authHeader.split(" ")[1];
+  const decoded = jwt.verify(token, process.env.JWT_SECRET);
+
+  return decoded.id || decoded.userId || decoded._id;
+}
+
+/* CREATE ORDER */
 router.post("/create-order", async (req, res) => {
   try {
     const options = {
@@ -49,17 +55,35 @@ router.post("/create-order", async (req, res) => {
   }
 });
 
-/* =========================
-   VERIFY PAYMENT
-========================= */
+/* VERIFY PAYMENT */
 router.post("/verify-payment", async (req, res) => {
   try {
-    const {
-      userId,
-      razorpay_order_id,
-      razorpay_payment_id,
-      razorpay_signature
-    } = req.body;
+    const userId = getUserIdFromToken(req);
+
+    if (!userId) {
+      return res.status(401).json({ error: "Token missing or invalid" });
+    }
+
+   const {
+  razorpay_order_id,
+  razorpay_payment_id,
+  razorpay_signature
+} = req.body;
+
+const authHeader = req.headers.authorization;
+
+if (!authHeader || !authHeader.startsWith("Bearer ")) {
+  return res.status(401).json({ error: "Token missing" });
+}
+
+const token = authHeader.split(" ")[1];
+const decoded = jwt.verify(token, process.env.JWT_SECRET);
+
+const userId = decoded.id || decoded.userId || decoded._id;
+
+    if (!razorpay_order_id || !razorpay_payment_id || !razorpay_signature) {
+      return res.status(400).json({ error: "Payment details missing" });
+    }
 
     const sign = razorpay_order_id + "|" + razorpay_payment_id;
 
@@ -119,9 +143,6 @@ router.post("/verify-payment", async (req, res) => {
           <p>Website: https://rrbedu.online</p>
         `
       });
-
-      console.log("PAYMENT RECEIPT EMAIL SENT TO:", user.email);
-
     } catch (emailErr) {
       console.error("EMAIL RECEIPT FAILED:", emailErr.message);
     }
@@ -138,25 +159,16 @@ router.post("/verify-payment", async (req, res) => {
   }
 });
 
-/* =========================
-   USER PAYMENT HISTORY
-========================= */
+/* USER PAYMENT HISTORY */
 router.get("/my-payments", async (req, res) => {
   try {
-    const authHeader = req.headers.authorization;
+    const userId = getUserIdFromToken(req);
 
-    if (!authHeader || !authHeader.startsWith("Bearer ")) {
-      return res.status(401).json({ error: "Token missing" });
+    if (!userId) {
+      return res.status(401).json({ error: "Token missing or invalid" });
     }
 
-    const token = authHeader.split(" ")[1];
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
-
-    const userId = decoded.id || decoded.userId || decoded._id;
-
-    const payments = await Payment.find({
-      userId: userId
-    }).sort({ createdAt: -1 });
+    const payments = await Payment.find({ userId }).sort({ createdAt: -1 });
 
     res.status(200).json(payments);
 
@@ -166,9 +178,7 @@ router.get("/my-payments", async (req, res) => {
   }
 });
 
-/* =========================
-   ADMIN PAYMENTS
-========================= */
+/* ADMIN PAYMENTS */
 router.get("/admin/payments", async (req, res) => {
   try {
     const payments = await Payment.find()
@@ -182,4 +192,5 @@ router.get("/admin/payments", async (req, res) => {
     res.status(500).json({ error: "Failed to load payments" });
   }
 });
+
 module.exports = router;
