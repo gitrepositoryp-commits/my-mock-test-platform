@@ -23,43 +23,68 @@ const transporter = nodemailer.createTransport({
   }
 });
 
-function getUserIdFromToken(req) {
-  const authHeader = req.headers.authorization;
+async function protect(req, res, next) {
+  try {
+    const authHeader = req.headers.authorization;
 
-  if (!authHeader || !authHeader.startsWith("Bearer ")) {
-    return null;
+    if (!authHeader || !authHeader.startsWith("Bearer ")) {
+      return res.status(401).json({ error: "Token required." });
+    }
+
+    const token = authHeader.split(" ")[1];
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+
+    const user = await User.findById(decoded.id).select(
+      "username email isAdmin isPremium premiumExpiresAt"
+    );
+
+    if (!user) {
+      return res.status(401).json({ error: "User not found." });
+    }
+
+    req.user = user;
+    next();
+
+  } catch (err) {
+    return res.status(401).json({ error: "Invalid or expired token." });
   }
-
-  const token = authHeader.split(" ")[1];
-  const decoded = jwt.verify(token, process.env.JWT_SECRET);
-
-  return decoded.id || decoded.userId || decoded._id;
 }
 
-router.post("/create-order", async (req, res) => {
+async function adminProtect(req, res, next) {
+  try {
+    await protect(req, res, async () => {
+      if (!req.user.isAdmin && req.user.email !== process.env.ADMIN_EMAIL) {
+        return res.status(403).json({ error: "Admin access only." });
+      }
+      next();
+    });
+  } catch {
+    return res.status(401).json({ error: "Invalid admin session." });
+  }
+}
+
+/* CREATE RAZORPAY ORDER */
+router.post("/create-order", protect, async (req, res) => {
   try {
     const options = {
       amount: 7900,
       currency: "INR",
-      receipt: "premium_" + Date.now()
+      receipt: `premium_${req.user._id}_${Date.now()}`
     };
 
     const order = await razorpay.orders.create(options);
+
     res.status(200).json(order);
+
   } catch (err) {
     console.error("RAZORPAY ORDER ERROR:", err.message);
-    res.status(500).json({ error: "Failed to create payment order" });
+    res.status(500).json({ error: "Failed to create payment order." });
   }
 });
 
-router.post("/verify-payment", async (req, res) => {
+/* VERIFY PAYMENT */
+router.post("/verify-payment", protect, async (req, res) => {
   try {
-    const userId = getUserIdFromToken(req);
-
-    if (!userId) {
-      return res.status(401).json({ error: "Token missing or invalid" });
-    }
-
     const {
       razorpay_order_id,
       razorpay_payment_id,
@@ -67,40 +92,40 @@ router.post("/verify-payment", async (req, res) => {
     } = req.body;
 
     if (!razorpay_order_id || !razorpay_payment_id || !razorpay_signature) {
-      return res.status(400).json({ error: "Payment details missing" });
+      return res.status(400).json({ error: "Payment details missing." });
     }
 
-    const sign = razorpay_order_id + "|" + razorpay_payment_id;
+    const duplicatePayment = await Payment.findOne({
+      razorpayPaymentId: razorpay_payment_id
+    });
+
+    if (duplicatePayment) {
+      return res.status(400).json({ error: "Payment already verified." });
+    }
+
+    const sign = `${razorpay_order_id}|${razorpay_payment_id}`;
 
     const expectedSign = crypto
       .createHmac("sha256", process.env.RAZORPAY_KEY_SECRET)
       .update(sign)
       .digest("hex");
 
-    if (razorpay_signature !== expectedSign) {
-      return res.status(400).json({ error: "Invalid payment signature" });
+    if (expectedSign !== razorpay_signature) {
+      return res.status(400).json({ error: "Invalid payment signature." });
     }
 
     const startedAt = new Date();
     const expiresAt = new Date();
     expiresAt.setDate(expiresAt.getDate() + 30);
 
-    const user = await User.findByIdAndUpdate(
-      userId,
-      {
-        isPremium: true,
-        premiumStartedAt: startedAt,
-        premiumExpiresAt: expiresAt
-      },
-      { new: true }
-    );
+    req.user.isPremium = true;
+    req.user.premiumStartedAt = startedAt;
+    req.user.premiumExpiresAt = expiresAt;
 
-    if (!user) {
-      return res.status(404).json({ error: "User not found" });
-    }
+    await req.user.save();
 
     await Payment.create({
-      userId: user._id,
+      userId: req.user._id,
       razorpayOrderId: razorpay_order_id,
       razorpayPaymentId: razorpay_payment_id,
       amount: 79,
@@ -113,11 +138,11 @@ router.post("/verify-payment", async (req, res) => {
     try {
       await transporter.sendMail({
         from: `"RRB EDU" <${process.env.BREVO_FROM_EMAIL}>`,
-        to: user.email,
+        to: req.user.email,
         subject: "RRB EDU Premium Activated Successfully",
         html: `
           <h2>Premium Membership Activated ✅</h2>
-          <p>Hello ${user.username || "Student"},</p>
+          <p>Hello ${req.user.username || "Student"},</p>
           <p>Your RRB EDU Premium Membership has been activated successfully.</p>
           <hr>
           <p><strong>Payment ID:</strong> ${razorpay_payment_id}</p>
@@ -133,34 +158,30 @@ router.post("/verify-payment", async (req, res) => {
     }
 
     res.status(200).json({
-      message: "Payment verified and premium activated",
-      isPremium: user.isPremium,
-      premiumExpiresAt: user.premiumExpiresAt
+      message: "Payment verified and premium activated.",
+      isPremium: true,
+      premiumExpiresAt: expiresAt
     });
+
   } catch (err) {
     console.error("PAYMENT VERIFY ERROR:", err.message);
-    res.status(500).json({ error: "Payment verification failed" });
+    res.status(500).json({ error: "Payment verification failed." });
   }
 });
 
-router.get("/my-payments", async (req, res) => {
+/* USER PAYMENT HISTORY */
+router.get("/my-payments", protect, async (req, res) => {
   try {
-    const userId = getUserIdFromToken(req);
-
-    if (!userId) {
-      return res.status(401).json({ error: "Token missing or invalid" });
-    }
-
-    const payments = await Payment.find({ userId }).sort({ createdAt: -1 });
-
+    const payments = await Payment.find({ userId: req.user._id }).sort({ createdAt: -1 });
     res.status(200).json(payments);
   } catch (err) {
     console.error("MY PAYMENTS ERROR:", err.message);
-    res.status(500).json({ error: "Failed to load payments" });
+    res.status(500).json({ error: "Failed to load payments." });
   }
 });
 
-router.get("/admin/payments", async (req, res) => {
+/* ADMIN PAYMENT HISTORY */
+router.get("/admin/payments", adminProtect, async (req, res) => {
   try {
     const payments = await Payment.find()
       .populate("userId", "username email")
@@ -169,7 +190,7 @@ router.get("/admin/payments", async (req, res) => {
     res.status(200).json(payments);
   } catch (err) {
     console.error("ADMIN PAYMENTS ERROR:", err.message);
-    res.status(500).json({ error: "Failed to load payments" });
+    res.status(500).json({ error: "Failed to load payments." });
   }
 });
 

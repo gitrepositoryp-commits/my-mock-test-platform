@@ -12,11 +12,11 @@ const PaymentSchema = new mongoose.Schema({
     required: true
   },
 
-  razorpayPaymentId: {
-    type: String,
-    required: true
-  },
-
+ razorpayPaymentId: {
+  type: String,
+  required: true,
+  unique: true
+},
   amount: {
     type: Number,
     default: 79
@@ -27,10 +27,11 @@ const PaymentSchema = new mongoose.Schema({
     default: "INR"
   },
 
-  status: {
-    type: String,
-    default: "success"
-  },
+status: {
+  type: String,
+  enum: ["success", "failed", "pending"],
+  default: "success"
+},
 
   premiumStartedAt: {
     type: Date,
