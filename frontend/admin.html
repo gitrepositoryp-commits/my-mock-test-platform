@@ -137,14 +137,6 @@ function adminHeaders() {
   return { "Content-Type": "application/json", "Authorization": `Bearer ${getAdminToken()}` };
 }
 
-document.getElementById("adminLogoutBtn").addEventListener("click", () => {
-  localStorage.removeItem("admin_logged_in");
-  localStorage.removeItem("token");
-  localStorage.removeItem("adminToken");
-  localStorage.removeItem("authToken");
-  window.location.href = "admin-login.html";
-});
-
 if (localStorage.getItem("admin_logged_in") !== "true" || !getAdminToken()) {
   alert("Admin session expired. Please login again.");
   window.location.href = "admin-login.html";
@@ -156,7 +148,7 @@ pdfjsLib.GlobalWorkerOptions.workerSrc = "https://cdnjs.cloudflare.com/ajax/libs
 let allQuestions = [];
 
 document.getElementById("manualAddBtn").addEventListener("click", async () => {
-  const examType = requireSelectedExam();
+  const examType = getSelectedExam();
   const question = document.getElementById("manualQuestion").value.trim();
   const category = document.getElementById("manualCategory").value;
   const options = [
@@ -197,63 +189,26 @@ const examGroups = [
 
 function populateExamDropdown() {
   const select = document.getElementById("examType");
-  select.innerHTML = "";
-
-  const defaultOption = document.createElement("option");
-  defaultOption.value = "";
-  defaultOption.textContent = "Select Exam Type";
-  defaultOption.disabled = true;
-  defaultOption.selected = true;
-  select.appendChild(defaultOption);
-
   examGroups.forEach(group => {
-    const freeHeader = document.createElement("optgroup");
-    freeHeader.label = `${group.label} - FREE`;
-
+    const freeHeader = document.createElement("optgroup"); freeHeader.label = `${group.label} - FREE`;
     for (let i = 1; i <= 3; i++) {
-      const opt = document.createElement("option");
-      opt.value = `${group.prefix}_FREE_${i}`;
-      opt.textContent = `${group.label} Free Mock ${i}`;
-      freeHeader.appendChild(opt);
+      const opt = document.createElement("option"); opt.value = `${group.prefix}_FREE_${i}`; opt.textContent = `${group.label} Free Mock ${i}`; freeHeader.appendChild(opt);
     }
-
     select.appendChild(freeHeader);
-
-    const premHeader = document.createElement("optgroup");
-    premHeader.label = `${group.label} - PREMIUM`;
-
+    const premHeader = document.createElement("optgroup"); premHeader.label = `${group.label} - PREMIUM`;
     for (let i = 1; i <= 30; i++) {
-      const opt = document.createElement("option");
-      opt.value = `${group.prefix}_PREMIUM_${i}`;
-      opt.textContent = `🔒 ${group.label} Premium Mock ${i}`;
-      premHeader.appendChild(opt);
+      const opt = document.createElement("option"); opt.value = `${group.prefix}_PREMIUM_${i}`; opt.textContent = `🔒 ${group.label} Premium Mock ${i}`; premHeader.appendChild(opt);
     }
-
     select.appendChild(premHeader);
   });
 }
 populateExamDropdown();
 
-function getSelectedExam() {
-  return document.getElementById("examType").value;
-}
-
-function requireSelectedExam() {
-  const exam = getSelectedExam();
-  if (!exam) {
-    alert("Please select exam type first.");
-    throw new Error("Exam type not selected");
-  }
-  return exam;
-}
+function getSelectedExam() { return document.getElementById("examType").value; }
 
 async function loadQuestionCount() {
   try {
     const exam = getSelectedExam();
-    if (!exam) {
-      document.getElementById("questionCountDisplay").textContent = "Please select exam type";
-      return;
-    }
     const response = await fetch(`${LIVE_BACKEND_URL}/tests/admin/questions?exam=${exam}`, { headers: adminHeaders() });
     const data = await response.json();
     if (response.ok && Array.isArray(data)) {
@@ -377,7 +332,6 @@ function parseQuestions(text) {
 document.getElementById("smartParseBtn").addEventListener("click", () => {
   const consoleArea = document.getElementById("editorConsole"); const text = consoleArea.value.trim();
   if (!text) { alert("Parse engine data source empty."); return; }
-  requireSelectedExam();
   const parsed = parseQuestions(text);
   if (parsed.length === 0) { alert("Format reading array discrepancy isolated."); return; }
   consoleArea.value = JSON.stringify(parsed, null, 2);
@@ -385,7 +339,7 @@ document.getElementById("smartParseBtn").addEventListener("click", () => {
 });
 
 document.getElementById("executeUploadBtn").addEventListener("click", async () => {
-  const consoleArea = document.getElementById("editorConsole"); const examType = requireSelectedExam();
+  const consoleArea = document.getElementById("editorConsole"); const examType = getSelectedExam();
   let questionsArray;
   try { questionsArray = JSON.parse(consoleArea.value.trim()); } catch (err) { alert("Run Step 2 first."); return; }
 
@@ -402,7 +356,7 @@ document.getElementById("executeUploadBtn").addEventListener("click", async () =
 });
 
 document.getElementById("deleteAllBtn").addEventListener("click", async () => {
-  const exam = requireSelectedExam(); if (!confirm("Flush data logs for selected module?")) return;
+  const exam = getSelectedExam(); if (!confirm("Flush data logs for selected module?")) return;
   try {
     const res = await fetch(`${LIVE_BACKEND_URL}/tests/questions/delete-all?exam=${exam}`, { method: "DELETE", headers: adminHeaders() });
     if (res.ok) { alert("Deleted."); await loadQuestionCount(); await loadQuestionsPreview(); }
@@ -412,7 +366,6 @@ document.getElementById("deleteAllBtn").addEventListener("click", async () => {
 async function loadQuestionsPreview() {
   try {
     const exam = getSelectedExam();
-    if (!exam) { allQuestions = []; renderQuestions([]); return; }
     const response = await fetch(`${LIVE_BACKEND_URL}/tests/admin/questions?exam=${exam}`, { headers: adminHeaders() });
     const data = await response.json();
     if (response.ok) { allQuestions = data; renderQuestions(allQuestions); }
@@ -479,7 +432,7 @@ async function updateQuestion(id) {
 }
 
 async function loadAdminResults() {
-  const container = document.getElementById("resultsContainer"); const exam = requireSelectedExam(); container.innerHTML = "Syncing dataset logs...";
+  const container = document.getElementById("resultsContainer"); const exam = getSelectedExam(); container.innerHTML = "Syncing dataset logs...";
   try {
     const response = await fetch(`${LIVE_BACKEND_URL}/tests/admin/results?exam=${exam}`, { headers: adminHeaders() });
     const results = await response.json(); if (!response.ok) return;
@@ -491,7 +444,6 @@ document.getElementById("loadResultsBtn").addEventListener("click", loadAdminRes
 async function loadAdminAnalytics() {
   try {
     const exam = getSelectedExam();
-    if (!exam) return;
     const response = await fetch(`${LIVE_BACKEND_URL}/tests/admin/results?exam=${exam}`, { headers: adminHeaders() });
     const results = await response.json(); if (!response.ok || !Array.isArray(results)) return;
     document.getElementById("totalResultsCard").textContent = results.length;
