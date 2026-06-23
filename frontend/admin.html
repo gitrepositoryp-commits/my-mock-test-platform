@@ -23,6 +23,27 @@
 
   <div class="card" style="padding:30px;">
     <h2 style="text-align:center;">Universal PDF Question Uploader</h2>
+    <div class="card" style="margin-top:20px;padding:20px;">
+  <h3>➕ Manual Add Question</h3>
+
+  <textarea id="manualQuestion" placeholder="Enter question" style="width:100%;height:80px;padding:10px;margin-top:10px;"></textarea>
+
+  <input id="manualOpt1" placeholder="Option A" style="width:100%;padding:10px;margin-top:8px;">
+  <input id="manualOpt2" placeholder="Option B" style="width:100%;padding:10px;margin-top:8px;">
+  <input id="manualOpt3" placeholder="Option C" style="width:100%;padding:10px;margin-top:8px;">
+  <input id="manualOpt4" placeholder="Option D" style="width:100%;padding:10px;margin-top:8px;">
+
+  <select id="manualCorrect" style="width:100%;padding:10px;margin-top:8px;">
+    <option value="1">Correct Answer: Option A</option>
+    <option value="2">Correct Answer: Option B</option>
+    <option value="3">Correct Answer: Option C</option>
+    <option value="4">Correct Answer: Option D</option>
+  </select>
+
+  <button id="manualAddBtn" class="btn" style="background:#16a34a;margin-top:12px;">
+    Add This Question
+  </button>
+</div>
 
     <div style="margin:20px 0;">
       <label style="font-weight:bold;">Select Exam Type</label>
@@ -139,6 +160,67 @@ pdfjsLib.GlobalWorkerOptions.workerSrc =
   "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js";
 
 let allQuestions = [];
+document.getElementById("manualAddBtn").addEventListener("click", async () => {
+  const examType = getSelectedExam();
+
+  const question = document.getElementById("manualQuestion").value.trim();
+
+  const options = [
+    document.getElementById("manualOpt1").value.trim(),
+    document.getElementById("manualOpt2").value.trim(),
+    document.getElementById("manualOpt3").value.trim(),
+    document.getElementById("manualOpt4").value.trim()
+  ];
+
+  const correctIndex = Number(document.getElementById("manualCorrect").value) - 1;
+  const correctAnswer = options[correctIndex];
+
+  if (!question || options.some(opt => !opt) || !correctAnswer) {
+    alert("Please fill question, all 4 options and correct answer.");
+    return;
+  }
+
+  try {
+    const response = await fetch(`${LIVE_BACKEND_URL}/tests/bulk-questions`, {
+      method: "POST",
+      headers: adminHeaders(),
+      body: JSON.stringify({
+        examType,
+        questionsArray: [
+          {
+            examType,
+            question,
+            options,
+            correctAnswer,
+            category: "General"
+          }
+        ]
+      })
+    });
+
+    const data = await response.json();
+
+    if (response.ok) {
+      alert("Question added successfully.");
+
+      document.getElementById("manualQuestion").value = "";
+      document.getElementById("manualOpt1").value = "";
+      document.getElementById("manualOpt2").value = "";
+      document.getElementById("manualOpt3").value = "";
+      document.getElementById("manualOpt4").value = "";
+      document.getElementById("manualCorrect").value = "1";
+
+      await loadQuestionCount();
+      await loadQuestionsPreview();
+    } else {
+      alert(data.error || "Failed to add question.");
+    }
+
+  } catch (err) {
+    console.error("MANUAL ADD ERROR:", err);
+    alert("Manual add error: " + err.message);
+  }
+});
 const examGroups = [
   { label: "RRB NTPC Graduate", prefix: "NTPC_PG" },
   { label: "RRB NTPC Undergraduate", prefix: "NTPC_UG" },
