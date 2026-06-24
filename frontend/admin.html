@@ -348,17 +348,14 @@ document.getElementById("readPdfBtn").addEventListener("click", async () => {
   fileReader.readAsArrayBuffer(fileInput.files[0]);
 });
 function parseQuestions(text) {
-  // Normalize whitespaces, tabs, and carriage returns into single spaces
   text = text.replace(/\r/g, " ").replace(/\s+/g, " ").trim();
 
   const examType = getSelectedExam();
   const questions = [];
   let currentCategory = "";
 
-  // 1. Explicit Section State Machine Trackers
   function detectSectionHeading(block) {
     const b = block.toLowerCase();
-    
     if (/section\s*:?\s*(mathematics|maths|quantitative\s+aptitude|numerical\s+ability)/i.test(b)) {
       return "Maths";
     }
@@ -374,43 +371,37 @@ function parseQuestions(text) {
     return null;
   }
 
-  // 2. High-Precision Structural Pattern & Vocabulary Analyzer
   function autoDetectByQuestion(questionText) {
     const q = questionText.toLowerCase();
 
-    // --- STRUCTURAL AND PATTERN OVERRIDES (HIGH PRIORITY) ---
-    
-    // Reasoning Patterns: Mixed letter-number tracks, structural coding changes, direction loops, and symbol logic
     if (
-      /[A-Z]{2,}\s*[-–]?\s*\d+/.test(questionText) || // "VPG 7", "FZN 4", "LLP-22"
-      /[A-Z\d\s\-_%,?]{3,}[\s,]+[A-Z\d\s\-_%,?]{3,}[\s,]+[A-Z\d\s\-_%,?]{3,}/.test(questionText) || // Triad series sequences
-      /coded\s+as\s+['"\d\w ]+/i.test(q) || // "coded as 6315"
-      /preceded\s+by\s+a\s+(symbol|number|digit)/i.test(q) || // String symbol manipulation trackers
-      /shortest\s+distance.*direction/i.test(q) || // Map direction puzzles
-      /turns\s+are\s+90\s+degrees/i.test(q) || // Explicit angular turn matrices
-      /sitting\s+around\s+a\s+circular\s+table/i.test(q) || // Round table seating logic
-      /facing\s+north.*row/i.test(q) || // Row layout alignments
-      /live\s+on\s+six\s+different\s+floors/i.test(q) || // Structural hierarchy maps
-      /statement\s*\(?[i1V]+\)?\s*and\s+conclusion/i.test(q) // Syllogisms
+      /[A-Z]{2,}\s*[-–]?\s*\d+/.test(questionText) || 
+      /[A-Z\d\s\-_%,?]{3,}[\s,]+[A-Z\d\s\-_%,?]{3,}[\s,]+[A-Z\d\s\-_%,?]{3,}/.test(questionText) || 
+      /coded\s+as\s+['"\d\w ]+/i.test(q) || 
+      /preceded\s+by\s+a\s+(symbol|number|digit)/i.test(q) || 
+      /shortest\s+distance.*direction/i.test(q) || 
+      /turns\s+are\s+90\s+degrees/i.test(q) || 
+      /sitting\s+around\s+a\s+circular\s+table/i.test(q) || 
+      /facing\s+north.*row/i.test(q) || 
+      /live\s+on\s+six\s+different\s+floors/i.test(q) || 
+      /statement\s*\(?[i1V]+\)?\s*and\s+conclusion/i.test(q)
     ) {
       return "Reasoning";
     }
 
-    // Maths Structure Patterns: Equations, fractions, and explicit geometry variable notations
     if (
-      /^[a-z]\s*\(?[y-z\d\s\-+*/=]+\)?\s*=/i.test(q) || // Functional algebra expressions
-      /\(?\s*\d+[a-z\d\s\-+^*/()]+\)?\s*[-+=]\s*[\d?]+/i.test(q) || // Complex computational formulas
-      /angle\s+of\s+elevation/i.test(q) || // Height and distance trigonometry
-      /tan\d*|cos\d*|sin\d*/i.test(q) || // Pure trigonometric identifiers
-      /compounded\s+annually|compound\s+interest/i.test(q) || // Business compound arithmetic
-      /simple\s+interest/i.test(q) || // Base percentage asset returns
-      /ratio\s+of/i.test(q) || // Direct dynamic system portions
-      /third\s+proportional/i.test(q) // Ratio proportions
+      /^[a-z]\s*\(?[y-z\d\s\-+*/=]+\)?\s*=/i.test(q) || 
+      /\(?\s*\d+[a-z\d\s\-+^*/()]+\)?\s*[-+=]\s*[\d?]+/i.test(q) || 
+      /angle\s+of\s+elevation/i.test(q) || 
+      /tan\d*|cos\d*|sin\d*/i.test(q) || 
+      /compounded\s+annually|compound\s+interest/i.test(q) || 
+      /simple\s+interest/i.test(q) || 
+      /ratio\s+of/i.test(q) || 
+      /third\s+proportional/i.test(q)
     ) {
       return "Maths";
     }
 
-    // --- VOCABULARY SEARCH DICTIONARIES ---
     const mathsWords = [
       "speed", "distance", "time and work", "profit", "loss", "discount", "average", "lcm", "hcf", 
       "fraction", "simplification", "algebra", "geometry", "mensuration", "perimeter", "volume", 
@@ -441,23 +432,14 @@ function parseQuestions(text) {
     ];
 
     const gaWords = [
-      "unveiled by", "defence industry", "articles of the", "indian constitution", "equal pay",
-      "andaman and nicobar", "puducherry", "lieutenant governor", "icc champions trophy", 
-      "central administrative tribunal", "fiscal framework", "preferential trade agreement", 
-      "mercosur", "fdi limit", "insurance sector", "land border", "higher education", "policy report",
-      "sangam literature", "harappan", "dockyard", "lothal", "banking laws", "substantial interest",
-      "indo-brahma", "drainage systems", "pleistocene upheaval", "free trade agreement", "efta", "tepa",
-      "anniversary", "summer solstice", "tropic of cancer", "tropic of capricorn", "high court",
-      "district judiciary", "real gva", "nso", "mospi", "slash and burn", "kuruwa", "portuguese",
-      "bardoli satyagraha", "sardar vallabhbhai", "route length", "tibeto-burman", "eighth schedule",
-      "tertiary activity", "delhi sultanate", "ilfutmish", "balban", "alauddin", "rationing",
-      "customized application software", "payroll management", "86th amendment", "fundamental duty",
-      "young india", "mahatma gandhi", "constitution amendment bill", "directive principles",
-      "oscar entry", "laapataa ladies", "khel ratna", "graded response action plan", "grap",
-      "cpcb", "caqm", "zoonotic", "nipah", "rural development", "world health day", "reset scheme",
-      "gachibowli", "knighthood", "james anderson", "garuda aerospace", "agri-drone", "e-jagriti",
-      "sustainable development report", "un member", "passex", "kyrgyzstan", "zonal council",
-      "geosynchronous satellite", "gslv", "zero-emission trucking", "noise pollution", "kyc updating"
+      "president", "prime minister", "governor", "chief justice", "parliament", 
+      "constitution", "fundamental rights", "amendment", "lok sabha", "rajya sabha", 
+      "harappan", "indus valley", "mughal", "delhi sultanate", "british", "revolt of 1857", 
+      "gandhi", "congress", "capital of", "currency of", "unesco", "national park", 
+      "wildlife sanctuary", "biosphere reserve", "river", "tributary", "lake", "mountain peak", 
+      "strait", "gulf", "five-year plan", "gdp", "inflation", "rbi", "budget", "fiscal policy", 
+      "olympics", "fifa", "ipl", "trophy", "stadium", "nobel prize", "bharat ratna", 
+      "oscar", "book written by", "author of", "headquarters of", "drdo", "isro"
     ];
 
     function score(words) {
@@ -483,7 +465,6 @@ function parseQuestions(text) {
     return null;
   }
 
-  // 3. Fallback Uniform Numerical Block Distribution Patterns
   function fallbackCategory(qNo) {
     const isUnderGrad = examType.includes("UG");
     const isGroupD = examType.includes("GROUP_D") || examType.includes("Level 01");
@@ -495,20 +476,17 @@ function parseQuestions(text) {
       return "General Awareness";
     }
 
-    // Standard RRB NTPC Graduate & Under Graduate Layout Default Mapping
     if (isUnderGrad) {
       if (qNo >= 1 && qNo <= 40) return "General Awareness";
       if (qNo >= 41 && qNo <= 70) return "Maths";
       return "Reasoning";
     }
 
-    // Default general template assignment
     if (qNo >= 1 && qNo <= 30) return "Maths";
     if (qNo >= 31 && qNo <= 60) return "Reasoning";
     return "General Awareness";
   }
 
-  // Parsing loop using the standard structural boundaries
   const blocks = text.split(/(?=Section\s*:|Q\.?\s*\d+)/gi);
 
   blocks.forEach(block => {
@@ -533,7 +511,6 @@ function parseQuestions(text) {
       .replace(/Section\s*:.*$/i, "")
       .trim();
 
-    // Match array alternatives: Alpha characters (A-D) or standard numeric (1-4) options
     const optionPattern = /(?:Ans\s+)?([A-D1-4])\.\s*([\s\S]*?)(?=\s+(?:[A-D1-4])\.\s*|\s+Q\.?\s*\d+|$)/gi;
     const matches = [...block.matchAll(optionPattern)];
 
@@ -546,87 +523,6 @@ function parseQuestions(text) {
     ).filter(Boolean);
 
     if (questionText && options.length >= 4) {
-      const smartCategory = autoDetectByQuestion(questionText);
-      const category = smartCategory || currentCategory || fallbackCategory(qNo);
-
-      questions.push({
-        examType,
-        question: questionText,
-        options: options.slice(0, 4),
-        correctAnswer: options[0], // Assumes index zero contains the raw parsed default correct key mapping
-        category
-      });
-    }
-  });
-
-  return questions;
-}
-  // 3. Exam-Specific Fallback Segment Distribution 
-  function fallbackCategory(qNo) {
-    if (examType.includes("NTPC")) {
-      if (qNo >= 1 && qNo <= 30) return "Maths";
-      if (qNo >= 31 && qNo <= 60) return "Reasoning";
-      return "General Awareness"; // 61-100 (Includes Science + GA in NTPC templates)
-    }
-
-    if (examType.includes("GROUP_D")) {
-      if (qNo >= 1 && qNo <= 25) return "General Science";
-      if (qNo >= 26 && qNo <= 50) return "Maths";
-      if (qNo >= 51 && qNo <= 80) return "Reasoning";
-      return "General Awareness";
-    }
-
-    if (examType.includes("ALP") || examType.includes("TECH")) {
-      if (qNo >= 1 && qNo <= 25) return "Maths";
-      if (qNo >= 26 && qNo <= 50) return "Reasoning";
-      if (qNo >= 51 && qNo <= 75) return "General Science";
-      return "General Awareness";
-    }
-
-    return "General Awareness";
-  }
-
-  // Split into distinct blocks based on Section marks or Question starts
-  const blocks = text.split(/(?=Section\s*:|Q\.?\s*\d+)/gi);
-
-  blocks.forEach(block => {
-    block = block.trim();
-    if (!block) return;
-
-    // Check if this block updates our current Section path context
-    const headingCategory = detectSectionHeading(block);
-    if (headingCategory) {
-      currentCategory = headingCategory;
-    }
-
-    if (!/^Q\.?\s*\d+/i.test(block)) return;
-
-    const qNoMatch = block.match(/^Q\.?\s*(\d+)/i);
-    const qNo = qNoMatch ? Number(qNoMatch[1]) : 0;
-
-    const qMatch = block.match(/Q\.?\s*\d+\.?\s*([\s\S]*?)(?=\s+(?:Ans\s+)?(?:A\.|1\.))/i);
-    if (!qMatch) return;
-
-    let questionText = qMatch[1]
-      .replace(/Test Date.*$/i, "")
-      .replace(/Section\s*:.*$/i, "")
-      .trim();
-
-    const optionPattern = /(?:Ans\s+)?([A-D1-4])\.\s*([\s\S]*?)(?=\s+(?:[A-D1-4])\.\s*|\s+Q\.?\s*\d+|$)/gi;
-    const matches = [...block.matchAll(optionPattern)];
-
-    const options = matches.map(m =>
-      m[2]
-        .replace(/Section\s*:.*$/i, "")
-        .replace(/Adda\s*247/gi, "")
-        .replace(/Google\s*Play/gi, "")
-        .trim()
-    ).filter(Boolean);
-
-    if (questionText && options.length >= 4) {
-      // Priority 1: Smart structural content scan
-      // Priority 2: Persistent structural heading trace
-      // Priority 3: Numerical distribution fallback pattern
       const smartCategory = autoDetectByQuestion(questionText);
       const category = smartCategory || currentCategory || fallbackCategory(qNo);
 
@@ -642,6 +538,8 @@ function parseQuestions(text) {
 
   return questions;
 }
+
+// --- CONSOLE CONTROL AND ASYNC EVENT UTILITIES ---
 
 document.getElementById("smartParseBtn").addEventListener("click", () => {
   const consoleArea = document.getElementById("editorConsole");
@@ -666,7 +564,6 @@ document.getElementById("smartParseBtn").addEventListener("click", () => {
 document.getElementById("executeUploadBtn").addEventListener("click", async () => {
   const consoleArea = document.getElementById("editorConsole");
   const examType = getSelectedExam();
-
   let questionsArray;
 
   try {
@@ -680,8 +577,6 @@ document.getElementById("executeUploadBtn").addEventListener("click", async () =
     alert("No valid questions found.");
     return;
   }
-
-  questionsArray = questionsArray.map(q => ({ ...q, examType }));
 
   try {
     const response = await fetch(`${LIVE_BACKEND_URL}/tests/bulk-questions`, {
@@ -707,7 +602,6 @@ document.getElementById("executeUploadBtn").addEventListener("click", async () =
 
 document.getElementById("deleteAllBtn").addEventListener("click", async () => {
   const exam = getSelectedExam();
-
   if (!confirm(`Delete all questions for ${exam}?`)) return;
 
   try {
@@ -732,14 +626,12 @@ document.getElementById("deleteAllBtn").addEventListener("click", async () => {
 
 async function loadQuestionsPreview() {
   const exam = getSelectedExam();
-
   try {
     const response = await fetch(`${LIVE_BACKEND_URL}/tests/admin/questions?exam=${encodeURIComponent(exam)}`, {
       headers: adminHeaders()
     });
 
     if (response.status === 401 || response.status === 403) return forceAdminLogout();
-
     const data = await safeJson(response);
 
     if (response.ok && Array.isArray(data)) {
@@ -753,29 +645,22 @@ async function loadQuestionsPreview() {
 
 function filterAdminPreview(category) {
   currentAdminTab = category;
-
   document.querySelectorAll(".admin-tab-btn").forEach(btn => {
     btn.classList.remove("active");
-    if (
-      btn.textContent.trim() === category ||
-      (category === "All" && btn.textContent.trim() === "All Sections")
-    ) {
+    if (btn.textContent.trim() === category || (category === "All" && btn.textContent.trim() === "All Sections")) {
       btn.classList.add("active");
     }
   });
-
   applyAdminFilter();
 }
 
 function applyAdminFilter() {
   const searchVal = document.getElementById("searchQuestionInput").value.toLowerCase();
-
   const filtered = allQuestions.filter(q => {
     const matchesTab = currentAdminTab === "All" || q.category === currentAdminTab;
     const matchesSearch = (q.question || "").toLowerCase().includes(searchVal);
     return matchesTab && matchesSearch;
   });
-
   renderQuestions(filtered);
 }
 
@@ -784,7 +669,6 @@ document.getElementById("searchQuestionInput").addEventListener("input", applyAd
 function renderQuestions(questions) {
   const container = document.getElementById("questionPreviewContainer");
   container.innerHTML = "";
-
   const displaySlice = questions.slice(0, 30);
 
   if (displaySlice.length === 0) {
@@ -795,7 +679,6 @@ function renderQuestions(questions) {
   displaySlice.forEach((q, index) => {
     const id = q._id;
     const card = document.createElement("div");
-
     card.style.border = "1px solid #ddd";
     card.style.padding = "15px";
     card.style.marginBottom = "15px";
@@ -803,36 +686,29 @@ function renderQuestions(questions) {
 
     card.innerHTML = `
       <h4>Q${index + 1} - Section: <strong style="color:#7c3aed;">${escapeHtml(q.category || "General Awareness")}</strong></h4>
-
       <textarea id="qtext-${id}" style="width:100%;height:70px;">${escapeHtml(q.question)}</textarea>
-
       <input id="opt1-${id}" value="${escapeHtml(q.options?.[0])}" style="width:100%;margin-top:4px;padding:6px;">
       <input id="opt2-${id}" value="${escapeHtml(q.options?.[1])}" style="width:100%;margin-top:4px;padding:6px;">
       <input id="opt3-${id}" value="${escapeHtml(q.options?.[2])}" style="width:100%;margin-top:4px;padding:6px;">
       <input id="opt4-${id}" value="${escapeHtml(q.options?.[3])}" style="width:100%;margin-top:4px;padding:6px;">
-
       <input id="ans-${id}" value="${escapeHtml(q.correctAnswer)}" style="width:100%;margin-top:4px;padding:6px;color:green;font-weight:bold;">
       <select id="cat-${id}" style="width:100%;margin-top:4px;padding:6px;color:purple;">
-  <option value="Maths" ${q.category==="Maths"?"selected":""}>Maths</option>
-  <option value="Reasoning" ${q.category==="Reasoning"?"selected":""}>Reasoning</option>
-  <option value="General Science" ${q.category==="General Science"?"selected":""}>General Science</option>
-  <option value="General Awareness" ${q.category==="General Awareness"?"selected":""}>General Awareness</option>
-</select>
-
+        <option value="Maths" ${q.category==="Maths"?"selected":""}>Maths</option>
+        <option value="Reasoning" ${q.category==="Reasoning"?"selected":""}>Reasoning</option>
+        <option value="General Science" ${q.category==="General Science"?"selected":""}>General Science</option>
+        <option value="General Awareness" ${q.category==="General Awareness"?"selected":""}>General Awareness</option>
+      </select>
       <button onclick="updateQuestion('${id}')" class="btn" style="background:#2563eb;margin-top:8px;padding:5px 10px;font-size:12px;">Save Modifications</button>
     `;
-
     container.appendChild(card);
   });
 }
 
 async function updateQuestion(id) {
   const examType = getSelectedExam();
-
   const question = document.getElementById(`qtext-${id}`).value.trim();
   const correctAnswer = document.getElementById(`ans-${id}`).value.trim();
   const category = document.getElementById(`cat-${id}`).value.trim();
-
   const options = [
     document.getElementById(`opt1-${id}`).value.trim(),
     document.getElementById(`opt2-${id}`).value.trim(),
@@ -848,7 +724,6 @@ async function updateQuestion(id) {
     });
 
     if (res.status === 401 || res.status === 403) return forceAdminLogout();
-
     if (res.ok) {
       alert("Question updated.");
       await loadQuestionsPreview();
@@ -863,7 +738,6 @@ async function updateQuestion(id) {
 async function loadAdminResults() {
   const container = document.getElementById("resultsContainer");
   const exam = getSelectedExam();
-
   container.innerHTML = "Loading results...";
 
   try {
@@ -872,7 +746,6 @@ async function loadAdminResults() {
     });
 
     if (response.status === 401 || response.status === 403) return forceAdminLogout();
-
     const results = await safeJson(response);
 
     if (!response.ok || !Array.isArray(results)) {
@@ -881,11 +754,7 @@ async function loadAdminResults() {
     }
 
     container.innerHTML = results.map(r => `
-      <p>
-        User: ${escapeHtml(r.userId?.username || r.userId?.email || "Student")}
-        - Score: ${escapeHtml(r.score || 0)}
-        - Percentage: ${escapeHtml(r.percentage || 0)}%
-      </p>
+      <p>User: ${escapeHtml(r.userId?.username || r.userId?.email || "Student")} - Score: ${escapeHtml(r.score || 0)} - Percentage: ${escapeHtml(r.percentage || 0)}%</p>
     `).join("");
   } catch {
     container.innerHTML = "Error loading results.";
@@ -896,16 +765,13 @@ document.getElementById("loadResultsBtn").addEventListener("click", loadAdminRes
 
 async function loadAdminAnalytics() {
   const exam = getSelectedExam();
-
   try {
     const response = await fetch(`${LIVE_BACKEND_URL}/tests/admin/results?exam=${encodeURIComponent(exam)}`, {
       headers: adminHeaders()
     });
 
     if (response.status === 401 || response.status === 403) return forceAdminLogout();
-
     const results = await safeJson(response);
-
     if (!response.ok || !Array.isArray(results)) return;
 
     const total = results.length;
@@ -932,7 +798,6 @@ async function loadPayments() {
     });
 
     if (response.status === 401 || response.status === 403) return forceAdminLogout();
-
     const data = await safeJson(response);
 
     if (!response.ok || !Array.isArray(data)) {
@@ -941,11 +806,7 @@ async function loadPayments() {
     }
 
     container.innerHTML = data.map(p => `
-      <p>
-        Payment: ₹${escapeHtml(p.amount || 0)}
-        - Status: ${escapeHtml(p.status || "success")}
-        - User: ${escapeHtml(p.email || p.userId?.email || "Student")}
-      </p>
+      <p>Payment: ₹${escapeHtml(p.amount || 0)} - Status: ${escapeHtml(p.status || "success")} - User: ${escapeHtml(p.email || p.userId?.email || "Student")}</p>
     `).join("");
   } catch {
     container.innerHTML = "Error loading payments.";
@@ -962,9 +823,7 @@ document.getElementById("examType").addEventListener("change", async () => {
 
 (async function initAdminPage() {
   populateExamDropdown();
-
   const ok = await verifyAdminAccess();
-
   if (ok) {
     await loadQuestionCount();
     await loadQuestionsPreview();
