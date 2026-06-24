@@ -374,6 +374,7 @@ function parseQuestions(text) {
   function autoDetectByQuestion(questionText) {
     const q = questionText.toLowerCase();
 
+    // --- STRUCTURAL AND PATTERN OVERRIDES (HIGH PRIORITY) ---
     if (
       /[A-Z]{2,}\s*[-–]?\s*\d+/.test(questionText) || 
       /[A-Z\d\s\-_%,?]{3,}[\s,]+[A-Z\d\s\-_%,?]{3,}[\s,]+[A-Z\d\s\-_%,?]{3,}/.test(questionText) || 
@@ -432,14 +433,15 @@ function parseQuestions(text) {
     ];
 
     const gaWords = [
-      "president", "prime minister", "governor", "chief justice", "parliament", 
+      "president", "prime minister", "governor", "lieutenant governor", "administrator", "chief justice", "parliament", 
       "constitution", "fundamental rights", "amendment", "lok sabha", "rajya sabha", 
       "harappan", "indus valley", "mughal", "delhi sultanate", "british", "revolt of 1857", 
       "gandhi", "congress", "capital of", "currency of", "unesco", "national park", 
       "wildlife sanctuary", "biosphere reserve", "river", "tributary", "lake", "mountain peak", 
       "strait", "gulf", "five-year plan", "gdp", "inflation", "rbi", "budget", "fiscal policy", 
       "olympics", "fifa", "ipl", "trophy", "stadium", "nobel prize", "bharat ratna", 
-      "oscar", "book written by", "author of", "headquarters of", "drdo", "isro"
+      "oscar", "book written by", "author of", "headquarters of", "drdo", "isro",
+      "andaman", "nicobar", "puducherry", "designated as"
     ];
 
     function score(words) {
@@ -462,31 +464,9 @@ function parseQuestions(text) {
 
     if (best && best[1] > 0) return best[0];
 
-    return null;
-  }
-
-  function fallbackCategory(qNo) {
-    const isUnderGrad = examType.includes("UG");
-    const isGroupD = examType.includes("GROUP_D") || examType.includes("Level 01");
-
-    if (isGroupD) {
-      if (qNo >= 1 && qNo <= 25) return "General Science";
-      if (qNo >= 26 && qNo <= 50) return "Maths";
-      if (qNo >= 51 && qNo <= 80) return "Reasoning";
-      return "General Awareness";
-    }
-
-    if (isUnderGrad) {
-      if (qNo >= 1 && qNo <= 40) return "General Awareness";
-      if (qNo >= 41 && qNo <= 70) return "Maths";
-      return "Reasoning";
-    }
-
-    if (qNo >= 1 && qNo <= 30) return "Maths";
-    if (qNo >= 31 && qNo <= 60) return "Reasoning";
+    // Safe fallback if it hits 0 matches across all arrays
     return "General Awareness";
   }
-
   const blocks = text.split(/(?=Section\s*:|Q\.?\s*\d+)/gi);
 
   blocks.forEach(block => {
