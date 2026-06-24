@@ -348,16 +348,17 @@ document.getElementById("readPdfBtn").addEventListener("click", async () => {
   fileReader.readAsArrayBuffer(fileInput.files[0]);
 });
 function parseQuestions(text) {
-  // Normalize whitespaces and line endings
+  // Normalize whitespaces, tabs, and carriage returns into single spaces
   text = text.replace(/\r/g, " ").replace(/\s+/g, " ").trim();
 
   const examType = getSelectedExam();
   const questions = [];
   let currentCategory = "";
 
-  // 1. Explicit Section Heading Detection
+  // 1. Explicit Section State Machine Trackers
   function detectSectionHeading(block) {
     const b = block.toLowerCase();
+    
     if (/section\s*:?\s*(mathematics|maths|quantitative\s+aptitude|numerical\s+ability)/i.test(b)) {
       return "Maths";
     }
@@ -367,64 +368,96 @@ function parseQuestions(text) {
     if (/section\s*:?\s*(general\s+science|science|physics|chemistry|biology)/i.test(b)) {
       return "General Science";
     }
-    if (/section\s*:?\s*(general\s+awareness|current\s+affairs|history|polity|geography|gk)/i.test(b)) {
+    if (/section\s*:?\s*(general\s+awareness|current\s+affairs|history|polity|geography|gk|social\s+studies)/i.test(b)) {
       return "General Awareness";
     }
     return null;
   }
 
-  // 2. High-Precision Smart Keyword Auto-Detection
+  // 2. High-Precision Structural Pattern & Vocabulary Analyzer
   function autoDetectByQuestion(questionText) {
     const q = questionText.toLowerCase();
 
-    // --- CRITICAL REASONING PATTERN MATCHING ---
-    // Rule A: Detects alphabet/letter series clusters like "VPG 7, ZTK 11, DXO 15" or "A, B, D, G, ?"
-    if (/[A-Z]{2,}\s+\d+[\s,]+[A-Z]{2,}/.test(questionText) || /([A-Z\d\s\-_],?\s*){4,}\?/.test(questionText)) {
-      return "Reasoning";
-    }
-    // Rule B: Explicitly overrides common words if "replace the question mark" or "logical series" appears
-    if (q.includes("replace the question mark") || q.includes("logically complete") || q.includes("wrong term in the series")) {
+    // --- STRUCTURAL AND PATTERN OVERRIDES (HIGH PRIORITY) ---
+    
+    // Reasoning Patterns: Mixed letter-number tracks, structural coding changes, direction loops, and symbol logic
+    if (
+      /[A-Z]{2,}\s*[-–]?\s*\d+/.test(questionText) || // "VPG 7", "FZN 4", "LLP-22"
+      /[A-Z\d\s\-_%,?]{3,}[\s,]+[A-Z\d\s\-_%,?]{3,}[\s,]+[A-Z\d\s\-_%,?]{3,}/.test(questionText) || // Triad series sequences
+      /coded\s+as\s+['"\d\w ]+/i.test(q) || // "coded as 6315"
+      /preceded\s+by\s+a\s+(symbol|number|digit)/i.test(q) || // String symbol manipulation trackers
+      /shortest\s+distance.*direction/i.test(q) || // Map direction puzzles
+      /turns\s+are\s+90\s+degrees/i.test(q) || // Explicit angular turn matrices
+      /sitting\s+around\s+a\s+circular\s+table/i.test(q) || // Round table seating logic
+      /facing\s+north.*row/i.test(q) || // Row layout alignments
+      /live\s+on\s+six\s+different\s+floors/i.test(q) || // Structural hierarchy maps
+      /statement\s*\(?[i1V]+\)?\s*and\s+conclusion/i.test(q) // Syllogisms
+    ) {
       return "Reasoning";
     }
 
+    // Maths Structure Patterns: Equations, fractions, and explicit geometry variable notations
+    if (
+      /^[a-z]\s*\(?[y-z\d\s\-+*/=]+\)?\s*=/i.test(q) || // Functional algebra expressions
+      /\(?\s*\d+[a-z\d\s\-+^*/()]+\)?\s*[-+=]\s*[\d?]+/i.test(q) || // Complex computational formulas
+      /angle\s+of\s+elevation/i.test(q) || // Height and distance trigonometry
+      /tan\d*|cos\d*|sin\d*/i.test(q) || // Pure trigonometric identifiers
+      /compounded\s+annually|compound\s+interest/i.test(q) || // Business compound arithmetic
+      /simple\s+interest/i.test(q) || // Base percentage asset returns
+      /ratio\s+of/i.test(q) || // Direct dynamic system portions
+      /third\s+proportional/i.test(q) // Ratio proportions
+    ) {
+      return "Maths";
+    }
+
+    // --- VOCABULARY SEARCH DICTIONARIES ---
     const mathsWords = [
-      "speed", "distance", "time and work", "profit", "loss", "discount", 
-      "simple interest", "compound interest", "ratio", "proportion", "percentage", 
-      "average", "lcm", "hcf", "fraction", "simplification", "algebra", "geometry", 
-      "trigonometry", "mensuration", "perimeter", "volume", "triangle", "circle", 
-      "rectangle", "quadrilateral", "pipe", "cistern", "upstream", "downstream", 
-      "boat", "train", "interest earned", "selling price", "cost price", "numerical value",
-      "square root", "cube root", "dividend", "divisor", "remainder"
+      "speed", "distance", "time and work", "profit", "loss", "discount", "average", "lcm", "hcf", 
+      "fraction", "simplification", "algebra", "geometry", "mensuration", "perimeter", "volume", 
+      "triangle", "circle", "rectangle", "quadrilateral", "cistern", "upstream", "downstream", 
+      "selling price", "cost price", "square root", "cube root", "dividend", "divisor", "remainder",
+      "median", "mode", "empirical formula", "altitude", "rhombus", "diagonals", "successive discounts",
+      "prime numbers", "circumference", "increased by 100%"
     ];
 
     const reasoningWords = [
-      "statement and conclusion", "syllogism", "blood relation", "coding-decoding", 
-      "coding decoding", "letter series", "number series", "analogy", "analogies", "odd one out", 
-      "seating arrangement", "circular table", "direction sense", "north", "south", 
-      "east", "west", "turned left", "turned right", "mirror image", "water image", 
-      "paper folding", "dice", "calendar", "clock", "veitch", "venn diagram", 
-      "meaningful order", "missing number in", "logical order", "assumption", "argument"
+      "letter-number clusters", "replace the question mark", "logically complete", "wrong term", 
+      "english alphabetical order", "syllogism", "blood relation", "coding-decoding", "series",
+      "is related to", "same logic", "same way", "alike in a certain way", "odd one out", "consonants",
+      "vowels", "meaningful order", "assumption", "argument", "rearranged", "digits are repeated",
+      "retained", "remains unchanged", "ascending order", "descending order"
     ];
 
     const scienceWords = [
-      "force", "acceleration", "velocity", "momentum", "gravitation", "kinetic energy", 
-      "potential energy", "work done", "power", "wavelength", "frequency", "refraction", 
-      "reflection", "lens", "mirror", "ohm", "resistance", "voltage", "current", "magnet", 
-      "acid", "base", "salt", "ph value", "atomic number", "mass number", "isotope", 
-      "periodic table", "element", "compound", "chemical formula", "cell wall", "mitochondria", 
-      "chromosome", "photosynthesis", "xylem", "phloem", "hormone", "enzyme", "vitamin", 
-      "deficiency disease", "bacteria", "virus", "fungi", "blood group", "hemoglobin", "kidney"
+      "hydraulic lift", "hydraulic brakes", "pascal's law", "faraday's law", "coulomb's law",
+      "logistic growth", "carrying capacity", "subatomic particles", "dalton's atomic theory",
+      "echinoderms", "water vascular system", "starfish", "magnetic field", "sound wave", 
+      "wavelength", "frequency", "geotropism", "potential energy", "alpha-particle", "scattering",
+      "valency", "gangue", "ore", "acid reacts", "carbonate", "carbon compounds", "covalent bonding",
+      "circular motion", "baking soda", "washing soda", "lead(ii) nitrate", "potassium iodide",
+      "mitosis", "meiosis", "eukaryotic cells", "endoplasmic reticulum", "lipid synthesis", 
+      "plasma membrane", "cell wall", "embryo", "placenta", "trophic level", "ecosystem",
+      "atmospheric refraction", "air density", "thomson's model"
     ];
 
     const gaWords = [
-      "president", "prime minister", "governor", "chief justice", "parliament", 
-      "constitution", "fundamental rights", "amendment", "lok sabha", "rajya sabha", 
-      "harappan", "indus valley", "mughal", "delhi sultanate", "british", "revolt of 1857", 
-      "gandhi", "congress", "capital of", "currency of", "unesco", "national park", 
-      "wildlife sanctuary", "biosphere reserve", "river", "tributary", "lake", "mountain peak", 
-      "strait", "gulf", "five-year plan", "gdp", "inflation", "rbi", "budget", "fiscal policy", 
-      "olympics", "fifa", "ipl", "trophy", "stadium", "nobel prize", "bharat ratna", 
-      "oscar", "book written by", "author of", "headquarters of", "drdo", "isro"
+      "unveiled by", "defence industry", "articles of the", "indian constitution", "equal pay",
+      "andaman and nicobar", "puducherry", "lieutenant governor", "icc champions trophy", 
+      "central administrative tribunal", "fiscal framework", "preferential trade agreement", 
+      "mercosur", "fdi limit", "insurance sector", "land border", "higher education", "policy report",
+      "sangam literature", "harappan", "dockyard", "lothal", "banking laws", "substantial interest",
+      "indo-brahma", "drainage systems", "pleistocene upheaval", "free trade agreement", "efta", "tepa",
+      "anniversary", "summer solstice", "tropic of cancer", "tropic of capricorn", "high court",
+      "district judiciary", "real gva", "nso", "mospi", "slash and burn", "kuruwa", "portuguese",
+      "bardoli satyagraha", "sardar vallabhbhai", "route length", "tibeto-burman", "eighth schedule",
+      "tertiary activity", "delhi sultanate", "ilfutmish", "balban", "alauddin", "rationing",
+      "customized application software", "payroll management", "86th amendment", "fundamental duty",
+      "young india", "mahatma gandhi", "constitution amendment bill", "directive principles",
+      "oscar entry", "laapataa ladies", "khel ratna", "graded response action plan", "grap",
+      "cpcb", "caqm", "zoonotic", "nipah", "rural development", "world health day", "reset scheme",
+      "gachibowli", "knighthood", "james anderson", "garuda aerospace", "agri-drone", "e-jagriti",
+      "sustainable development report", "un member", "passex", "kyrgyzstan", "zonal council",
+      "geosynchronous satellite", "gslv", "zero-emission trucking", "noise pollution", "kyc updating"
     ];
 
     function score(words) {
@@ -450,6 +483,84 @@ function parseQuestions(text) {
     return null;
   }
 
+  // 3. Fallback Uniform Numerical Block Distribution Patterns
+  function fallbackCategory(qNo) {
+    const isUnderGrad = examType.includes("UG");
+    const isGroupD = examType.includes("GROUP_D") || examType.includes("Level 01");
+
+    if (isGroupD) {
+      if (qNo >= 1 && qNo <= 25) return "General Science";
+      if (qNo >= 26 && qNo <= 50) return "Maths";
+      if (qNo >= 51 && qNo <= 80) return "Reasoning";
+      return "General Awareness";
+    }
+
+    // Standard RRB NTPC Graduate & Under Graduate Layout Default Mapping
+    if (isUnderGrad) {
+      if (qNo >= 1 && qNo <= 40) return "General Awareness";
+      if (qNo >= 41 && qNo <= 70) return "Maths";
+      return "Reasoning";
+    }
+
+    // Default general template assignment
+    if (qNo >= 1 && qNo <= 30) return "Maths";
+    if (qNo >= 31 && qNo <= 60) return "Reasoning";
+    return "General Awareness";
+  }
+
+  // Parsing loop using the standard structural boundaries
+  const blocks = text.split(/(?=Section\s*:|Q\.?\s*\d+)/gi);
+
+  blocks.forEach(block => {
+    block = block.trim();
+    if (!block) return;
+
+    const headingCategory = detectSectionHeading(block);
+    if (headingCategory) {
+      currentCategory = headingCategory;
+    }
+
+    if (!/^Q\.?\s*\d+/i.test(block)) return;
+
+    const qNoMatch = block.match(/^Q\.?\s*(\d+)/i);
+    const qNo = qNoMatch ? Number(qNoMatch[1]) : 0;
+
+    const qMatch = block.match(/Q\.?\s*\d+\.?\s*([\s\S]*?)(?=\s+(?:Ans\s+)?(?:\d\.|\s*[A-D]\.))/i);
+    if (!qMatch) return;
+
+    let questionText = qMatch[1]
+      .replace(/Test Date.*$/i, "")
+      .replace(/Section\s*:.*$/i, "")
+      .trim();
+
+    // Match array alternatives: Alpha characters (A-D) or standard numeric (1-4) options
+    const optionPattern = /(?:Ans\s+)?([A-D1-4])\.\s*([\s\S]*?)(?=\s+(?:[A-D1-4])\.\s*|\s+Q\.?\s*\d+|$)/gi;
+    const matches = [...block.matchAll(optionPattern)];
+
+    const options = matches.map(m =>
+      m[2]
+        .replace(/Section\s*:.*$/i, "")
+        .replace(/Adda\s*247/gi, "")
+        .replace(/Google\s*Play/gi, "")
+        .trim()
+    ).filter(Boolean);
+
+    if (questionText && options.length >= 4) {
+      const smartCategory = autoDetectByQuestion(questionText);
+      const category = smartCategory || currentCategory || fallbackCategory(qNo);
+
+      questions.push({
+        examType,
+        question: questionText,
+        options: options.slice(0, 4),
+        correctAnswer: options[0], // Assumes index zero contains the raw parsed default correct key mapping
+        category
+      });
+    }
+  });
+
+  return questions;
+}
   // 3. Exam-Specific Fallback Segment Distribution 
   function fallbackCategory(qNo) {
     if (examType.includes("NTPC")) {
