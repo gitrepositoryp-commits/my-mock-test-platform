@@ -14,6 +14,14 @@ let warningCount = 0;
 
 document.addEventListener("visibilitychange", () => {
 
+  // Only run on test page
+  if (
+    !window.location.pathname.includes("test.html") &&
+    !document.getElementById("examWorkspaceContainer")
+  ) {
+    return;
+  }
+
   if (document.hidden) {
 
     warningCount++;
@@ -23,9 +31,11 @@ document.addEventListener("visibilitychange", () => {
     );
 
     if (warningCount >= 3) {
+      alert("Exam auto-submitted due to repeated tab switching.");
       submitMockTestResponses();
     }
   }
+
 });
 function getCurrentExamType() {
   return new URLSearchParams(window.location.search).get("exam") || "NTPC";
@@ -398,13 +408,16 @@ async function submitMockTestResponses() {
 }
 document.addEventListener("visibilitychange", () => {
 
-  if (document.hidden) {
+  const isExamPage =
+    window.location.pathname.includes("test.html") ||
+    document.getElementById("examWorkspaceContainer");
 
+  if (!isExamPage) return;
+
+  if (document.hidden) {
     warningCount++;
 
-    alert(
-      `Warning ${warningCount}/3\nDo not switch tabs during exam.`
-    );
+    alert(`Warning ${warningCount}/3\nDo not switch tabs during exam.`);
 
     if (warningCount >= 3) {
       alert("Exam auto-submitted due to repeated tab switching.");
