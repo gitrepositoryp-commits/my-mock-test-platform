@@ -347,93 +347,85 @@ document.getElementById("readPdfBtn").addEventListener("click", async () => {
 
   fileReader.readAsArrayBuffer(fileInput.files[0]);
 });
-
 function parseQuestions(text) {
+  // Normalize whitespaces and line endings
   text = text.replace(/\r/g, " ").replace(/\s+/g, " ").trim();
 
   const examType = getSelectedExam();
   const questions = [];
   let currentCategory = "";
 
+  // 1. Explicit Section Heading Detection
   function detectSectionHeading(block) {
     const b = block.toLowerCase();
-
-    if (/section\s*:?\s*(mathematics|maths|quantitative aptitude)/i.test(block)) {
+    if (/section\s*:?\s*(mathematics|maths|quantitative\s+aptitude|numerical\s+ability)/i.test(b)) {
       return "Maths";
     }
-
-    if (/section\s*:?\s*(reasoning|general intelligence|general intelligence and reasoning)/i.test(block)) {
+    if (/section\s*:?\s*(reasoning|general\s+intelligence|mental\s+ability|logical)/i.test(b)) {
       return "Reasoning";
     }
-
-    if (/section\s*:?\s*(general science|science)/i.test(block)) {
+    if (/section\s*:?\s*(general\s+science|science|physics|chemistry|biology)/i.test(b)) {
       return "General Science";
     }
-
-    if (/section\s*:?\s*(general awareness|current affairs|general awareness and current affairs)/i.test(block)) {
+    if (/section\s*:?\s*(general\s+awareness|current\s+affairs|history|polity|geography|gk)/i.test(b)) {
       return "General Awareness";
     }
-
     return null;
   }
 
+  // 2. High-Precision Smart Keyword Auto-Detection
   function autoDetectByQuestion(questionText) {
     const q = questionText.toLowerCase();
 
     const mathsWords = [
-      "area", "perimeter", "triangle", "circle", "rectangle", "quadrilateral",
-      "ratio", "percentage", "profit", "loss", "discount", "simple interest",
-      "compound interest", "average", "speed", "distance", "time and work",
-      "pipe", "cistern", "number", "digit", "fraction", "hcf", "lcm",
-      "equation", "simplify", "mensuration", "algebra", "geometry"
+      "speed", "distance", "time and work", "profit", "loss", "discount", 
+      "simple interest", "compound interest", "ratio", "proportion", "percentage", 
+      "average", "lcm", "hcf", "fraction", "simplification", "algebra", "geometry", 
+      "trigonometry", "mensuration", "perimeter", "volume", "triangle", "circle", 
+      "rectangle", "quadrilateral", "pipe", "cistern", "upstream", "downstream", 
+      "boat", "train", "interest earned", "selling price", "cost price", "numerical value",
+      "square root", "cube root", "dividend", "divisor", "remainder"
     ];
 
     const reasoningWords = [
-      "statement", "conclusion", "assumption", "argument", "course of action",
-      "coding", "decoding", "series", "analogy", "odd one", "blood relation",
-      "direction", "syllogism", "mirror", "water image", "calendar", "clock",
-      "arrangement", "seating", "ranking", "order", "puzzle", "figure"
+      "statement and conclusion", "syllogism", "blood relation", "coding-decoding", 
+      "coding decoding", "letter series", "analogy", "analogies", "odd one out", 
+      "seating arrangement", "circular table", "direction sense", "north", "south", 
+      "east", "west", "turned left", "turned right", "mirror image", "water image", 
+      "paper folding", "dice", "calendar", "clock", "veitch", "venn diagram", 
+      "meaningful order", "missing number in", "logical order", "assumption", "argument"
     ];
 
     const scienceWords = [
-      "force", "energy", "work", "power", "motion", "light", "sound",
-      "electric", "magnet", "acid", "base", "salt", "metal", "non-metal",
-      "chemical", "reaction", "cell", "plant", "animal", "human body",
-      "vitamin", "disease", "blood", "organ", "photosynthesis", "respiration",
-      "atom", "molecule", "heat", "temperature"
+      "force", "acceleration", "velocity", "momentum", "gravitation", "kinetic energy", 
+      "potential energy", "work done", "power", "wavelength", "frequency", "refraction", 
+      "reflection", "lens", "mirror", "ohm", "resistance", "voltage", "current", "magnet", 
+      "acid", "base", "salt", "ph value", "atomic number", "mass number", "isotope", 
+      "periodic table", "element", "compound", "chemical formula", "cell wall", "mitochondria", 
+      "chromosome", "photosynthesis", "xylem", "phloem", "hormone", "enzyme", "vitamin", 
+      "deficiency disease", "bacteria", "virus", "fungi", "blood group", "hemoglobin", "kidney"
     ];
+
     const gaWords = [
-  "president",
-  "prime minister",
-  "governor",
-  "lieutenant governor",
-  "administrator",
-  "constitution",
-  "article",
-  "parliament",
-  "supreme court",
-  "high court",
-  "scheme",
-  "policy",
-  "ministry",
-  "award",
-  "book",
-  "author",
-  "sports",
-  "capital",
-  "currency",
-  "state",
-  "country",
-  "history",
-  "freedom movement",
-  "mughal",
-  "sultan",
-  "andaman",
-  "nicobar",
-  "puducherry"
-];
+      "president", "prime minister", "governor", "chief justice", "parliament", 
+      "constitution", "fundamental rights", "amendment", "lok sabha", "rajya sabha", 
+      "harappan", "indus valley", "mughal", "delhi sultanate", "british", "revolt of 1857", 
+      "gandhi", "congress", "capital of", "currency of", "unesco", "national park", 
+      "wildlife sanctuary", "biosphere reserve", "river", "tributary", "lake", "mountain peak", 
+      "strait", "gulf", "five-year plan", "gdp", "inflation", "rbi", "budget", "fiscal policy", 
+      "olympics", "fifa", "ipl", "trophy", "stadium", "nobel prize", "bharat ratna", 
+      "oscar", "book written by", "author of", "headquarters of", "drdo", "isro"
+    ];
+
+    // Count exact phrase/word matches to prevent substring overlapping errors
     function score(words) {
-      return words.reduce((total, word) => q.includes(word) ? total + 1 : total, 0);
+      return words.reduce((total, word) => {
+        if (q.includes(word)) {
+          // Give higher weight to unique domain-specific multi-word strings
+          return total + (word.includes(" ") ? 2 : 1);
+        }
+        return total;
+      }, 0);
     }
 
     const scores = {
@@ -443,43 +435,48 @@ function parseQuestions(text) {
       "General Awareness": score(gaWords)
     };
 
+    // Find the category with the highest matching score
     const best = Object.entries(scores).sort((a, b) => b[1] - a[1])[0];
 
+    // Return only if it has a definitive score match of at least 1
     if (best && best[1] > 0) return best[0];
 
     return null;
   }
 
+  // 3. Exam-Specific Fallback Segment Distribution 
   function fallbackCategory(qNo) {
     if (examType.includes("NTPC")) {
       if (qNo >= 1 && qNo <= 30) return "Maths";
       if (qNo >= 31 && qNo <= 60) return "Reasoning";
-      if (qNo >= 61 && qNo <= 100) return "General Awareness";
+      return "General Awareness"; // 61-100 (Includes Science + GA in NTPC templates)
     }
 
     if (examType.includes("GROUP_D")) {
       if (qNo >= 1 && qNo <= 25) return "General Science";
       if (qNo >= 26 && qNo <= 50) return "Maths";
       if (qNo >= 51 && qNo <= 80) return "Reasoning";
-      if (qNo >= 81 && qNo <= 100) return "General Awareness";
+      return "General Awareness";
     }
 
     if (examType.includes("ALP") || examType.includes("TECH")) {
       if (qNo >= 1 && qNo <= 25) return "Maths";
       if (qNo >= 26 && qNo <= 50) return "Reasoning";
       if (qNo >= 51 && qNo <= 75) return "General Science";
-      if (qNo >= 76 && qNo <= 100) return "General Awareness";
+      return "General Awareness";
     }
 
     return "General Awareness";
   }
 
+  // Split into distinct blocks based on Section marks or Question starts
   const blocks = text.split(/(?=Section\s*:|Q\.?\s*\d+)/gi);
 
   blocks.forEach(block => {
     block = block.trim();
     if (!block) return;
 
+    // Check if this block updates our current Section path context
     const headingCategory = detectSectionHeading(block);
     if (headingCategory) {
       currentCategory = headingCategory;
@@ -510,18 +507,17 @@ function parseQuestions(text) {
     ).filter(Boolean);
 
     if (questionText && options.length >= 4) {
-  const smartCategory = autoDetectByQuestion(questionText);
-
-const category =
-  smartCategory ||
-  currentCategory ||
-  fallbackCategory(qNo);
+      // Priority 1: Smart structural content scan
+      // Priority 2: Persistent structural heading trace
+      // Priority 3: Numerical distribution fallback pattern
+      const smartCategory = autoDetectByQuestion(questionText);
+      const category = smartCategory || currentCategory || fallbackCategory(qNo);
 
       questions.push({
         examType,
         question: questionText,
         options: options.slice(0, 4),
-        correctAnswer: options[0],
+        correctAnswer: options[0], 
         category
       });
     }
@@ -529,6 +525,7 @@ const category =
 
   return questions;
 }
+
 document.getElementById("smartParseBtn").addEventListener("click", () => {
   const consoleArea = document.getElementById("editorConsole");
   const text = consoleArea.value.trim();
