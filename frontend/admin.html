@@ -698,7 +698,12 @@ function renderQuestions(questions) {
       <input id="opt4-${id}" value="${escapeHtml(q.options?.[3])}" style="width:100%;margin-top:4px;padding:6px;">
 
       <input id="ans-${id}" value="${escapeHtml(q.correctAnswer)}" style="width:100%;margin-top:4px;padding:6px;color:green;font-weight:bold;">
-      <input id="cat-${id}" value="${escapeHtml(q.category || "General Awareness")}" style="width:100%;margin-top:4px;padding:6px;color:purple;">
+      <select id="cat-${id}" style="width:100%;margin-top:4px;padding:6px;color:purple;">
+  <option value="Maths" ${q.category==="Maths"?"selected":""}>Maths</option>
+  <option value="Reasoning" ${q.category==="Reasoning"?"selected":""}>Reasoning</option>
+  <option value="General Science" ${q.category==="General Science"?"selected":""}>General Science</option>
+  <option value="General Awareness" ${q.category==="General Awareness"?"selected":""}>General Awareness</option>
+</select>
 
       <button onclick="updateQuestion('${id}')" class="btn" style="background:#2563eb;margin-top:8px;padding:5px 10px;font-size:12px;">Save Modifications</button>
     `;
