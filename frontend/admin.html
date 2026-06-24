@@ -358,176 +358,160 @@ document.getElementById("readPdfBtn").addEventListener("click", async () => {
   fileReader.readAsArrayBuffer(fileInput.files[0]);
 });
 function parseQuestions(text) {
-  text = text.replace(/\r/g, " ").replace(/\s+/g, " ").trim();
+  text = text.replace(/\r/g, "\n").trim();
 
   const examType = getSelectedExam();
+  const uploadMode = document.getElementById("uploadCategoryMode")?.value || "AUTO";
   const questions = [];
-  let currentCategory = "";
+
+  let currentCategory = "General Awareness";
 
   function detectSectionHeading(block) {
     const b = block.toLowerCase();
-    if (/section\s*:?\s*(mathematics|maths|quantitative\s+aptitude|numerical\s+ability)/i.test(b)) {
+
+    if (/section\s*\d*\s*:?\s*(mathematics|maths|quantitative\s+aptitude|numerical\s+ability)/i.test(b)) {
       return "Maths";
     }
-    if (/section\s*:?\s*(reasoning|general\s+intelligence|mental\s+ability|logical)/i.test(b)) {
+
+    if (/section\s*\d*\s*:?\s*(reasoning|general\s+intelligence|mental\s+ability|logical)/i.test(b)) {
       return "Reasoning";
     }
-    if (/section\s*:?\s*(general\s+science|science|physics|chemistry|biology)/i.test(b)) {
+
+    if (/section\s*\d*\s*:?\s*(general\s+science|science|physics|chemistry|biology)/i.test(b)) {
       return "General Science";
     }
-    if (/section\s*:?\s*(general\s+awareness|current\s+affairs|history|polity|geography|gk|social\s+studies)/i.test(b)) {
+
+    if (/section\s*\d*\s*:?\s*(general\s+awareness|current\s+affairs|history|polity|geography|gk|social\s+studies)/i.test(b)) {
       return "General Awareness";
     }
+
     return null;
   }
 
-  function autoDetectByQuestion(questionText) {
+  function smartDetect(questionText) {
     const q = questionText.toLowerCase();
 
-    // --- STRUCTURAL AND PATTERN OVERRIDES (HIGH PRIORITY) ---
-    if (
-      /[A-Z]{2,}\s*[-–]?\s*\d+/.test(questionText) || 
-      /[A-Z\d\s\-_%,?]{3,}[\s,]+[A-Z\d\s\-_%,?]{3,}[\s,]+[A-Z\d\s\-_%,?]{3,}/.test(questionText) || 
-      /coded\s+as\s+['"\d\w ]+/i.test(q) || 
-      /preceded\s+by\s+a\s+(symbol|number|digit)/i.test(q) || 
-      /shortest\s+distance.*direction/i.test(q) || 
-      /turns\s+are\s+90\s+degrees/i.test(q) || 
-      /sitting\s+around\s+a\s+circular\s+table/i.test(q) || 
-      /facing\s+north.*row/i.test(q) || 
-      /live\s+on\s+six\s+different\s+floors/i.test(q) || 
-      /statement\s*\(?[i1V]+\)?\s*and\s+conclusion/i.test(q)
-    ) {
-      return "Reasoning";
-    }
-
-    if (
-      /^[a-z]\s*\(?[y-z\d\s\-+*/=]+\)?\s*=/i.test(q) || 
-      /\(?\s*\d+[a-z\d\s\-+^*/()]+\)?\s*[-+=]\s*[\d?]+/i.test(q) || 
-      /angle\s+of\s+elevation/i.test(q) || 
-      /tan\d*|cos\d*|sin\d*/i.test(q) || 
-      /compounded\s+annually|compound\s+interest/i.test(q) || 
-      /simple\s+interest/i.test(q) || 
-      /ratio\s+of/i.test(q) || 
-      /third\s+proportional/i.test(q)
-    ) {
-      return "Maths";
-    }
-
-    const mathsWords = [
-      "speed", "distance", "time and work", "profit", "loss", "discount", "average", "lcm", "hcf", 
-      "fraction", "simplification", "algebra", "geometry", "mensuration", "perimeter", "volume", 
-      "triangle", "circle", "rectangle", "quadrilateral", "cistern", "upstream", "downstream", 
-      "selling price", "cost price", "square root", "cube root", "dividend", "divisor", "remainder",
-      "median", "mode", "empirical formula", "altitude", "rhombus", "diagonals", "successive discounts",
-      "prime numbers", "circumference", "increased by 100%"
+    const maths = [
+      "area", "perimeter", "triangle", "circle", "rectangle", "quadrilateral",
+      "ratio", "percentage", "profit", "loss", "discount", "simple interest",
+      "compound interest", "average", "speed", "distance", "time and work",
+      "pipe", "cistern", "boat", "upstream", "downstream", "train",
+      "lcm", "hcf", "fraction", "equation", "simplify", "mensuration",
+      "algebra", "geometry", "angle of elevation", "median", "mode",
+      "mean", "selling price", "cost price", "marked price", "successive discount",
+      "third proportional", "roots", "quadratic", "cm", "km/hr", "per annum"
     ];
 
-    const reasoningWords = [
-      "letter-number clusters", "replace the question mark", "logically complete", "wrong term", 
-      "english alphabetical order", "syllogism", "blood relation", "coding-decoding", "series",
-      "is related to", "same logic", "same way", "alike in a certain way", "odd one out", "consonants",
-      "vowels", "meaningful order", "assumption", "argument", "rearranged", "digits are repeated",
-      "retained", "remains unchanged", "ascending order", "descending order"
+    const reasoning = [
+      "statement", "conclusion", "assumption", "argument", "course of action",
+      "coding", "decoding", "series", "analogy", "odd one", "blood relation",
+      "direction", "syllogism", "mirror", "water image", "calendar", "clock",
+      "arrangement", "seating", "ranking", "puzzle", "figure", "alphabetical",
+      "letter", "cluster", "logic", "same way", "meaningful order"
     ];
 
-    const scienceWords = [
-      "hydraulic lift", "hydraulic brakes", "pascal's law", "faraday's law", "coulomb's law",
-      "logistic growth", "carrying capacity", "subatomic particles", "dalton's atomic theory",
-      "echinoderms", "water vascular system", "starfish", "magnetic field", "sound wave", 
-      "wavelength", "frequency", "geotropism", "potential energy", "alpha-particle", "scattering",
-      "valency", "gangue", "ore", "acid reacts", "carbonate", "carbon compounds", "covalent bonding",
-      "circular motion", "baking soda", "washing soda", "lead(ii) nitrate", "potassium iodide",
-      "mitosis", "meiosis", "eukaryotic cells", "endoplasmic reticulum", "lipid synthesis", 
-      "plasma membrane", "cell wall", "embryo", "placenta", "trophic level", "ecosystem",
-      "atmospheric refraction", "air density", "thomson's model"
+    const science = [
+      "force", "energy", "work", "power", "motion", "light", "sound",
+      "electric", "magnet", "acid", "base", "salt", "metal", "non-metal",
+      "chemical", "reaction", "cell", "plant", "animal", "human body",
+      "vitamin", "disease", "blood", "organ", "photosynthesis", "respiration",
+      "atom", "molecule", "heat", "temperature", "physics", "chemistry",
+      "biology", "ecosystem", "valency", "covalent", "mitosis", "meiosis"
     ];
 
-    const gaWords = [
-      "president", "prime minister", "governor", "lieutenant governor", "administrator", "chief justice", "parliament", 
-      "constitution", "fundamental rights", "amendment", "lok sabha", "rajya sabha", 
-      "harappan", "indus valley", "mughal", "delhi sultanate", "british", "revolt of 1857", 
-      "gandhi", "congress", "capital of", "currency of", "unesco", "national park", 
-      "wildlife sanctuary", "biosphere reserve", "river", "tributary", "lake", "mountain peak", 
-      "strait", "gulf", "five-year plan", "gdp", "inflation", "rbi", "budget", "fiscal policy", 
-      "olympics", "fifa", "ipl", "trophy", "stadium", "nobel prize", "bharat ratna", 
-      "oscar", "book written by", "author of", "headquarters of", "drdo", "isro",
-      "andaman", "nicobar", "puducherry", "designated as"
+    const ga = [
+      "president", "prime minister", "governor", "lieutenant governor",
+      "administrator", "constitution", "article", "parliament", "lok sabha",
+      "rajya sabha", "supreme court", "high court", "policy", "scheme",
+      "ministry", "commission", "award", "book", "author", "sports",
+      "capital", "currency", "state", "country", "history", "mughal",
+      "sultan", "freedom", "war", "international", "india", "budget",
+      "current affairs", "andaman", "nicobar", "puducherry", "isro", "drdo",
+      "unesco", "national park", "river", "mountain", "rbi", "gdp"
     ];
 
     function score(words) {
       return words.reduce((total, word) => {
-        if (q.includes(word)) {
-          return total + (word.includes(" ") ? 2 : 1);
-        }
-        return total;
+        return q.includes(word) ? total + (word.includes(" ") ? 2 : 1) : total;
       }, 0);
     }
 
     const scores = {
-      Maths: score(mathsWords),
-      Reasoning: score(reasoningWords),
-      "General Science": score(scienceWords),
-      "General Awareness": score(gaWords)
+      Maths: score(maths),
+      Reasoning: score(reasoning),
+      "General Science": score(science),
+      "General Awareness": score(ga)
     };
 
     const best = Object.entries(scores).sort((a, b) => b[1] - a[1])[0];
 
-    if (best && best[1] > 0) return best[0];
-
-    // Safe fallback if it hits 0 matches across all arrays
-    return "General Awareness";
+    return best && best[1] > 0 ? best[0] : currentCategory;
   }
-  const blocks = text.split(/(?=Section\s*:|Q\.?\s*\d+)/gi);
+
+  function finalCategory(questionText) {
+    if (uploadMode !== "AUTO") return uploadMode;
+    return currentCategory || smartDetect(questionText) || "General Awareness";
+  }
+
+  const blocks = text.split(/(?=Q\.?\s*\d+)/gi);
 
   blocks.forEach(block => {
     block = block.trim();
     if (!block) return;
 
-    const headingCategory = detectSectionHeading(block);
-    if (headingCategory) {
-      currentCategory = headingCategory;
-    }
-
-    if (!/^Q\.?\s*\d+/i.test(block)) return;
+    const heading = detectSectionHeading(block);
+    if (heading) currentCategory = heading;
 
     const qNoMatch = block.match(/^Q\.?\s*(\d+)/i);
-    const qNo = qNoMatch ? Number(qNoMatch[1]) : 0;
+    if (!qNoMatch) return;
 
-    const qMatch = block.match(/Q\.?\s*\d+\.?\s*([\s\S]*?)(?=\s+(?:Ans\s+)?(?:\d\.|\s*[A-D]\.))/i);
-    if (!qMatch) return;
+    let questionText = "";
+    let options = [];
+    let correctAnswer = "";
 
-    let questionText = qMatch[1]
-      .replace(/Test Date.*$/i, "")
-      .replace(/Section\s*:.*$/i, "")
-      .trim();
+    const formatOneQuestion = block.match(/Q\.?\s*\d+\.?\s*([\s\S]*?)Options\s*:/i);
+    const formatOneOptions = block.match(/Options\s*:\s*A\.\s*([\s\S]*?)\s*\|\s*B\.\s*([\s\S]*?)\s*\|\s*C\.\s*([\s\S]*?)\s*\|\s*D\.\s*([\s\S]*?)(?=Correct Answer\s*:)/i);
+    const formatOneCorrect = block.match(/Correct Answer\s*:\s*([A-D])\.\s*([\s\S]*?)(?=Q\.?\s*\d+|$)/i);
 
-    const optionPattern = /(?:Ans\s+)?([A-D1-4])\.\s*([\s\S]*?)(?=\s+(?:[A-D1-4])\.\s*|\s+Q\.?\s*\d+|$)/gi;
-    const matches = [...block.matchAll(optionPattern)];
+    if (formatOneQuestion && formatOneOptions && formatOneCorrect) {
+      questionText = formatOneQuestion[1].replace(/Section\s*\d*\s*:.*$/i, "").replace(/\s+/g, " ").trim();
 
-    const options = matches.map(m =>
-      m[2]
-        .replace(/Section\s*:.*$/i, "")
-        .replace(/Adda\s*247/gi, "")
-        .replace(/Google\s*Play/gi, "")
-        .trim()
-    ).filter(Boolean);
+      options = [
+        formatOneOptions[1].trim(),
+        formatOneOptions[2].trim(),
+        formatOneOptions[3].trim(),
+        formatOneOptions[4].trim()
+      ];
 
-    if (questionText && options.length >= 4) {
-      const uploadMode = document.getElementById("uploadCategoryMode").value;
+      const correctIndex = { A: 0, B: 1, C: 2, D: 3 }[formatOneCorrect[1].toUpperCase()];
+      correctAnswer = options[correctIndex];
+    } else {
+      const qMatch = block.match(/Q\.?\s*\d+\.?\s*([\s\S]*?)(?=\s+(?:Ans\s+)?(?:A\.|1\.))/i);
+      if (!qMatch) return;
 
-const smartCategory = autoDetectByQuestion(questionText);
+      questionText = qMatch[1].replace(/Test Date.*$/i, "").replace(/Section\s*:.*$/i, "").replace(/\s+/g, " ").trim();
 
-const category =
-  uploadMode !== "AUTO"
-    ? uploadMode
-    : (currentCategory || smartCategory || "General Awareness");
+      const optionPattern = /(?:Ans\s+)?([A-D1-4])\.\s*([\s\S]*?)(?=\s+(?:[A-D1-4])\.\s*|\s+Q\.?\s*\d+|$)/gi;
+      const matches = [...block.matchAll(optionPattern)];
 
+      options = matches.map(m =>
+        m[2]
+          .replace(/Section\s*:.*$/i, "")
+          .replace(/Adda\s*247/gi, "")
+          .replace(/Google\s*Play/gi, "")
+          .trim()
+      ).filter(Boolean).slice(0, 4);
+
+      correctAnswer = options[0];
+    }
+
+    if (questionText && options.length === 4 && correctAnswer) {
       questions.push({
         examType,
         question: questionText,
-        options: options.slice(0, 4),
-        correctAnswer: options[0], 
-        category
+        options,
+        correctAnswer,
+        category: finalCategory(questionText)
       });
     }
   });
