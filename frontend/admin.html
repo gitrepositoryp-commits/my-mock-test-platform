@@ -363,16 +363,33 @@ function parseQuestions(text) {
     return null;
   }
 
-  function fallbackCategory(qNo) {
-    if (examType.includes("GROUP_D")) {
-      if (qNo >= 1 && qNo <= 25) return "General Science";
-      if (qNo >= 26 && qNo <= 50) return "Maths";
-      if (qNo >= 51 && qNo <= 80) return "Reasoning";
-      if (qNo >= 81 && qNo <= 100) return "General Awareness";
-    }
-    return currentCategory;
+ function fallbackCategory(qNo) {
+
+  // NTPC / ALP / Technician / Group-2 / Group-D
+
+  if (
+    examType.includes("NTPC") ||
+    examType.includes("ALP") ||
+    examType.includes("TECH") ||
+    examType.includes("GROUP_2") ||
+    examType.includes("GROUP_D")
+  ) {
+
+    if (qNo >= 1 && qNo <= 25)
+      return "General Science";
+
+    if (qNo >= 26 && qNo <= 50)
+      return "Maths";
+
+    if (qNo >= 51 && qNo <= 75)
+      return "Reasoning";
+
+    if (qNo >= 76 && qNo <= 100)
+      return "General Awareness";
   }
 
+  return currentCategory;
+}
   const blocks = text.split(/(?=Section\s*:|Q\.?\s*\d+)/gi);
 
   blocks.forEach(block => {
