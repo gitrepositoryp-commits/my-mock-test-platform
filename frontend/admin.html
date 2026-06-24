@@ -402,16 +402,36 @@ function parseQuestions(text) {
       "vitamin", "disease", "blood", "organ", "photosynthesis", "respiration",
       "atom", "molecule", "heat", "temperature"
     ];
-
     const gaWords = [
-      "president", "prime minister", "governor", "constitution", "article",
-      "parliament", "supreme court", "high court", "policy", "scheme",
-      "ministry", "commission", "award", "book", "author", "sports",
-      "country", "capital", "currency", "river", "mountain", "state",
-      "festival", "history", "sultan", "mughal", "freedom", "war",
-      "international", "india", "budget", "current affairs"
-    ];
-
+  "president",
+  "prime minister",
+  "governor",
+  "lieutenant governor",
+  "administrator",
+  "constitution",
+  "article",
+  "parliament",
+  "supreme court",
+  "high court",
+  "scheme",
+  "policy",
+  "ministry",
+  "award",
+  "book",
+  "author",
+  "sports",
+  "capital",
+  "currency",
+  "state",
+  "country",
+  "history",
+  "freedom movement",
+  "mughal",
+  "sultan",
+  "andaman",
+  "nicobar",
+  "puducherry"
+];
     function score(words) {
       return words.reduce((total, word) => q.includes(word) ? total + 1 : total, 0);
     }
@@ -490,10 +510,12 @@ function parseQuestions(text) {
     ).filter(Boolean);
 
     if (questionText && options.length >= 4) {
-      const category =
-        currentCategory ||
-        autoDetectByQuestion(questionText) ||
-        fallbackCategory(qNo);
+  const smartCategory = autoDetectByQuestion(questionText);
+
+const category =
+  smartCategory ||
+  currentCategory ||
+  fallbackCategory(qNo);
 
       questions.push({
         examType,
