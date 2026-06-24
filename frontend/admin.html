@@ -59,6 +59,16 @@
       <label style="font-weight:bold;">Select Exam Type</label>
       <select id="examType" style="width:100%;padding:12px;margin-top:8px;border-radius:8px;"></select>
     </div>
+    <div style="margin:20px 0;">
+  <label style="font-weight:bold;">Upload Section Mode</label>
+  <select id="uploadCategoryMode" style="width:100%;padding:12px;margin-top:8px;border-radius:8px;">
+    <option value="AUTO">Auto Detect</option>
+    <option value="Maths">Force Maths / Aptitude</option>
+    <option value="Reasoning">Force Reasoning</option>
+    <option value="General Science">Force General Science</option>
+    <option value="General Awareness">Force General Awareness</option>
+  </select>
+</div>
 
     <div style="text-align:center;margin:15px 0;padding:15px;background:#f1f5f9;border-radius:8px;">
       <h3 id="questionCountDisplay" style="margin:0;color:#2563eb;">Total Questions: Loading...</h3>
@@ -503,8 +513,14 @@ function parseQuestions(text) {
     ).filter(Boolean);
 
     if (questionText && options.length >= 4) {
-      const smartCategory = autoDetectByQuestion(questionText);
-      const category = smartCategory || currentCategory || fallbackCategory(qNo);
+      const uploadMode = document.getElementById("uploadCategoryMode").value;
+
+const smartCategory = autoDetectByQuestion(questionText);
+
+const category =
+  uploadMode !== "AUTO"
+    ? uploadMode
+    : (currentCategory || smartCategory || "General Awareness");
 
       questions.push({
         examType,
