@@ -353,13 +353,80 @@ function parseQuestions(text) {
 
   const examType = getSelectedExam();
   const questions = [];
-  let currentCategory = "General Awareness";
+  let currentCategory = "";
 
-  function detectCategory(block) {
-    if (/Section\s*:?\s*(Mathematics|Maths)/i.test(block)) return "Maths";
-    if (/Section\s*:?\s*(Reasoning|General Intelligence|General Intelligence and Reasoning)/i.test(block)) return "Reasoning";
-    if (/Section\s*:?\s*(General Science|Science)/i.test(block)) return "General Science";
-    if (/Section\s*:?\s*(General Awareness|Current Affairs|General Awareness and Current Affairs)/i.test(block)) return "General Awareness";
+  function detectSectionHeading(block) {
+    const b = block.toLowerCase();
+
+    if (/section\s*:?\s*(mathematics|maths|quantitative aptitude)/i.test(block)) {
+      return "Maths";
+    }
+
+    if (/section\s*:?\s*(reasoning|general intelligence|general intelligence and reasoning)/i.test(block)) {
+      return "Reasoning";
+    }
+
+    if (/section\s*:?\s*(general science|science)/i.test(block)) {
+      return "General Science";
+    }
+
+    if (/section\s*:?\s*(general awareness|current affairs|general awareness and current affairs)/i.test(block)) {
+      return "General Awareness";
+    }
+
+    return null;
+  }
+
+  function autoDetectByQuestion(questionText) {
+    const q = questionText.toLowerCase();
+
+    const mathsWords = [
+      "area", "perimeter", "triangle", "circle", "rectangle", "quadrilateral",
+      "ratio", "percentage", "profit", "loss", "discount", "simple interest",
+      "compound interest", "average", "speed", "distance", "time and work",
+      "pipe", "cistern", "number", "digit", "fraction", "hcf", "lcm",
+      "equation", "simplify", "mensuration", "algebra", "geometry"
+    ];
+
+    const reasoningWords = [
+      "statement", "conclusion", "assumption", "argument", "course of action",
+      "coding", "decoding", "series", "analogy", "odd one", "blood relation",
+      "direction", "syllogism", "mirror", "water image", "calendar", "clock",
+      "arrangement", "seating", "ranking", "order", "puzzle", "figure"
+    ];
+
+    const scienceWords = [
+      "force", "energy", "work", "power", "motion", "light", "sound",
+      "electric", "magnet", "acid", "base", "salt", "metal", "non-metal",
+      "chemical", "reaction", "cell", "plant", "animal", "human body",
+      "vitamin", "disease", "blood", "organ", "photosynthesis", "respiration",
+      "atom", "molecule", "heat", "temperature"
+    ];
+
+    const gaWords = [
+      "president", "prime minister", "governor", "constitution", "article",
+      "parliament", "supreme court", "high court", "policy", "scheme",
+      "ministry", "commission", "award", "book", "author", "sports",
+      "country", "capital", "currency", "river", "mountain", "state",
+      "festival", "history", "sultan", "mughal", "freedom", "war",
+      "international", "india", "budget", "current affairs"
+    ];
+
+    function score(words) {
+      return words.reduce((total, word) => q.includes(word) ? total + 1 : total, 0);
+    }
+
+    const scores = {
+      Maths: score(mathsWords),
+      Reasoning: score(reasoningWords),
+      "General Science": score(scienceWords),
+      "General Awareness": score(gaWords)
+    };
+
+    const best = Object.entries(scores).sort((a, b) => b[1] - a[1])[0];
+
+    if (best && best[1] > 0) return best[0];
+
     return null;
   }
 
@@ -377,7 +444,14 @@ function parseQuestions(text) {
       if (qNo >= 81 && qNo <= 100) return "General Awareness";
     }
 
-    return currentCategory;
+    if (examType.includes("ALP") || examType.includes("TECH")) {
+      if (qNo >= 1 && qNo <= 25) return "Maths";
+      if (qNo >= 26 && qNo <= 50) return "Reasoning";
+      if (qNo >= 51 && qNo <= 75) return "General Science";
+      if (qNo >= 76 && qNo <= 100) return "General Awareness";
+    }
+
+    return "General Awareness";
   }
 
   const blocks = text.split(/(?=Section\s*:|Q\.?\s*\d+)/gi);
@@ -386,8 +460,10 @@ function parseQuestions(text) {
     block = block.trim();
     if (!block) return;
 
-    const section = detectCategory(block);
-    if (section) currentCategory = section;
+    const headingCategory = detectSectionHeading(block);
+    if (headingCategory) {
+      currentCategory = headingCategory;
+    }
 
     if (!/^Q\.?\s*\d+/i.test(block)) return;
 
@@ -414,21 +490,23 @@ function parseQuestions(text) {
     ).filter(Boolean);
 
     if (questionText && options.length >= 4) {
-      const detected = detectCategory(block);
+      const category =
+        currentCategory ||
+        autoDetectByQuestion(questionText) ||
+        fallbackCategory(qNo);
 
       questions.push({
         examType,
         question: questionText,
         options: options.slice(0, 4),
         correctAnswer: options[0],
-        category: detected || currentCategory || fallbackCategory(qNo)
+        category
       });
     }
   });
 
   return questions;
 }
-
 document.getElementById("smartParseBtn").addEventListener("click", () => {
   const consoleArea = document.getElementById("editorConsole");
   const text = consoleArea.value.trim();
