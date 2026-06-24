@@ -357,163 +357,57 @@ document.getElementById("readPdfBtn").addEventListener("click", async () => {
 
   fileReader.readAsArrayBuffer(fileInput.files[0]);
 });
+
 function parseQuestions(text) {
-  text = text.replace(/\r/g, "\n").trim();
+  text = text
+    .replace(/\r/g, " ")
+    .replace(/\s+/g, " ")
+    .replace(/([A-D]\.\s*[^A-DQ]+)(?=[A-D]\.)/g, "$1 ")
+    .replace(/(D\.\s*[^Q]+)(?=Q\.?\s*\d+)/g, "$1 ")
+    .trim();
 
   const examType = getSelectedExam();
   const uploadMode = document.getElementById("uploadCategoryMode")?.value || "AUTO";
   const questions = [];
 
-  let currentCategory = "General Awareness";
-
-  function detectSectionHeading(block) {
-    const b = block.toLowerCase();
-
-    if (/section\s*\d*\s*:?\s*(mathematics|maths|quantitative\s+aptitude|numerical\s+ability)/i.test(b)) {
-      return "Maths";
-    }
-
-    if (/section\s*\d*\s*:?\s*(reasoning|general\s+intelligence|mental\s+ability|logical)/i.test(b)) {
-      return "Reasoning";
-    }
-
-    if (/section\s*\d*\s*:?\s*(general\s+science|science|physics|chemistry|biology)/i.test(b)) {
-      return "General Science";
-    }
-
-    if (/section\s*\d*\s*:?\s*(general\s+awareness|current\s+affairs|history|polity|geography|gk|social\s+studies)/i.test(b)) {
-      return "General Awareness";
-    }
-
-    return null;
-  }
-
-  function smartDetect(questionText) {
-    const q = questionText.toLowerCase();
-
-    const maths = [
-      "area", "perimeter", "triangle", "circle", "rectangle", "quadrilateral",
-      "ratio", "percentage", "profit", "loss", "discount", "simple interest",
-      "compound interest", "average", "speed", "distance", "time and work",
-      "pipe", "cistern", "boat", "upstream", "downstream", "train",
-      "lcm", "hcf", "fraction", "equation", "simplify", "mensuration",
-      "algebra", "geometry", "angle of elevation", "median", "mode",
-      "mean", "selling price", "cost price", "marked price", "successive discount",
-      "third proportional", "roots", "quadratic", "cm", "km/hr", "per annum"
-    ];
-
-    const reasoning = [
-      "statement", "conclusion", "assumption", "argument", "course of action",
-      "coding", "decoding", "series", "analogy", "odd one", "blood relation",
-      "direction", "syllogism", "mirror", "water image", "calendar", "clock",
-      "arrangement", "seating", "ranking", "puzzle", "figure", "alphabetical",
-      "letter", "cluster", "logic", "same way", "meaningful order"
-    ];
-
-    const science = [
-      "force", "energy", "work", "power", "motion", "light", "sound",
-      "electric", "magnet", "acid", "base", "salt", "metal", "non-metal",
-      "chemical", "reaction", "cell", "plant", "animal", "human body",
-      "vitamin", "disease", "blood", "organ", "photosynthesis", "respiration",
-      "atom", "molecule", "heat", "temperature", "physics", "chemistry",
-      "biology", "ecosystem", "valency", "covalent", "mitosis", "meiosis"
-    ];
-
-    const ga = [
-      "president", "prime minister", "governor", "lieutenant governor",
-      "administrator", "constitution", "article", "parliament", "lok sabha",
-      "rajya sabha", "supreme court", "high court", "policy", "scheme",
-      "ministry", "commission", "award", "book", "author", "sports",
-      "capital", "currency", "state", "country", "history", "mughal",
-      "sultan", "freedom", "war", "international", "india", "budget",
-      "current affairs", "andaman", "nicobar", "puducherry", "isro", "drdo",
-      "unesco", "national park", "river", "mountain", "rbi", "gdp"
-    ];
-
-    function score(words) {
-      return words.reduce((total, word) => {
-        return q.includes(word) ? total + (word.includes(" ") ? 2 : 1) : total;
-      }, 0);
-    }
-
-    const scores = {
-      Maths: score(maths),
-      Reasoning: score(reasoning),
-      "General Science": score(science),
-      "General Awareness": score(ga)
-    };
-
-    const best = Object.entries(scores).sort((a, b) => b[1] - a[1])[0];
-
-    return best && best[1] > 0 ? best[0] : currentCategory;
-  }
-
-  function finalCategory(questionText) {
+  function detectCategory(questionText) {
     if (uploadMode !== "AUTO") return uploadMode;
-    return currentCategory || smartDetect(questionText) || "General Awareness";
+    return "General Awareness";
   }
 
   const blocks = text.split(/(?=Q\.?\s*\d+)/gi);
 
   blocks.forEach(block => {
     block = block.trim();
-    if (!block) return;
+    if (!/^Q\.?\s*\d+/i.test(block)) return;
 
-    const heading = detectSectionHeading(block);
-    if (heading) currentCategory = heading;
+    const qMatch = block.match(/Q\.?\s*\d+\.?\s*([\s\S]*?)(?=A\.)/i);
+    if (!qMatch) return;
 
-    const qNoMatch = block.match(/^Q\.?\s*(\d+)/i);
-    if (!qNoMatch) return;
+    const questionText = qMatch[1].trim();
 
-    let questionText = "";
-    let options = [];
-    let correctAnswer = "";
+    const optMatch = block.match(
+      /A\.\s*([\s\S]*?)\s*B\.\s*([\s\S]*?)\s*C\.\s*([\s\S]*?)\s*D\.\s*([\s\S]*?)(?=Q\.?\s*\d+|$)/i
+    );
 
-    const formatOneQuestion = block.match(/Q\.?\s*\d+\.?\s*([\s\S]*?)Options\s*:/i);
-    const formatOneOptions = block.match(/Options\s*:\s*A\.\s*([\s\S]*?)\s*\|\s*B\.\s*([\s\S]*?)\s*\|\s*C\.\s*([\s\S]*?)\s*\|\s*D\.\s*([\s\S]*?)(?=Correct Answer\s*:)/i);
-    const formatOneCorrect = block.match(/Correct Answer\s*:\s*([A-D])\.\s*([\s\S]*?)(?=Q\.?\s*\d+|$)/i);
+    if (!optMatch) return;
 
-    if (formatOneQuestion && formatOneOptions && formatOneCorrect) {
-      questionText = formatOneQuestion[1].replace(/Section\s*\d*\s*:.*$/i, "").replace(/\s+/g, " ").trim();
+    const options = [
+      optMatch[1].trim(),
+      optMatch[2].trim(),
+      optMatch[3].trim(),
+      optMatch[4].trim()
+    ];
 
-      options = [
-        formatOneOptions[1].trim(),
-        formatOneOptions[2].trim(),
-        formatOneOptions[3].trim(),
-        formatOneOptions[4].trim()
-      ];
+    if (!questionText || options.length !== 4) return;
 
-      const correctIndex = { A: 0, B: 1, C: 2, D: 3 }[formatOneCorrect[1].toUpperCase()];
-      correctAnswer = options[correctIndex];
-    } else {
-      const qMatch = block.match(/Q\.?\s*\d+\.?\s*([\s\S]*?)(?=\s+(?:Ans\s+)?(?:A\.|1\.))/i);
-      if (!qMatch) return;
-
-      questionText = qMatch[1].replace(/Test Date.*$/i, "").replace(/Section\s*:.*$/i, "").replace(/\s+/g, " ").trim();
-
-      const optionPattern = /(?:Ans\s+)?([A-D1-4])\.\s*([\s\S]*?)(?=\s+(?:[A-D1-4])\.\s*|\s+Q\.?\s*\d+|$)/gi;
-      const matches = [...block.matchAll(optionPattern)];
-
-      options = matches.map(m =>
-        m[2]
-          .replace(/Section\s*:.*$/i, "")
-          .replace(/Adda\s*247/gi, "")
-          .replace(/Google\s*Play/gi, "")
-          .trim()
-      ).filter(Boolean).slice(0, 4);
-
-      correctAnswer = options[0];
-    }
-
-    if (questionText && options.length === 4 && correctAnswer) {
-      questions.push({
-        examType,
-        question: questionText,
-        options,
-        correctAnswer,
-        category: finalCategory(questionText)
-      });
-    }
+    questions.push({
+      examType,
+      question: questionText,
+      options,
+      correctAnswer: options[0],
+      category: detectCategory(questionText)
+    });
   });
 
   return questions;
