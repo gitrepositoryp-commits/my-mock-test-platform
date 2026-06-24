@@ -356,40 +356,30 @@ function parseQuestions(text) {
   let currentCategory = "General Awareness";
 
   function detectCategory(block) {
-    if (/General Science/i.test(block)) return "General Science";
-    if (/Mathematics|Maths/i.test(block)) return "Maths";
-    if (/Reasoning|General Intelligence/i.test(block)) return "Reasoning";
-    if (/General Awareness|Current Affairs/i.test(block)) return "General Awareness";
+    if (/Section\s*:?\s*(Mathematics|Maths)/i.test(block)) return "Maths";
+    if (/Section\s*:?\s*(Reasoning|General Intelligence|General Intelligence and Reasoning)/i.test(block)) return "Reasoning";
+    if (/Section\s*:?\s*(General Science|Science)/i.test(block)) return "General Science";
+    if (/Section\s*:?\s*(General Awareness|Current Affairs|General Awareness and Current Affairs)/i.test(block)) return "General Awareness";
     return null;
   }
 
- function fallbackCategory(qNo) {
+  function fallbackCategory(qNo) {
+    if (examType.includes("NTPC")) {
+      if (qNo >= 1 && qNo <= 30) return "Maths";
+      if (qNo >= 31 && qNo <= 60) return "Reasoning";
+      if (qNo >= 61 && qNo <= 100) return "General Awareness";
+    }
 
-  // NTPC / ALP / Technician / Group-2 / Group-D
+    if (examType.includes("GROUP_D")) {
+      if (qNo >= 1 && qNo <= 25) return "General Science";
+      if (qNo >= 26 && qNo <= 50) return "Maths";
+      if (qNo >= 51 && qNo <= 80) return "Reasoning";
+      if (qNo >= 81 && qNo <= 100) return "General Awareness";
+    }
 
-  if (
-    examType.includes("NTPC") ||
-    examType.includes("ALP") ||
-    examType.includes("TECH") ||
-    examType.includes("GROUP_2") ||
-    examType.includes("GROUP_D")
-  ) {
-
-    if (qNo >= 1 && qNo <= 25)
-      return "General Science";
-
-    if (qNo >= 26 && qNo <= 50)
-      return "Maths";
-
-    if (qNo >= 51 && qNo <= 75)
-      return "Reasoning";
-
-    if (qNo >= 76 && qNo <= 100)
-      return "General Awareness";
+    return currentCategory;
   }
 
-  return currentCategory;
-}
   const blocks = text.split(/(?=Section\s*:|Q\.?\s*\d+)/gi);
 
   blocks.forEach(block => {
@@ -424,12 +414,14 @@ function parseQuestions(text) {
     ).filter(Boolean);
 
     if (questionText && options.length >= 4) {
+      const detected = detectCategory(block);
+
       questions.push({
         examType,
         question: questionText,
         options: options.slice(0, 4),
         correctAnswer: options[0],
-        category: fallbackCategory(qNo)
+        category: detected || currentCategory || fallbackCategory(qNo)
       });
     }
   });
