@@ -377,6 +377,16 @@ function parseQuestions(text) {
   function autoDetectByQuestion(questionText) {
     const q = questionText.toLowerCase();
 
+    // --- CRITICAL REASONING PATTERN MATCHING ---
+    // Rule A: Detects alphabet/letter series clusters like "VPG 7, ZTK 11, DXO 15" or "A, B, D, G, ?"
+    if (/[A-Z]{2,}\s+\d+[\s,]+[A-Z]{2,}/.test(questionText) || /([A-Z\d\s\-_],?\s*){4,}\?/.test(questionText)) {
+      return "Reasoning";
+    }
+    // Rule B: Explicitly overrides common words if "replace the question mark" or "logical series" appears
+    if (q.includes("replace the question mark") || q.includes("logically complete") || q.includes("wrong term in the series")) {
+      return "Reasoning";
+    }
+
     const mathsWords = [
       "speed", "distance", "time and work", "profit", "loss", "discount", 
       "simple interest", "compound interest", "ratio", "proportion", "percentage", 
@@ -389,7 +399,7 @@ function parseQuestions(text) {
 
     const reasoningWords = [
       "statement and conclusion", "syllogism", "blood relation", "coding-decoding", 
-      "coding decoding", "letter series", "analogy", "analogies", "odd one out", 
+      "coding decoding", "letter series", "number series", "analogy", "analogies", "odd one out", 
       "seating arrangement", "circular table", "direction sense", "north", "south", 
       "east", "west", "turned left", "turned right", "mirror image", "water image", 
       "paper folding", "dice", "calendar", "clock", "veitch", "venn diagram", 
@@ -417,11 +427,9 @@ function parseQuestions(text) {
       "oscar", "book written by", "author of", "headquarters of", "drdo", "isro"
     ];
 
-    // Count exact phrase/word matches to prevent substring overlapping errors
     function score(words) {
       return words.reduce((total, word) => {
         if (q.includes(word)) {
-          // Give higher weight to unique domain-specific multi-word strings
           return total + (word.includes(" ") ? 2 : 1);
         }
         return total;
@@ -435,10 +443,8 @@ function parseQuestions(text) {
       "General Awareness": score(gaWords)
     };
 
-    // Find the category with the highest matching score
     const best = Object.entries(scores).sort((a, b) => b[1] - a[1])[0];
 
-    // Return only if it has a definitive score match of at least 1
     if (best && best[1] > 0) return best[0];
 
     return null;
