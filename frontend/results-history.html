@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Results History - MockExam Pro</title>
+<title>Results History - RRB EDU</title>
 <link rel="stylesheet" href="style.css">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 </head>
@@ -12,7 +12,7 @@
 
 <nav>
   <div class="container nav-container">
-    <a href="dashboard.html" class="logo">MockExam Pro</a>
+    <a href="dashboard.html" class="logo">RRB EDU</a>
 
     <button onclick="window.location.href='dashboard.html'"
       class="btn"
@@ -90,7 +90,9 @@ function getExamName(examType) {
 }
 
 document.addEventListener("DOMContentLoaded", async () => {
-  const token = localStorage.getItem("mock_test_token");
+  const token =
+  localStorage.getItem("mock_test_token") ||
+  localStorage.getItem("token");
   const userData = localStorage.getItem("mock_test_user");
   const container = document.getElementById("historyContainer");
 
@@ -106,6 +108,12 @@ document.addEventListener("DOMContentLoaded", async () => {
   }
 });
     const results = await response.json();
+    if (response.status === 401) {
+  alert("Session expired. Please login again.");
+  localStorage.clear();
+  window.location.href = "login.html";
+  return;
+}
     const user = JSON.parse(userData);
 
     if (!response.ok || !Array.isArray(results)) {
@@ -159,7 +167,7 @@ function renderResults(results) {
 
         <p>
           <strong>Percentage:</strong>
-          ${r.percentage}%
+          ${Number(r.percentage || 0).toFixed(2)}%
         </p>
 
         <p>
@@ -225,7 +233,7 @@ function downloadCertificate(score, total, percentage, createdAt, examType) {
   const examName = getExamName(examType);
 
   doc.setFontSize(22);
-  doc.text("MockExam Pro", 105, 30, { align: "center" });
+  doc.text("RRB EDU", 105, 30, { align: "center" });
 
   doc.setFontSize(18);
   doc.text("Certificate of Completion", 105, 50, { align: "center" });

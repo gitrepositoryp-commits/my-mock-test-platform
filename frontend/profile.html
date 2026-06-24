@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Student Profile - MockExam Pro</title>
+<title>Student Profile - RRB EDU</title>
 <link rel="stylesheet" href="style.css">
 
 <style>
@@ -87,7 +87,7 @@ body{
 
 <nav>
   <div class="container nav-container">
-    <a href="dashboard.html" class="logo">MockExam Pro</a>
+    <<a href="dashboard.html" class="logo">RRB EDU</a>
     <button onclick="window.location.href='dashboard.html'" class="btn" style="width:auto;padding:8px 15px;">
       Dashboard
     </button>
@@ -148,7 +148,9 @@ body{
 const API_BASE = "https://my-mock-test-platform.onrender.com/api";
 
 document.addEventListener("DOMContentLoaded", async () => {
-  const token = localStorage.getItem("mock_test_token");
+  const token =
+  localStorage.getItem("mock_test_token") ||
+  localStorage.getItem("token");
   const userData = localStorage.getItem("mock_test_user");
 
   if (!token || !userData) {
@@ -194,8 +196,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   }
 
   document.getElementById("logoutProfileBtn").addEventListener("click", () => {
-    localStorage.removeItem("mock_test_token");
-    localStorage.removeItem("mock_test_user");
+ localStorage.clear();
     window.location.href = "login.html";
   });
 });

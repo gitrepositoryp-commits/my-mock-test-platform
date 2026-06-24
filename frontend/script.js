@@ -10,7 +10,23 @@ let appState = {
   totalSecondsRemaining: 90 * 60,
   currentActiveSection: "ALL" // Track current section filter view state
 };
+let warningCount = 0;
 
+document.addEventListener("visibilitychange", () => {
+
+  if (document.hidden) {
+
+    warningCount++;
+
+    alert(
+      `Warning ${warningCount}/3\nDo not switch tabs during exam.`
+    );
+
+    if (warningCount >= 3) {
+      submitMockTestResponses();
+    }
+  }
+});
 function getCurrentExamType() {
   return new URLSearchParams(window.location.search).get("exam") || "NTPC";
 }
@@ -329,10 +345,16 @@ function initExamActionButtons() {
   if (submitBtn) { submitBtn.addEventListener('click', () => { if (confirm('Submit complete test results?')) submitMockTestResponses(); }); }
 }
 
-async function submitMockTestResponses() {
-  if (appState.timerInterval) clearInterval(appState.timerInterval);
+let examSubmitted = false;
 
-  const token = localStorage.getItem('mock_test_token');
+async function submitMockTestResponses() {
+
+  if (examSubmitted) return;
+  examSubmitted = true;
+  if (appState.timerInterval) clearInterval(appState.timerInterval);
+  const token =
+  localStorage.getItem('mock_test_token') ||
+  localStorage.getItem('token');
   const examType = getCurrentExamType();
 
   if (!token) {
@@ -374,3 +396,20 @@ async function submitMockTestResponses() {
     alert("Network error while submitting test.");
   }
 }
+document.addEventListener("visibilitychange", () => {
+
+  if (document.hidden) {
+
+    warningCount++;
+
+    alert(
+      `Warning ${warningCount}/3\nDo not switch tabs during exam.`
+    );
+
+    if (warningCount >= 3) {
+      alert("Exam auto-submitted due to repeated tab switching.");
+      submitMockTestResponses();
+    }
+  }
+
+});

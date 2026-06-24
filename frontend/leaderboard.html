@@ -104,7 +104,9 @@ function getExamName(examType) {
 }
 
 async function loadLeaderboard(examType = "NTPC") {
-  const token = localStorage.getItem("mock_test_token");
+  const token =
+  localStorage.getItem("mock_test_token") ||
+  localStorage.getItem("token");
   const tableBody = document.getElementById("leaderboardRowsContainer");
   const title = document.getElementById("leaderboardTitle");
 
@@ -133,6 +135,12 @@ async function loadLeaderboard(examType = "NTPC") {
 
     const ranks = await response.json();
 
+    if (response.status === 401) {
+  alert("Session expired. Please login again.");
+  localStorage.clear();
+  window.location.href = "login.html";
+  return;
+}
     if (response.ok && Array.isArray(ranks)) {
       if (ranks.length === 0) {
         tableBody.innerHTML = `
@@ -160,7 +168,7 @@ async function loadLeaderboard(examType = "NTPC") {
             <td style="padding:12px;">${row.userId?.username || "Student"}</td>
             <td style="padding:12px;">${getExamName(row.examType)}</td>
             <td style="padding:12px;">${row.score} / ${row.totalQuestions}</td>
-            <td style="padding:12px;">${row.percentage}%</td>
+            <td style="padding:12px;">${Number(row.percentage || 0).toFixed(2)}%</td>
           </tr>
         `;
       });

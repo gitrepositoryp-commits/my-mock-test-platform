@@ -87,7 +87,9 @@ function getExamName(examType) {
 document.addEventListener("DOMContentLoaded", async () => {
   const urlParams = new URLSearchParams(window.location.search);
   const resultId = urlParams.get("id") || localStorage.getItem("last_result_id");
-  const token = localStorage.getItem("mock_test_token");
+  const token =
+  localStorage.getItem("mock_test_token") ||
+  localStorage.getItem("token");
   const container = document.getElementById("reviewContainer");
 
   if (!token) {
@@ -114,6 +116,12 @@ document.addEventListener("DOMContentLoaded", async () => {
     });
 
     const data = await response.json();
+    if (response.status === 401) {
+  alert("Session expired. Please login again.");
+  localStorage.clear();
+  window.location.href = "login.html";
+  return;
+}
 
     if (!response.ok || !data.answersBreakdown) {
       container.innerHTML = `
@@ -228,7 +236,7 @@ document.getElementById("downloadPdfBtn").addEventListener("click", () => {
   doc.text(`Student: ${username}`, 15, y); y += 7;
   doc.text(`Exam: ${examName}`, 15, y); y += 7;
   doc.text(`Score: ${loadedResultData.score} / ${loadedResultData.totalQuestions}`, 15, y); y += 7;
-  doc.text(`Percentage: ${loadedResultData.percentage}%`, 15, y); y += 7;
+  doc.text(`Percentage: Percentage: ${Number(loadedResultData.percentage || 0).toFixed(2)}%`, 15, y); y += 7;
   doc.text(`Correct: ${correct} | Wrong: ${wrong} | Unanswered: ${unanswered}`, 15, y); y += 10;
 
   loadedBreakdown.forEach((item, index) => {
