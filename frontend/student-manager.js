@@ -115,8 +115,23 @@ function renderStudents(students) {
         <td>${expiry}</td>
         <td>${joined}</td>
         <td>
-          <button class="action-btn view-btn" onclick="viewStudent('${user._id}')">View</button>
-          <button class="action-btn delete-btn" onclick="deleteStudent('${user._id}')">Delete</button>
+         <td>
+  <button class="action-btn view-btn" onclick="viewStudent('${user._id}')">
+    View
+  </button>
+
+  ${
+    user.isActive === false
+      ? `<button class="action-btn" style="background:#16a34a"
+           onclick="activateStudent('${user._id}')">
+           Activate
+         </button>`
+      : `<button class="action-btn" style="background:#dc2626"
+           onclick="deactivateStudent('${user._id}')">
+           Deactivate
+         </button>`
+  }
+</td>
         </td>
       </tr>
     `;
@@ -149,26 +164,47 @@ function viewStudent(id) {
   );
 }
 
-async function deleteStudent(id) {
-  if (!confirm("Delete this student permanently?")) return;
+async function deactivateStudent(id) {
+  if (!confirm("Deactivate this student?")) return;
 
   try {
-    const res = await fetch(`${API_BASE}/admin/users/${id}`, {
-      method: "DELETE",
+    const res = await fetch(`${API_BASE}/admin/users/${id}/deactivate`, {
+      method: "PUT",
       headers: headers()
     });
 
+    const data = await res.json();
+
     if (res.ok) {
-      alert("Student deleted.");
-      await loadStudents();
+      alert(data.message);
+      loadStudents();
     } else {
-      alert("Delete failed. Backend route may be missing.");
+      alert(data.error || "Failed to deactivate.");
     }
-  } catch {
-    alert("Delete error.");
+  } catch (err) {
+    alert("Network error.");
   }
 }
 
+async function activateStudent(id) {
+  try {
+    const res = await fetch(`${API_BASE}/admin/users/${id}/activate`, {
+      method: "PUT",
+      headers: headers()
+    });
+
+    const data = await res.json();
+
+    if (res.ok) {
+      alert(data.message);
+      loadStudents();
+    } else {
+      alert(data.error || "Failed to activate.");
+    }
+  } catch (err) {
+    alert("Network error.");
+  }
+}
 function escapeHtml(value) {
   return String(value || "")
     .replaceAll("&", "&amp;")
