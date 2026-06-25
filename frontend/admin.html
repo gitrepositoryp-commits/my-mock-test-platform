@@ -1,135 +1,137 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Admin Portal - RRB EDU</title>
-  <link rel="stylesheet" href="style.css" />
-  <style>
-    .admin-tabs{display:flex;gap:10px;margin-bottom:15px;border-bottom:2px solid #e2e8f0;padding-bottom:10px;flex-wrap:wrap}
-    .admin-tab-btn{padding:8px 16px;border:none;background:#e2e8f0;color:#475569;font-weight:bold;border-radius:6px;cursor:pointer}
-    .admin-tab-btn.active{background:#2563eb;color:white}
-    .hidden{display:none!important}
-  </style>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Admin Portal - RRB EDU</title>
+<link rel="stylesheet" href="style.css" />
+<style>
+.admin-tabs{display:flex;gap:10px;margin-bottom:15px;border-bottom:2px solid #e2e8f0;padding-bottom:10px;flex-wrap:wrap}
+.admin-tab-btn{padding:8px 16px;border:none;background:#e2e8f0;color:#475569;font-weight:bold;border-radius:6px;cursor:pointer}
+.admin-tab-btn.active{background:#2563eb;color:white}
+.hidden{display:none!important}
+</style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
 </head>
 
 <body>
 
 <nav>
-  <div class="container nav-container">
-    <a href="admin.html" class="logo">RRB EDU Admin</a>
-    <button id="adminLogoutBtn" class="btn" style="width:auto;padding:8px 15px;background:#dc2626;">Logout</button>
-  </div>
+<div class="container nav-container">
+<a href="admin.html" class="logo">RRB EDU Admin</a>
+<button id="adminLogoutBtn" class="btn" style="width:auto;padding:8px 15px;background:#dc2626;">Logout</button>
+</div>
 </nav>
 
 <main id="adminApp" class="container auth-wrapper hidden" style="min-height:85vh;max-width:950px;margin:0 auto;display:block;padding-top:30px;">
 
-  <div class="card" style="padding:30px;">
-    <h2 style="text-align:center;">Universal PDF Question Uploader</h2>
+<div class="card" style="padding:30px;">
+<h2 style="text-align:center;">Universal PDF Question Uploader</h2>
 
-    <div class="card" style="margin-top:20px;padding:20px;">
-      <h3>➕ Manual Add Question</h3>
+<div class="card" style="margin-top:20px;padding:20px;">
+<h3>➕ Manual Add Question</h3>
 
-      <textarea id="manualQuestion" placeholder="Enter question" style="width:100%;height:80px;padding:10px;margin-top:10px;"></textarea>
+<textarea id="manualQuestion" placeholder="Enter question" style="width:100%;height:80px;padding:10px;margin-top:10px;"></textarea>
+<input id="manualOpt1" placeholder="Option A" style="width:100%;padding:10px;margin-top:8px;">
+<input id="manualOpt2" placeholder="Option B" style="width:100%;padding:10px;margin-top:8px;">
+<input id="manualOpt3" placeholder="Option C" style="width:100%;padding:10px;margin-top:8px;">
+<input id="manualOpt4" placeholder="Option D" style="width:100%;padding:10px;margin-top:8px;">
 
-      <input id="manualOpt1" placeholder="Option A" style="width:100%;padding:10px;margin-top:8px;">
-      <input id="manualOpt2" placeholder="Option B" style="width:100%;padding:10px;margin-top:8px;">
-      <input id="manualOpt3" placeholder="Option C" style="width:100%;padding:10px;margin-top:8px;">
-      <input id="manualOpt4" placeholder="Option D" style="width:100%;padding:10px;margin-top:8px;">
+<select id="manualCorrect" style="width:100%;padding:10px;margin-top:8px;">
+<option value="1">Correct Answer: Option A</option>
+<option value="2">Correct Answer: Option B</option>
+<option value="3">Correct Answer: Option C</option>
+<option value="4">Correct Answer: Option D</option>
+</select>
 
-      <select id="manualCorrect" style="width:100%;padding:10px;margin-top:8px;">
-        <option value="1">Correct Answer: Option A</option>
-        <option value="2">Correct Answer: Option B</option>
-        <option value="3">Correct Answer: Option C</option>
-        <option value="4">Correct Answer: Option D</option>
-      </select>
+<select id="manualCategory" style="width:100%;padding:10px;margin-top:8px;">
+<option value="General Awareness">General Awareness</option>
+<option value="Maths">Maths / Aptitude</option>
+<option value="Reasoning">Reasoning</option>
+<option value="General Science">General Science</option>
+</select>
 
-      <select id="manualCategory" style="width:100%;padding:10px;margin-top:8px;">
-        <option value="General Awareness">General Awareness</option>
-        <option value="Maths">Maths</option>
-        <option value="Reasoning">Reasoning</option>
-        <option value="General Science">General Science</option>
-      </select>
-
-      <button id="manualAddBtn" class="btn" style="background:#16a34a;margin-top:12px;">Add This Question</button>
-    </div>
-
-    <div style="margin:20px 0;">
-      <label style="font-weight:bold;">Select Exam Type</label>
-      <select id="examType" style="width:100%;padding:12px;margin-top:8px;border-radius:8px;"></select>
-    </div>
-    <div style="margin:20px 0;">
-  <label style="font-weight:bold;">Upload Section Mode</label>
-  <select id="uploadCategoryMode" style="width:100%;padding:12px;margin-top:8px;border-radius:8px;">
-    <option value="AUTO">Auto Detect</option>
-    <option value="Maths">Force Maths / Aptitude</option>
-    <option value="Reasoning">Force Reasoning</option>
-    <option value="General Science">Force General Science</option>
-    <option value="General Awareness">Force General Awareness</option>
-  </select>
+<button id="manualAddBtn" class="btn" style="background:#16a34a;margin-top:12px;">Add This Question</button>
 </div>
 
-    <div style="text-align:center;margin:15px 0;padding:15px;background:#f1f5f9;border-radius:8px;">
-      <h3 id="questionCountDisplay" style="margin:0;color:#2563eb;">Total Questions: Loading...</h3>
-    </div>
+<div style="margin:20px 0;">
+<label style="font-weight:bold;">Select Exam Type</label>
+<select id="examType" style="width:100%;padding:12px;margin-top:8px;border-radius:8px;"></select>
+</div>
 
-    <div class="card" style="margin-top:20px;padding:20px;">
-      <h3>📈 Admin Analytics</h3>
-      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:15px;margin-top:15px;">
-        <div style="background:#eff6ff;padding:15px;border-radius:8px;text-align:center;"><h2 id="totalResultsCard">0</h2><p>Total Results</p></div>
-        <div style="background:#ecfdf5;padding:15px;border-radius:8px;text-align:center;"><h2 id="highestScoreCard">0</h2><p>Highest Score</p></div>
-        <div style="background:#fef3c7;padding:15px;border-radius:8px;text-align:center;"><h2 id="avgPercentageCard">0%</h2><p>Average %</p></div>
-        <div style="background:#f3e8ff;padding:15px;border-radius:8px;text-align:center;"><h2 id="studentsCard">0</h2><p>Students</p></div>
-      </div>
-    </div>
+<div style="margin:20px 0;">
+<label style="font-weight:bold;">Upload Section Mode</label>
+<select id="uploadCategoryMode" style="width:100%;padding:12px;margin-top:8px;border-radius:8px;">
+<option value="AUTO">Auto Detect</option>
+<option value="Maths">Force Maths / Aptitude</option>
+<option value="Reasoning">Force Reasoning</option>
+<option value="General Science">Force General Science</option>
+<option value="General Awareness">Force General Awareness</option>
+</select>
+</div>
 
-    <div class="card" style="margin-top:20px;padding:20px;">
-      <h3>📊 Student Results</h3>
-      <button id="loadResultsBtn" class="btn" style="background:#7c3aed;margin-top:10px;">Load Results</button>
-      <div id="resultsContainer" style="margin-top:20px;"></div>
-    </div>
+<div style="text-align:center;margin:15px 0;padding:15px;background:#f1f5f9;border-radius:8px;">
+<h3 id="questionCountDisplay" style="margin:0;color:#2563eb;">Total Questions: Loading...</h3>
+</div>
 
-    <div class="card" style="margin-top:20px;padding:20px;">
-      <h3>💰 Premium Payments</h3>
-      <button id="loadPaymentsBtn" class="btn" style="background:#16a34a;margin-top:10px;">Load Payments</button>
-      <div id="paymentsContainer" style="margin-top:20px;"></div>
-    </div>
+<div class="card" style="margin-top:20px;padding:20px;">
+<h3>📈 Admin Analytics</h3>
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:15px;margin-top:15px;">
+<div style="background:#eff6ff;padding:15px;border-radius:8px;text-align:center;"><h2 id="totalResultsCard">0</h2><p>Total Results</p></div>
+<div style="background:#ecfdf5;padding:15px;border-radius:8px;text-align:center;"><h2 id="highestScoreCard">0</h2><p>Highest Score</p></div>
+<div style="background:#fef3c7;padding:15px;border-radius:8px;text-align:center;"><h2 id="avgPercentageCard">0%</h2><p>Average %</p></div>
+<div style="background:#f3e8ff;padding:15px;border-radius:8px;text-align:center;"><h2 id="studentsCard">0</h2><p>Students</p></div>
+</div>
+</div>
 
-    <div class="card" style="margin-top:20px;padding:20px;">
-      <h3>🔍 Section Filter & Live Preview</h3>
+<div class="card" style="margin-top:20px;padding:20px;">
+<h3>📊 Student Results</h3>
+<button id="loadResultsBtn" class="btn" style="background:#7c3aed;margin-top:10px;">Load Results</button>
+<div id="resultsContainer" style="margin-top:20px;"></div>
+</div>
 
-      <div class="admin-tabs">
-        <button class="admin-tab-btn active" onclick="filterAdminPreview('All')">All Sections</button>
-        <button class="admin-tab-btn" onclick="filterAdminPreview('Maths')">Maths</button>
-        <button class="admin-tab-btn" onclick="filterAdminPreview('Reasoning')">Reasoning</button>
-        <button class="admin-tab-btn" onclick="filterAdminPreview('General Science')">General Science</button>
-        <button class="admin-tab-btn" onclick="filterAdminPreview('General Awareness')">General Awareness</button>
-      </div>
+<div class="card" style="margin-top:20px;padding:20px;">
+<h3>💰 Premium Payments</h3>
+<button id="loadPaymentsBtn" class="btn" style="background:#16a34a;margin-top:10px;">Load Payments</button>
+<div id="paymentsContainer" style="margin-top:20px;"></div>
+</div>
 
-      <input type="text" id="searchQuestionInput" placeholder="Search question..." style="width:100%;padding:10px;margin-bottom:15px;">
-      <div id="questionPreviewContainer" style="margin-top:20px;"></div>
-    </div>
+<div class="card" style="margin-top:20px;padding:20px;">
+<h3>🔍 Section Filter & Live Preview</h3>
 
-    <div class="form-group" style="background:#f8fafc;border:2px dashed #ddd;padding:20px;border-radius:8px;text-align:center;margin-top:20px;">
-      <input type="file" id="pdfFileInput" accept=".pdf">
-    </div>
+<div class="admin-tabs">
+<button class="admin-tab-btn active" onclick="filterAdminPreview('All')">All Sections</button>
+<button class="admin-tab-btn" onclick="filterAdminPreview('Maths')">Maths</button>
+<button class="admin-tab-btn" onclick="filterAdminPreview('Reasoning')">Reasoning</button>
+<button class="admin-tab-btn" onclick="filterAdminPreview('General Science')">General Science</button>
+<button class="admin-tab-btn" onclick="filterAdminPreview('General Awareness')">General Awareness</button>
+</div>
 
-    <div style="display:flex;gap:15px;margin-top:20px;flex-wrap:wrap;">
-      <button id="readPdfBtn" class="btn" style="background:#2563eb;flex:1;">Step 1: Read PDF</button>
-      <button id="smartParseBtn" class="btn" style="background:#0284c7;flex:1;">Step 2: Convert To JSON</button>
-    </div>
+<input type="text" id="searchQuestionInput" placeholder="Search question..." style="width:100%;padding:10px;margin-bottom:15px;">
+<div id="questionPreviewContainer" style="margin-top:20px;"></div>
+</div>
 
-    <textarea id="editorConsole" style="width:100%;height:420px;margin-top:25px;padding:12px;font-family:monospace;font-size:13px;"></textarea>
+<div class="form-group" style="background:#f8fafc;border:2px dashed #ddd;padding:20px;border-radius:8px;text-align:center;margin-top:20px;">
+<input type="file" id="pdfFileInput" accept=".pdf">
+</div>
 
-    <button id="deleteAllBtn" class="btn" style="background:#dc2626;margin-top:15px;font-size:16px;padding:14px;">
-      🗑 Delete Selected Exam Questions
-    </button>
+<div style="display:flex;gap:15px;margin-top:20px;flex-wrap:wrap;">
+<button id="readPdfBtn" class="btn" style="background:#2563eb;flex:1;">📄 Step 1: Read PDF</button>
+<button id="smartParseBtn" class="btn" style="background:#0284c7;flex:1;">🔄 Step 2: Convert To JSON</button>
+<button id="clearEditorBtn" class="btn" style="background:#dc2626;flex:1;">🗑 Clear Text / JSON</button>
+</div>
 
-    <button id="executeUploadBtn" class="btn" style="background:green;margin-top:15px;font-size:16px;padding:14px;">
-      🚀 Upload Questions to Selected Exam
-    </button>
-  </div>
+<textarea id="editorConsole" style="width:100%;height:420px;margin-top:25px;padding:12px;font-family:monospace;font-size:13px;"></textarea>
+
+<button id="deleteAllBtn" class="btn" style="background:#dc2626;margin-top:15px;font-size:16px;padding:14px;">
+🗑 Delete Selected Exam Questions
+</button>
+
+<button id="executeUploadBtn" class="btn" style="background:green;margin-top:15px;font-size:16px;padding:14px;">
+🚀 Upload Questions to Selected Exam
+</button>
+
+</div>
 </main>
 
 <script>
@@ -138,571 +140,623 @@ let currentAdminTab = "All";
 let allQuestions = [];
 
 function getAdminToken() {
-  return localStorage.getItem("adminToken") || localStorage.getItem("token") || localStorage.getItem("authToken");
+return localStorage.getItem("adminToken") || localStorage.getItem("token") || localStorage.getItem("authToken");
 }
 
 function adminHeaders() {
-  return {
-    "Content-Type": "application/json",
-    "Authorization": `Bearer ${getAdminToken()}`
-  };
+return {
+"Content-Type": "application/json",
+"Authorization": `Bearer ${getAdminToken()}`
+};
 }
 
 function forceAdminLogout() {
-  localStorage.removeItem("adminToken");
-  localStorage.removeItem("admin_logged_in");
-  localStorage.removeItem("token");
-  localStorage.removeItem("authToken");
-  window.location.replace("admin-login.html");
+localStorage.removeItem("adminToken");
+localStorage.removeItem("admin_logged_in");
+localStorage.removeItem("token");
+localStorage.removeItem("authToken");
+window.location.replace("admin-login.html");
 }
 
 document.getElementById("adminLogoutBtn").addEventListener("click", forceAdminLogout);
 
 async function verifyAdminAccess() {
-  const token = getAdminToken();
+const token = getAdminToken();
+if (!token) {
+forceAdminLogout();
+return false;
+}
 
-  if (!token) {
-    forceAdminLogout();
-    return false;
-  }
+try {
+const res = await fetch(`${LIVE_BACKEND_URL}/tests/admin/questions?exam=NTPC_PG_FREE_1`, {
+method: "GET",
+headers: adminHeaders()
+});
 
-  try {
-    const res = await fetch(`${LIVE_BACKEND_URL}/tests/admin/questions?exam=NTPC_PG_FREE_1`, {
-      method: "GET",
-      headers: adminHeaders()
-    });
+if (res.status === 401 || res.status === 403) {
+alert("Admin access only. Please login as admin.");
+forceAdminLogout();
+return false;
+}
 
-    if (res.status === 401 || res.status === 403) {
-      alert("Admin access only. Please login as admin.");
-      forceAdminLogout();
-      return false;
-    }
+document.getElementById("adminApp").classList.remove("hidden");
+return true;
 
-    document.getElementById("adminApp").classList.remove("hidden");
-    return true;
-
-  } catch (err) {
-    alert("Backend connection failed. Try again.");
-    forceAdminLogout();
-    return false;
-  }
+} catch {
+alert("Backend connection failed. Try again.");
+forceAdminLogout();
+return false;
+}
 }
 
 const pdfjsLib = window["pdfjs-dist/build/pdf"];
 pdfjsLib.GlobalWorkerOptions.workerSrc = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js";
 
 const examGroups = [
-  { label: "RRB NTPC Graduate", prefix: "NTPC_PG" },
-  { label: "RRB NTPC Undergraduate", prefix: "NTPC_UG" },
-  { label: "RRB ALP", prefix: "ALP" },
-  { label: "Technician Grade-1", prefix: "TECH_G1" },
-  { label: "Technician Grade-3", prefix: "TECH_G3" },
-  { label: "RRB Group-D", prefix: "GROUP_D" },
-  { label: "AP Group-2", prefix: "GROUP_2" }
+{ label: "RRB NTPC Graduate", prefix: "NTPC_PG" },
+{ label: "RRB NTPC Undergraduate", prefix: "NTPC_UG" },
+{ label: "RRB ALP", prefix: "ALP" },
+{ label: "Technician Grade-1", prefix: "TECH_G1" },
+{ label: "Technician Grade-3", prefix: "TECH_G3" },
+{ label: "RRB Group-D", prefix: "GROUP_D" },
+{ label: "AP Group-2", prefix: "GROUP_2" }
 ];
 
 function populateExamDropdown() {
-  const select = document.getElementById("examType");
-  select.innerHTML = "";
+const select = document.getElementById("examType");
+select.innerHTML = "";
 
-  examGroups.forEach(group => {
-    const freeHeader = document.createElement("optgroup");
-    freeHeader.label = `${group.label} - FREE`;
+examGroups.forEach(group => {
+const freeHeader = document.createElement("optgroup");
+freeHeader.label = `${group.label} - FREE`;
 
-    for (let i = 1; i <= 3; i++) {
-      const opt = document.createElement("option");
-      opt.value = `${group.prefix}_FREE_${i}`;
-      opt.textContent = `${group.label} Free Mock ${i}`;
-      freeHeader.appendChild(opt);
-    }
+for (let i = 1; i <= 3; i++) {
+const opt = document.createElement("option");
+opt.value = `${group.prefix}_FREE_${i}`;
+opt.textContent = `${group.label} Free Mock ${i}`;
+freeHeader.appendChild(opt);
+}
 
-    select.appendChild(freeHeader);
+select.appendChild(freeHeader);
 
-    const premHeader = document.createElement("optgroup");
-    premHeader.label = `${group.label} - PREMIUM`;
+const premHeader = document.createElement("optgroup");
+premHeader.label = `${group.label} - PREMIUM`;
 
-    for (let i = 1; i <= 30; i++) {
-      const opt = document.createElement("option");
-      opt.value = `${group.prefix}_PREMIUM_${i}`;
-      opt.textContent = `🔒 ${group.label} Premium Mock ${i}`;
-      premHeader.appendChild(opt);
-    }
+for (let i = 1; i <= 30; i++) {
+const opt = document.createElement("option");
+opt.value = `${group.prefix}_PREMIUM_${i}`;
+opt.textContent = `🔒 ${group.label} Premium Mock ${i}`;
+premHeader.appendChild(opt);
+}
 
-    select.appendChild(premHeader);
-  });
+select.appendChild(premHeader);
+});
 }
 
 function getSelectedExam() {
-  return document.getElementById("examType").value;
+return document.getElementById("examType").value;
 }
 
 function escapeHtml(value) {
-  return String(value || "")
-    .replaceAll("&", "&amp;")
-    .replaceAll("<", "&lt;")
-    .replaceAll(">", "&gt;")
-    .replaceAll('"', "&quot;")
-    .replaceAll("'", "&#039;");
+return String(value || "")
+.replaceAll("&", "&amp;")
+.replaceAll("<", "&lt;")
+.replaceAll(">", "&gt;")
+.replaceAll('"', "&quot;")
+.replaceAll("'", "&#039;");
 }
 
 async function safeJson(res) {
-  try {
-    return await res.json();
-  } catch {
-    return null;
-  }
+try {
+return await res.json();
+} catch {
+return null;
+}
 }
 
 async function loadQuestionCount() {
-  const exam = getSelectedExam();
+const exam = getSelectedExam();
 
-  try {
-    const response = await fetch(`${LIVE_BACKEND_URL}/tests/admin/questions?exam=${encodeURIComponent(exam)}`, {
-      headers: adminHeaders()
-    });
+try {
+const response = await fetch(`${LIVE_BACKEND_URL}/tests/admin/questions?exam=${encodeURIComponent(exam)}`, {
+headers: adminHeaders()
+});
 
-    if (response.status === 401 || response.status === 403) return forceAdminLogout();
+if (response.status === 401 || response.status === 403) return forceAdminLogout();
 
-    const data = await safeJson(response);
+const data = await safeJson(response);
 
-    if (response.ok && Array.isArray(data)) {
-      document.getElementById("questionCountDisplay").textContent = `${exam} Total Count: ${data.length}`;
-    } else {
-      document.getElementById("questionCountDisplay").textContent = "Unable to load count";
-    }
-  } catch {
-    document.getElementById("questionCountDisplay").textContent = "Backend error";
-  }
+if (response.ok && Array.isArray(data)) {
+document.getElementById("questionCountDisplay").textContent = `${exam} Total Count: ${data.length}`;
+} else {
+document.getElementById("questionCountDisplay").textContent = "Unable to load count";
+}
+} catch {
+document.getElementById("questionCountDisplay").textContent = "Backend error";
+}
 }
 
 document.getElementById("manualAddBtn").addEventListener("click", async () => {
-  const examType = getSelectedExam();
-  const question = document.getElementById("manualQuestion").value.trim();
-  const category = document.getElementById("manualCategory").value;
+const examType = getSelectedExam();
+const question = document.getElementById("manualQuestion").value.trim();
+const category = document.getElementById("manualCategory").value;
 
-  const options = [
-    document.getElementById("manualOpt1").value.trim(),
-    document.getElementById("manualOpt2").value.trim(),
-    document.getElementById("manualOpt3").value.trim(),
-    document.getElementById("manualOpt4").value.trim()
-  ];
+const options = [
+document.getElementById("manualOpt1").value.trim(),
+document.getElementById("manualOpt2").value.trim(),
+document.getElementById("manualOpt3").value.trim(),
+document.getElementById("manualOpt4").value.trim()
+];
 
-  const correctAnswer = options[Number(document.getElementById("manualCorrect").value) - 1];
+const correctAnswer = options[Number(document.getElementById("manualCorrect").value) - 1];
 
-  if (!question || options.some(opt => !opt) || !correctAnswer) {
-    alert("Please fill all fields.");
-    return;
-  }
+if (!question || options.some(opt => !opt) || !correctAnswer) {
+alert("Please fill all fields.");
+return;
+}
 
-  try {
-    const response = await fetch(`${LIVE_BACKEND_URL}/tests/bulk-questions`, {
-      method: "POST",
-      headers: adminHeaders(),
-      body: JSON.stringify({
-        examType,
-        questionsArray: [{ examType, question, options, correctAnswer, category }]
-      })
-    });
+try {
+const response = await fetch(`${LIVE_BACKEND_URL}/tests/bulk-questions`, {
+method: "POST",
+headers: adminHeaders(),
+body: JSON.stringify({
+examType,
+questionsArray: [{ examType, question, options, correctAnswer, category }]
+})
+});
 
-    if (response.status === 401 || response.status === 403) return forceAdminLogout();
+if (response.status === 401 || response.status === 403) return forceAdminLogout();
 
-    if (response.ok) {
-      alert("Question added successfully.");
-      document.getElementById("manualQuestion").value = "";
-      document.getElementById("manualOpt1").value = "";
-      document.getElementById("manualOpt2").value = "";
-      document.getElementById("manualOpt3").value = "";
-      document.getElementById("manualOpt4").value = "";
-      await loadQuestionCount();
-      await loadQuestionsPreview();
-    } else {
-      alert("Question upload failed.");
-    }
-  } catch (err) {
-    alert(err.message);
-  }
+if (response.ok) {
+alert("Question added successfully.");
+document.getElementById("manualQuestion").value = "";
+document.getElementById("manualOpt1").value = "";
+document.getElementById("manualOpt2").value = "";
+document.getElementById("manualOpt3").value = "";
+document.getElementById("manualOpt4").value = "";
+await loadQuestionCount();
+await loadQuestionsPreview();
+} else {
+alert("Question upload failed.");
+}
+} catch (err) {
+alert(err.message);
+}
 });
 
 document.getElementById("readPdfBtn").addEventListener("click", async () => {
-  const fileInput = document.getElementById("pdfFileInput");
-  const consoleArea = document.getElementById("editorConsole");
+const fileInput = document.getElementById("pdfFileInput");
+const consoleArea = document.getElementById("editorConsole");
 
-  if (fileInput.files.length === 0) {
-    alert("Choose a PDF file first.");
-    return;
-  }
+if (fileInput.files.length === 0) {
+alert("Choose a PDF file first.");
+return;
+}
 
-  consoleArea.value = "Reading PDF...";
+consoleArea.value = "Reading PDF...";
 
-  const fileReader = new FileReader();
+const fileReader = new FileReader();
 
-  fileReader.onload = async function () {
-    try {
-      const typedarray = new Uint8Array(this.result);
-      const pdf = await pdfjsLib.getDocument({ data: typedarray }).promise;
-      let fullText = "";
+fileReader.onload = async function () {
+try {
+const typedarray = new Uint8Array(this.result);
+const pdf = await pdfjsLib.getDocument({ data: typedarray }).promise;
+let fullText = "";
 
-      for (let i = 1; i <= pdf.numPages; i++) {
-        const page = await pdf.getPage(i);
-        const textContent = await page.getTextContent();
-        fullText += textContent.items.map(item => item.str).join(" ") + "\n";
-      }
+for (let i = 1; i <= pdf.numPages; i++) {
+const page = await pdf.getPage(i);
+const textContent = await page.getTextContent();
+fullText += textContent.items.map(item => item.str).join(" ") + "\n";
+}
 
-      consoleArea.value = fullText;
-      alert("PDF reading complete. Now click Step 2.");
-    } catch (err) {
-      alert(err.message);
-    }
-  };
+consoleArea.value = fullText;
+alert("PDF reading complete. Now click Step 2.");
+} catch (err) {
+alert(err.message);
+}
+};
 
-  fileReader.readAsArrayBuffer(fileInput.files[0]);
+fileReader.readAsArrayBuffer(fileInput.files[0]);
+});
+
+document.getElementById("clearEditorBtn").addEventListener("click", () => {
+if (!confirm("Clear all text and JSON?")) return;
+document.getElementById("editorConsole").value = "";
+document.getElementById("pdfFileInput").value = "";
+alert("Editor cleared.");
 });
 
 function parseQuestions(text) {
-  text = text
-    .replace(/\r/g, " ")
-    .replace(/\s+/g, " ")
-    .replace(/([A-D]\.\s*[^A-DQ]+)(?=[A-D]\.)/g, "$1 ")
-    .replace(/(D\.\s*[^Q]+)(?=Q\.?\s*\d+)/g, "$1 ")
-    .trim();
+text = text
+.replace(/\r/g, " ")
+.replace(/\s+/g, " ")
+.replace(/([A-D]\.\s*[^A-DQ]+)(?=[A-D]\.)/g, "$1 ")
+.replace(/(D\.\s*[^Q]+)(?=Q\.?\s*\d+)/g, "$1 ")
+.trim();
 
-  const examType = getSelectedExam();
-  const uploadMode = document.getElementById("uploadCategoryMode")?.value || "AUTO";
-  const questions = [];
+const examType = getSelectedExam();
+const uploadMode = document.getElementById("uploadCategoryMode")?.value || "AUTO";
+const questions = [];
 
-  function detectCategory(questionText) {
-    if (uploadMode !== "AUTO") return uploadMode;
-    return "General Awareness";
-  }
-
-  const blocks = text.split(/(?=Q\.?\s*\d+)/gi);
-
-  blocks.forEach(block => {
-    block = block.trim();
-    if (!/^Q\.?\s*\d+/i.test(block)) return;
-
-    const qMatch = block.match(/Q\.?\s*\d+\.?\s*([\s\S]*?)(?=A\.)/i);
-    if (!qMatch) return;
-
-    const questionText = qMatch[1].trim();
-
-    const optMatch = block.match(
-      /A\.\s*([\s\S]*?)\s*B\.\s*([\s\S]*?)\s*C\.\s*([\s\S]*?)\s*D\.\s*([\s\S]*?)(?=Q\.?\s*\d+|$)/i
-    );
-
-    if (!optMatch) return;
-
-    const options = [
-      optMatch[1].trim(),
-      optMatch[2].trim(),
-      optMatch[3].trim(),
-      optMatch[4].trim()
-    ];
-
-    if (!questionText || options.length !== 4) return;
-
-    questions.push({
-      examType,
-      question: questionText,
-      options,
-      correctAnswer: options[0],
-      category: detectCategory(questionText)
-    });
-  });
-
-  return questions;
+function detectCategory() {
+if (uploadMode !== "AUTO") return uploadMode;
+return "General Awareness";
 }
 
-// --- CONSOLE CONTROL AND ASYNC EVENT UTILITIES ---
+const blocks = text.split(/(?=Q\.?\s*\d+)/gi);
+
+blocks.forEach(block => {
+block = block.trim();
+if (!/^Q\.?\s*\d+/i.test(block)) return;
+
+const qMatch = block.match(/Q\.?\s*\d+\.?\s*([\s\S]*?)(?=A\.)/i);
+if (!qMatch) return;
+
+const questionText = qMatch[1].trim();
+
+const optMatch = block.match(
+/A\.\s*([\s\S]*?)\s*B\.\s*([\s\S]*?)\s*C\.\s*([\s\S]*?)\s*D\.\s*([\s\S]*?)(?=Q\.?\s*\d+|$)/i
+);
+
+if (!optMatch) return;
+
+const options = [
+optMatch[1].trim(),
+optMatch[2].trim(),
+optMatch[3].trim(),
+optMatch[4].trim()
+];
+
+if (!questionText || options.length !== 4) return;
+
+questions.push({
+examType,
+question: questionText,
+options,
+correctAnswer: options[0],
+category: detectCategory()
+});
+});
+
+return questions;
+}
 
 document.getElementById("smartParseBtn").addEventListener("click", () => {
-  const consoleArea = document.getElementById("editorConsole");
-  const text = consoleArea.value.trim();
+const consoleArea = document.getElementById("editorConsole");
+const text = consoleArea.value.trim();
 
-  if (!text) {
-    alert("PDF text is empty.");
-    return;
-  }
+if (!text) {
+alert("PDF text is empty.");
+return;
+}
 
-  const parsed = parseQuestions(text);
+const parsed = parseQuestions(text);
 
-  if (parsed.length === 0) {
-    alert("No questions parsed. Check PDF format.");
-    return;
-  }
+if (parsed.length === 0) {
+alert("No questions parsed. Check PDF format.");
+return;
+}
 
-  consoleArea.value = JSON.stringify(parsed, null, 2);
-  alert(`Converted ${parsed.length} questions.`);
+consoleArea.value = JSON.stringify(parsed, null, 2);
+alert(`Converted ${parsed.length} questions.`);
 });
 
 document.getElementById("executeUploadBtn").addEventListener("click", async () => {
-  const consoleArea = document.getElementById("editorConsole");
-  const examType = getSelectedExam();
-  let questionsArray;
+const consoleArea = document.getElementById("editorConsole");
+const examType = getSelectedExam();
+let questionsArray;
 
-  try {
-    questionsArray = JSON.parse(consoleArea.value.trim());
-  } catch {
-    alert("Run Step 2 first.");
-    return;
-  }
+try {
+questionsArray = JSON.parse(consoleArea.value.trim());
+} catch {
+alert("Run Step 2 first.");
+return;
+}
 
-  if (!Array.isArray(questionsArray) || questionsArray.length === 0) {
-    alert("No valid questions found.");
-    return;
-  }
+if (!Array.isArray(questionsArray) || questionsArray.length === 0) {
+alert("No valid questions found.");
+return;
+}
 
-  try {
-    const response = await fetch(`${LIVE_BACKEND_URL}/tests/bulk-questions`, {
-      method: "POST",
-      headers: adminHeaders(),
-      body: JSON.stringify({ examType, questionsArray })
-    });
+questionsArray = questionsArray.map(q => ({ ...q, examType }));
 
-    if (response.status === 401 || response.status === 403) return forceAdminLogout();
+try {
+const response = await fetch(`${LIVE_BACKEND_URL}/tests/bulk-questions`, {
+method: "POST",
+headers: adminHeaders(),
+body: JSON.stringify({ examType, questionsArray })
+});
 
-    if (response.ok) {
-      alert("Questions uploaded successfully.");
-      await loadQuestionCount();
-      await loadQuestionsPreview();
-      await loadAdminAnalytics();
-    } else {
-      alert("Upload failed.");
-    }
-  } catch {
-    alert("Upload error.");
-  }
+if (response.status === 401 || response.status === 403) return forceAdminLogout();
+
+if (response.ok) {
+alert("Questions uploaded successfully.");
+await loadQuestionCount();
+await loadQuestionsPreview();
+await loadAdminAnalytics();
+} else {
+alert("Upload failed.");
+}
+} catch {
+alert("Upload error.");
+}
 });
 
 document.getElementById("deleteAllBtn").addEventListener("click", async () => {
-  const exam = getSelectedExam();
-  if (!confirm(`Delete all questions for ${exam}?`)) return;
+const exam = getSelectedExam();
+if (!confirm(`Delete all questions for ${exam}?`)) return;
 
-  try {
-    const res = await fetch(`${LIVE_BACKEND_URL}/tests/questions/delete-all?exam=${encodeURIComponent(exam)}`, {
-      method: "DELETE",
-      headers: adminHeaders()
-    });
+try {
+const res = await fetch(`${LIVE_BACKEND_URL}/tests/questions/delete-all?exam=${encodeURIComponent(exam)}`, {
+method: "DELETE",
+headers: adminHeaders()
+});
 
-    if (res.status === 401 || res.status === 403) return forceAdminLogout();
+if (res.status === 401 || res.status === 403) return forceAdminLogout();
 
-    if (res.ok) {
-      alert("Deleted.");
-      await loadQuestionCount();
-      await loadQuestionsPreview();
-    } else {
-      alert("Delete failed.");
-    }
-  } catch {
-    alert("Delete error.");
-  }
+if (res.ok) {
+alert("Deleted.");
+await loadQuestionCount();
+await loadQuestionsPreview();
+} else {
+alert("Delete failed.");
+}
+} catch {
+alert("Delete error.");
+}
 });
 
 async function loadQuestionsPreview() {
-  const exam = getSelectedExam();
-  try {
-    const response = await fetch(`${LIVE_BACKEND_URL}/tests/admin/questions?exam=${encodeURIComponent(exam)}`, {
-      headers: adminHeaders()
-    });
+const exam = getSelectedExam();
 
-    if (response.status === 401 || response.status === 403) return forceAdminLogout();
-    const data = await safeJson(response);
+try {
+const response = await fetch(`${LIVE_BACKEND_URL}/tests/admin/questions?exam=${encodeURIComponent(exam)}`, {
+headers: adminHeaders()
+});
 
-    if (response.ok && Array.isArray(data)) {
-      allQuestions = data;
-      renderQuestions(allQuestions);
-    }
-  } catch {
-    console.error("Preview load error");
-  }
+if (response.status === 401 || response.status === 403) return forceAdminLogout();
+
+const data = await safeJson(response);
+
+if (response.ok && Array.isArray(data)) {
+allQuestions = data;
+renderQuestions(allQuestions);
+}
+} catch {
+console.error("Preview load error");
+}
 }
 
 function filterAdminPreview(category) {
-  currentAdminTab = category;
-  document.querySelectorAll(".admin-tab-btn").forEach(btn => {
-    btn.classList.remove("active");
-    if (btn.textContent.trim() === category || (category === "All" && btn.textContent.trim() === "All Sections")) {
-      btn.classList.add("active");
-    }
-  });
-  applyAdminFilter();
+currentAdminTab = category;
+document.querySelectorAll(".admin-tab-btn").forEach(btn => {
+btn.classList.remove("active");
+if (btn.textContent.trim() === category || (category === "All" && btn.textContent.trim() === "All Sections")) {
+btn.classList.add("active");
+}
+});
+applyAdminFilter();
 }
 
 function applyAdminFilter() {
-  const searchVal = document.getElementById("searchQuestionInput").value.toLowerCase();
-  const filtered = allQuestions.filter(q => {
-    const matchesTab = currentAdminTab === "All" || q.category === currentAdminTab;
-    const matchesSearch = (q.question || "").toLowerCase().includes(searchVal);
-    return matchesTab && matchesSearch;
-  });
-  renderQuestions(filtered);
+const searchVal = document.getElementById("searchQuestionInput").value.toLowerCase();
+
+const filtered = allQuestions.filter(q => {
+const matchesTab = currentAdminTab === "All" || q.category === currentAdminTab;
+const matchesSearch = (q.question || "").toLowerCase().includes(searchVal);
+return matchesTab && matchesSearch;
+});
+
+renderQuestions(filtered);
 }
 
 document.getElementById("searchQuestionInput").addEventListener("input", applyAdminFilter);
 
 function renderQuestions(questions) {
-  const container = document.getElementById("questionPreviewContainer");
-  container.innerHTML = "";
-  const displaySlice = questions.slice(0, 30);
+const container = document.getElementById("questionPreviewContainer");
+container.innerHTML = "";
 
-  if (displaySlice.length === 0) {
-    container.innerHTML = "<p>No questions found.</p>";
-    return;
-  }
+const displaySlice = questions.slice(0, 50);
 
-  displaySlice.forEach((q, index) => {
-    const id = q._id;
-    const card = document.createElement("div");
-    card.style.border = "1px solid #ddd";
-    card.style.padding = "15px";
-    card.style.marginBottom = "15px";
-    card.style.borderRadius = "8px";
+if (displaySlice.length === 0) {
+container.innerHTML = "<p>No questions found.</p>";
+return;
+}
 
-    card.innerHTML = `
-      <h4>Q${index + 1} - Section: <strong style="color:#7c3aed;">${escapeHtml(q.category || "General Awareness")}</strong></h4>
-      <textarea id="qtext-${id}" style="width:100%;height:70px;">${escapeHtml(q.question)}</textarea>
-      <input id="opt1-${id}" value="${escapeHtml(q.options?.[0])}" style="width:100%;margin-top:4px;padding:6px;">
-      <input id="opt2-${id}" value="${escapeHtml(q.options?.[1])}" style="width:100%;margin-top:4px;padding:6px;">
-      <input id="opt3-${id}" value="${escapeHtml(q.options?.[2])}" style="width:100%;margin-top:4px;padding:6px;">
-      <input id="opt4-${id}" value="${escapeHtml(q.options?.[3])}" style="width:100%;margin-top:4px;padding:6px;">
-      <input id="ans-${id}" value="${escapeHtml(q.correctAnswer)}" style="width:100%;margin-top:4px;padding:6px;color:green;font-weight:bold;">
-      <select id="cat-${id}" style="width:100%;margin-top:4px;padding:6px;color:purple;">
-        <option value="Maths" ${q.category==="Maths"?"selected":""}>Maths</option>
-        <option value="Reasoning" ${q.category==="Reasoning"?"selected":""}>Reasoning</option>
-        <option value="General Science" ${q.category==="General Science"?"selected":""}>General Science</option>
-        <option value="General Awareness" ${q.category==="General Awareness"?"selected":""}>General Awareness</option>
-      </select>
-      <button onclick="updateQuestion('${id}')" class="btn" style="background:#2563eb;margin-top:8px;padding:5px 10px;font-size:12px;">Save Modifications</button>
-    `;
-    container.appendChild(card);
-  });
+displaySlice.forEach((q, index) => {
+const id = q._id;
+const card = document.createElement("div");
+card.style.border = "1px solid #ddd";
+card.style.padding = "15px";
+card.style.marginBottom = "15px";
+card.style.borderRadius = "8px";
+
+card.innerHTML = `
+<h4>Q${index + 1} - Section: <strong style="color:#7c3aed;">${escapeHtml(q.category || "General Awareness")}</strong></h4>
+
+<textarea id="qtext-${id}" style="width:100%;height:70px;">${escapeHtml(q.question)}</textarea>
+
+<input id="opt1-${id}" value="${escapeHtml(q.options?.[0])}" style="width:100%;margin-top:4px;padding:6px;">
+<input id="opt2-${id}" value="${escapeHtml(q.options?.[1])}" style="width:100%;margin-top:4px;padding:6px;">
+<input id="opt3-${id}" value="${escapeHtml(q.options?.[2])}" style="width:100%;margin-top:4px;padding:6px;">
+<input id="opt4-${id}" value="${escapeHtml(q.options?.[3])}" style="width:100%;margin-top:4px;padding:6px;">
+
+<input id="ans-${id}" value="${escapeHtml(q.correctAnswer)}" style="width:100%;margin-top:4px;padding:6px;color:green;font-weight:bold;">
+
+<select id="cat-${id}" style="width:100%;margin-top:4px;padding:6px;color:purple;">
+<option value="Maths" ${q.category==="Maths"?"selected":""}>Maths</option>
+<option value="Reasoning" ${q.category==="Reasoning"?"selected":""}>Reasoning</option>
+<option value="General Science" ${q.category==="General Science"?"selected":""}>General Science</option>
+<option value="General Awareness" ${q.category==="General Awareness"?"selected":""}>General Awareness</option>
+</select>
+
+<button onclick="updateQuestion('${id}')" class="btn" style="background:#2563eb;margin-top:8px;padding:5px 10px;font-size:12px;">Save Modifications</button>
+
+<button onclick="deleteQuestion('${id}')" class="btn" style="background:#dc2626;margin-top:8px;padding:5px 10px;font-size:12px;">
+Delete This Question
+</button>
+`;
+
+container.appendChild(card);
+});
 }
 
 async function updateQuestion(id) {
-  const examType = getSelectedExam();
-  const question = document.getElementById(`qtext-${id}`).value.trim();
-  const correctAnswer = document.getElementById(`ans-${id}`).value.trim();
-  const category = document.getElementById(`cat-${id}`).value.trim();
-  const options = [
-    document.getElementById(`opt1-${id}`).value.trim(),
-    document.getElementById(`opt2-${id}`).value.trim(),
-    document.getElementById(`opt3-${id}`).value.trim(),
-    document.getElementById(`opt4-${id}`).value.trim()
-  ];
+const examType = getSelectedExam();
+const question = document.getElementById(`qtext-${id}`).value.trim();
+const correctAnswer = document.getElementById(`ans-${id}`).value.trim();
+const category = document.getElementById(`cat-${id}`).value.trim();
 
-  try {
-    const res = await fetch(`${LIVE_BACKEND_URL}/tests/admin/questions/${id}`, {
-      method: "PUT",
-      headers: adminHeaders(),
-      body: JSON.stringify({ examType, question, options, correctAnswer, category })
-    });
+const options = [
+document.getElementById(`opt1-${id}`).value.trim(),
+document.getElementById(`opt2-${id}`).value.trim(),
+document.getElementById(`opt3-${id}`).value.trim(),
+document.getElementById(`opt4-${id}`).value.trim()
+];
 
-    if (res.status === 401 || res.status === 403) return forceAdminLogout();
-    if (res.ok) {
-      alert("Question updated.");
-      await loadQuestionsPreview();
-    } else {
-      alert("Update failed.");
-    }
-  } catch {
-    alert("Save error.");
-  }
+try {
+const res = await fetch(`${LIVE_BACKEND_URL}/tests/admin/questions/${id}`, {
+method: "PUT",
+headers: adminHeaders(),
+body: JSON.stringify({ examType, question, options, correctAnswer, category })
+});
+
+if (res.status === 401 || res.status === 403) return forceAdminLogout();
+
+if (res.ok) {
+alert("Question updated.");
+await loadQuestionsPreview();
+} else {
+alert("Update failed.");
+}
+} catch {
+alert("Save error.");
+}
+}
+
+async function deleteQuestion(id) {
+if (!confirm("Delete only this question?")) return;
+
+try {
+const res = await fetch(`${LIVE_BACKEND_URL}/tests/admin/questions/${id}`, {
+method: "DELETE",
+headers: adminHeaders()
+});
+
+if (res.status === 401 || res.status === 403) return forceAdminLogout();
+
+if (res.ok) {
+alert("Question deleted.");
+await loadQuestionCount();
+await loadQuestionsPreview();
+} else {
+alert("Delete failed. Backend route may be missing.");
+}
+} catch {
+alert("Delete error.");
+}
 }
 
 async function loadAdminResults() {
-  const container = document.getElementById("resultsContainer");
-  const exam = getSelectedExam();
-  container.innerHTML = "Loading results...";
+const container = document.getElementById("resultsContainer");
+const exam = getSelectedExam();
+container.innerHTML = "Loading results...";
 
-  try {
-    const response = await fetch(`${LIVE_BACKEND_URL}/tests/admin/results?exam=${encodeURIComponent(exam)}`, {
-      headers: adminHeaders()
-    });
+try {
+const response = await fetch(`${LIVE_BACKEND_URL}/tests/admin/results?exam=${encodeURIComponent(exam)}`, {
+headers: adminHeaders()
+});
 
-    if (response.status === 401 || response.status === 403) return forceAdminLogout();
-    const results = await safeJson(response);
+if (response.status === 401 || response.status === 403) return forceAdminLogout();
 
-    if (!response.ok || !Array.isArray(results)) {
-      container.innerHTML = "No results found.";
-      return;
-    }
+const results = await safeJson(response);
 
-    container.innerHTML = results.map(r => `
-      <p>User: ${escapeHtml(r.userId?.username || r.userId?.email || "Student")} - Score: ${escapeHtml(r.score || 0)} - Percentage: ${escapeHtml(r.percentage || 0)}%</p>
-    `).join("");
-  } catch {
-    container.innerHTML = "Error loading results.";
-  }
+if (!response.ok || !Array.isArray(results)) {
+container.innerHTML = "No results found.";
+return;
+}
+
+container.innerHTML = results.map(r => `
+<p>User: ${escapeHtml(r.userId?.username || r.userId?.email || "Student")} - Score: ${escapeHtml(r.score || 0)} - Percentage: ${escapeHtml(r.percentage || 0)}%</p>
+`).join("");
+} catch {
+container.innerHTML = "Error loading results.";
+}
 }
 
 document.getElementById("loadResultsBtn").addEventListener("click", loadAdminResults);
 
 async function loadAdminAnalytics() {
-  const exam = getSelectedExam();
-  try {
-    const response = await fetch(`${LIVE_BACKEND_URL}/tests/admin/results?exam=${encodeURIComponent(exam)}`, {
-      headers: adminHeaders()
-    });
+const exam = getSelectedExam();
 
-    if (response.status === 401 || response.status === 403) return forceAdminLogout();
-    const results = await safeJson(response);
-    if (!response.ok || !Array.isArray(results)) return;
+try {
+const response = await fetch(`${LIVE_BACKEND_URL}/tests/admin/results?exam=${encodeURIComponent(exam)}`, {
+headers: adminHeaders()
+});
 
-    const total = results.length;
-    const highest = total ? Math.max(...results.map(r => Number(r.score || 0))) : 0;
-    const avg = total ? (results.reduce((sum, r) => sum + Number(r.percentage || 0), 0) / total).toFixed(2) : 0;
-    const students = new Set(results.map(r => r.userId?._id || r.userId || r.email || r.name)).size;
+if (response.status === 401 || response.status === 403) return forceAdminLogout();
 
-    document.getElementById("totalResultsCard").textContent = total;
-    document.getElementById("highestScoreCard").textContent = highest;
-    document.getElementById("avgPercentageCard").textContent = `${avg}%`;
-    document.getElementById("studentsCard").textContent = students;
-  } catch {
-    console.error("Analytics error");
-  }
+const results = await safeJson(response);
+
+if (!response.ok || !Array.isArray(results)) return;
+
+const total = results.length;
+const highest = total ? Math.max(...results.map(r => Number(r.score || 0))) : 0;
+const avg = total ? (results.reduce((sum, r) => sum + Number(r.percentage || 0), 0) / total).toFixed(2) : 0;
+const students = new Set(results.map(r => r.userId?._id || r.userId || r.email || r.name)).size;
+
+document.getElementById("totalResultsCard").textContent = total;
+document.getElementById("highestScoreCard").textContent = highest;
+document.getElementById("avgPercentageCard").textContent = `${avg}%`;
+document.getElementById("studentsCard").textContent = students;
+} catch {
+console.error("Analytics error");
+}
 }
 
 async function loadPayments() {
-  const container = document.getElementById("paymentsContainer");
-  container.innerHTML = "Loading...";
+const container = document.getElementById("paymentsContainer");
+container.innerHTML = "Loading...";
 
-  try {
-    const response = await fetch(`${LIVE_BACKEND_URL}/payment/admin/payments`, {
-      headers: adminHeaders()
-    });
+try {
+const response = await fetch(`${LIVE_BACKEND_URL}/payment/admin/payments`, {
+headers: adminHeaders()
+});
 
-    if (response.status === 401 || response.status === 403) return forceAdminLogout();
-    const data = await safeJson(response);
+if (response.status === 401 || response.status === 403) return forceAdminLogout();
 
-    if (!response.ok || !Array.isArray(data)) {
-      container.innerHTML = "No payments found.";
-      return;
-    }
+const data = await safeJson(response);
 
-    container.innerHTML = data.map(p => `
-      <p>Payment: ₹${escapeHtml(p.amount || 0)} - Status: ${escapeHtml(p.status || "success")} - User: ${escapeHtml(p.email || p.userId?.email || "Student")}</p>
-    `).join("");
-  } catch {
-    container.innerHTML = "Error loading payments.";
-  }
+if (!response.ok || !Array.isArray(data)) {
+container.innerHTML = "No payments found.";
+return;
+}
+
+container.innerHTML = data.map(p => `
+<p>Payment: ₹${escapeHtml(p.amount || 0)} - Status: ${escapeHtml(p.status || "success")} - User: ${escapeHtml(p.email || p.userId?.email || "Student")}</p>
+`).join("");
+} catch {
+container.innerHTML = "Error loading payments.";
+}
 }
 
 document.getElementById("loadPaymentsBtn").addEventListener("click", loadPayments);
 
 document.getElementById("examType").addEventListener("change", async () => {
-  await loadQuestionCount();
-  await loadQuestionsPreview();
-  await loadAdminAnalytics();
+await loadQuestionCount();
+await loadQuestionsPreview();
+await loadAdminAnalytics();
 });
 
 (async function initAdminPage() {
-  populateExamDropdown();
-  const ok = await verifyAdminAccess();
-  if (ok) {
-    await loadQuestionCount();
-    await loadQuestionsPreview();
-    await loadAdminAnalytics();
-  }
+populateExamDropdown();
+const ok = await verifyAdminAccess();
+
+if (ok) {
+await loadQuestionCount();
+await loadQuestionsPreview();
+await loadAdminAnalytics();
+}
 })();
 </script>
 
