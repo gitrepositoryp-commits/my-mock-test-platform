@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Settings - RRB EDU Admin</title>
+
+<link rel="stylesheet" href="settings.css">
+
+</head>
+
+<body>
+
+<header>
+
+<h1>⚙️ RRB EDU Settings</h1>
+
+<div>
+
+<a href="admin-dashboard.html" class="btn">Dashboard</a>
+
+<button id="logoutBtn" class="logout">Logout</button>
+
+</div>
+
+</header>
+
+<div class="container">
+
+<h2>Website Configuration</h2>
+
+<div class="card">
+
+<label>Website Title</label>
+
+<input
+type="text"
+id="siteTitle"
+value="RRB EDU"
+/>
+
+<label>Premium Price (₹)</label>
+
+<input
+type="number"
+id="premiumPrice"
+value="79"
+/>
+
+<label>Exam Duration (Minutes)</label>
+
+<input
+type="number"
+id="examTime"
+value="90"
+/>
+
+<label>Negative Marking</label>
+
+<select id="negativeMarking">
+
+<option value="0">No Negative</option>
+
+<option value="0.25">0.25</option>
+
+<option value="0.33" selected>0.33</option>
+
+<option value="0.50">0.50</option>
+
+</select>
+
+<label>Contact Email</label>
+
+<input
+type="email"
+id="contactEmail"
+value="support@rrbedu.online"
+/>
+
+<label>Maintenance Mode</label>
+
+<select id="maintenance">
+
+<option value="false">OFF</option>
+
+<option value="true">ON</option>
+
+</select>
+
+<br><br>
+
+<button id="saveBtn">
+
+💾 Save Settings
+
+</button>
+
+</div>
+
+<div class="card">
+
+<h3>Current Configuration</h3>
+
+<div id="preview">
+
+Loading...
+
+</div>
+
+</div>
+
+</div>
+
+<script src="settings.js"></script>
+
+</body>
+</html>
