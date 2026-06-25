@@ -366,6 +366,11 @@ document.addEventListener("DOMContentLoaded", async () => {
   document.getElementById("examFilter").addEventListener("change", loadQuestions);
   document.getElementById("refreshBtn").addEventListener("click", loadQuestions);
   document.getElementById("bulkDeleteBtn").addEventListener("click", bulkDelete);
+  document.getElementById("selectVisibleBtn").addEventListener("click", () => {
+  document.querySelectorAll(".select-question").forEach(cb => {
+    cb.checked = true;
+  });
+});
   document.getElementById("bulkCategoryBtn").addEventListener("click", bulkChangeCategory);
   document.getElementById("exportBtn").addEventListener("click", exportJson);
 
