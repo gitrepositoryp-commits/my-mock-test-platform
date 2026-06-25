@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Payment Manager | RRB EDU Admin</title>
+<link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="payment-manager.css">
+</head>
+<body>
+
+<header class="pm-header">
+  <h2>💳 Payment Manager</h2>
+  <div>
+    <a href="admin-dashboard.html" class="nav-btn">Dashboard</a>
+    <button id="logoutBtn" class="logout-btn">Logout</button>
+  </div>
+</header>
+
+<main class="container">
+  <section class="stats-grid">
+    <div class="stat-card"><h2 id="totalRevenue">₹0</h2><p>Total Revenue</p></div>
+    <div class="stat-card"><h2 id="totalPayments">0</h2><p>Total Payments</p></div>
+    <div class="stat-card"><h2 id="successPayments">0</h2><p>Successful</p></div>
+    <div class="stat-card"><h2 id="premiumUsers">0</h2><p>Premium Users</p></div>
+  </section>
+
+  <section class="toolbar">
+    <input id="searchBox" type="text" placeholder="Search name, email, payment ID...">
+    <button id="refreshBtn">Refresh</button>
+    <button id="exportBtn">Export CSV</button>
+  </section>
+
+  <section class="table-card">
+    <table>
+      <thead>
+        <tr>
+          <th>Date</th>
+          <th>Student</th>
+          <th>Email</th>
+          <th>Amount</th>
+          <th>Payment ID</th>
+          <th>Status</th>
+          <th>Premium Expiry</th>
+        </tr>
+      </thead>
+      <tbody id="paymentTable">
+        <tr><td colspan="7">Loading...</td></tr>
+      </tbody>
+    </table>
+  </section>
+</main>
+
+<script src="payment-manager.js"></script>
+</body>
+</html>
