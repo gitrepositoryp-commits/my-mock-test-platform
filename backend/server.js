@@ -86,6 +86,7 @@ const paymentRoutes = require("./routes/payment");
 app.use("/api/auth", authRoutes);
 app.use("/api/tests", testRoutes);
 app.use("/api/payment", paymentRoutes);
+app.use("/api/admin", require("./routes/admin"));
 
 /* =========================
    HEALTH CHECK

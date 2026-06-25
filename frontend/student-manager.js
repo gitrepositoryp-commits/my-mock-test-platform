@@ -48,9 +48,9 @@ async function loadStudents() {
   table.innerHTML = `<tr><td colspan="6">Loading students...</td></tr>`;
 
   try {
-    const res = await fetch(`${API_BASE}/auth/admin/users`, {
-      headers: headers()
-    });
+   const res = await fetch(`${API_BASE}/admin/users`, {
+    headers: headers()
+});
 
     if (res.status === 401 || res.status === 403) {
       alert("Admin access only.");
@@ -153,7 +153,7 @@ async function deleteStudent(id) {
   if (!confirm("Delete this student permanently?")) return;
 
   try {
-    const res = await fetch(`${API_BASE}/auth/admin/users/${id}`, {
+    const res = await fetch(`${API_BASE}/admin/users/${id}`, {
       method: "DELETE",
       headers: headers()
     });
