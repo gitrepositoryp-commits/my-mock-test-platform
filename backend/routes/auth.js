@@ -120,7 +120,12 @@ router.post("/login", async (req, res) => {
         error: "Invalid authentication credentials."
       });
     }
-
+if (!user.isActive) {
+  return res.status(403).json({
+    success: false,
+    error: "Your account has been deactivated. Please contact the administrator."
+  });
+}
     const token = createToken(user);
 
     res.status(200).json({
