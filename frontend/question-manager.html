@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Question Manager | RRB EDU Admin</title>
+
+<link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="question-manager.css">
+
+</head>
+
+<body>
+
+<header class="qm-header">
+
+    <div class="logo">
+        📚 RRB EDU Admin
+    </div>
+
+    <div class="header-actions">
+
+        <a href="admin.html" class="nav-btn">
+            ⬅ Back to Admin
+        </a>
+
+        <button id="logoutBtn" class="logout-btn">
+            Logout
+        </button>
+
+    </div>
+
+</header>
+
+<div class="container">
+
+    <h1 class="page-title">
+        Question Manager
+    </h1>
+
+    <p class="subtitle">
+        Search, Edit, Delete and Manage Questions
+    </p>
+
+    <div class="stats-grid">
+
+        <div class="stat-card">
+            <h2 id="totalQuestions">0</h2>
+            <span>Total Questions</span>
+        </div>
+
+        <div class="stat-card">
+            <h2 id="mathCount">0</h2>
+            <span>Maths</span>
+        </div>
+
+        <div class="stat-card">
+            <h2 id="reasoningCount">0</h2>
+            <span>Reasoning</span>
+        </div>
+
+        <div class="stat-card">
+            <h2 id="scienceCount">0</h2>
+            <span>Science</span>
+        </div>
+
+        <div class="stat-card">
+            <h2 id="gaCount">0</h2>
+            <span>General Awareness</span>
+        </div>
+
+    </div>
+
+    <div class="filter-box">
+
+        <input
+            type="text"
+            id="searchBox"
+            placeholder="🔍 Search question..."
+        >
+
+        <select id="examFilter"></select>
+
+        <select id="categoryFilter">
+
+            <option value="All">
+                All Subjects
+            </option>
+
+            <option value="Maths">
+                Maths
+            </option>
+
+            <option value="Reasoning">
+                Reasoning
+            </option>
+
+            <option value="General Science">
+                General Science
+            </option>
+
+            <option value="General Awareness">
+                General Awareness
+            </option>
+
+        </select>
+
+        <button id="searchBtn">
+            Search
+        </button>
+
+    </div>
+
+    <div class="toolbar">
+
+        <button id="refreshBtn">
+            🔄 Refresh
+        </button>
+
+        <button id="exportBtn">
+            📥 Export JSON
+        </button>
+
+        <button id="bulkDeleteBtn">
+            🗑 Delete Selected
+        </button>
+
+        <button id="bulkCategoryBtn">
+            🏷 Change Category
+        </button>
+
+    </div>
+
+    <div id="questionContainer">
+
+        <!-- Questions load here -->
+
+    </div>
+
+    <div class="pagination">
+
+        <button id="prevPage">
+            ◀ Previous
+        </button>
+
+        <span id="pageInfo">
+            Page 1
+        </span>
+
+        <button id="nextPage">
+            Next ▶
+        </button>
+
+    </div>
+
+</div>
+
+<script src="question-manager.js"></script>
+
+</body>
+</html>
