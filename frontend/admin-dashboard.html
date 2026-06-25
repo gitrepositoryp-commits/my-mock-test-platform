@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RRB EDU Admin Dashboard</title>
+<link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="admin-dashboard.css">
+</head>
+<body>
+
+<header class="admin-header">
+  <h2>RRB EDU Admin</h2>
+  <button id="logoutBtn">Logout</button>
+</header>
+
+<main class="dashboard-container">
+  <h1>Admin Dashboard</h1>
+  <p class="subtitle">Manage questions, students, payments and results</p>
+
+  <section class="stats-grid">
+    <div class="stat-card"><h2 id="totalQuestions">0</h2><p>Total Questions</p></div>
+    <div class="stat-card"><h2 id="totalResults">0</h2><p>Total Results</p></div>
+    <div class="stat-card"><h2 id="totalPayments">0</h2><p>Total Payments</p></div>
+    <div class="stat-card"><h2 id="totalRevenue">₹0</h2><p>Total Revenue</p></div>
+  </section>
+
+  <section class="quick-grid">
+    <a href="admin.html" class="quick-card">📤 PDF Uploader</a>
+    <a href="question-manager.html" class="quick-card">📚 Question Manager</a>
+    <a href="results-history.html" class="quick-card">📊 Student Results</a>
+    <a href="payment-history.html" class="quick-card">💳 Payment History</a>
+  </section>
+</main>
+
+<script src="admin-dashboard.js"></script>
+</body>
+</html>
