@@ -19,7 +19,7 @@ const adminProtect = async (req, res, next) => {
 
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
-    const user = await User.findById(decoded.id).select("username email isAdmin");
+    const user = await User.findById(decoded.id).select("username email isAdmin isActive");
 
     if (!user || !user.isAdmin) {
       return res.status(403).json({ error: "Admin access only." });
@@ -46,24 +46,64 @@ router.get("/users", adminProtect, async (req, res) => {
   }
 });
 
-/* DELETE ONE STUDENT */
-router.delete("/users/:id", adminProtect, async (req, res) => {
+/* DEACTIVATE STUDENT */
+router.put("/users/:id/deactivate", adminProtect, async (req, res) => {
   try {
     if (req.params.id === req.user._id.toString()) {
-      return res.status(400).json({ error: "You cannot delete your own admin account." });
+      return res.status(400).json({ error: "You cannot deactivate your own admin account." });
     }
 
-    const deletedUser = await User.findByIdAndDelete(req.params.id);
+    const user = await User.findByIdAndUpdate(
+      req.params.id,
+      { isActive: false },
+      { new: true }
+    ).select("-password -resetOtp -resetOtpExpires");
 
-    if (!deletedUser) {
+    if (!user) {
       return res.status(404).json({ error: "User not found." });
     }
 
-    res.json({ message: "User deleted successfully." });
+    res.json({
+      success: true,
+      message: "Student deactivated successfully.",
+      user
+    });
 
   } catch (err) {
-    res.status(500).json({ error: "Failed to delete user." });
+    res.status(500).json({ error: "Failed to deactivate user." });
   }
+});
+
+/* ACTIVATE STUDENT */
+router.put("/users/:id/activate", adminProtect, async (req, res) => {
+  try {
+    const user = await User.findByIdAndUpdate(
+      req.params.id,
+      { isActive: true },
+      { new: true }
+    ).select("-password -resetOtp -resetOtpExpires");
+
+    if (!user) {
+      return res.status(404).json({ error: "User not found." });
+    }
+
+    res.json({
+      success: true,
+      message: "Student activated successfully.",
+      user
+    });
+
+  } catch (err) {
+    res.status(500).json({ error: "Failed to activate user." });
+  }
+});
+
+/* OLD DELETE BLOCKED FOR SAFETY */
+router.delete("/users/:id", adminProtect, async (req, res) => {
+  return res.status(403).json({
+    success: false,
+    message: "Permanent delete is disabled. Use deactivate instead."
+  });
 });
 
 module.exports = router;
