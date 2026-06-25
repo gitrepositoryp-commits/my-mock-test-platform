@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Student Manager | RRB EDU</title>
+
+<link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="student-manager.css">
+
+</head>
+
+<body>
+
+<header class="topbar">
+
+    <h2>👨 Student Manager</h2>
+
+    <div>
+
+        <a href="admin-dashboard.html" class="btn">
+            Dashboard
+        </a>
+
+        <button id="logoutBtn" class="logout-btn">
+            Logout
+        </button>
+
+    </div>
+
+</header>
+
+<div class="container">
+
+    <h1>Registered Students</h1>
+
+    <div class="stats">
+
+        <div class="card">
+            <h2 id="totalStudents">0</h2>
+            <p>Total Students</p>
+        </div>
+
+        <div class="card premium">
+            <h2 id="premiumStudents">0</h2>
+            <p>Premium Users</p>
+        </div>
+
+        <div class="card free">
+            <h2 id="freeStudents">0</h2>
+            <p>Free Users</p>
+        </div>
+
+    </div>
+
+    <div class="toolbar">
+
+        <input
+            type="text"
+            id="searchStudent"
+            placeholder="Search by Name or Email">
+
+        <button id="refreshBtn">
+            Refresh
+        </button>
+
+    </div>
+
+    <table>
+
+        <thead>
+
+            <tr>
+
+                <th>Name</th>
+
+                <th>Email</th>
+
+                <th>Premium</th>
+
+                <th>Expiry</th>
+
+                <th>Joined</th>
+
+                <th>Action</th>
+
+            </tr>
+
+        </thead>
+
+        <tbody id="studentTable">
+
+        </tbody>
+
+    </table>
+
+</div>
+
+<script src="student-manager.js"></script>
+
+</body>
+
+</html>
