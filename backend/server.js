@@ -82,11 +82,13 @@ mongoose.connect(mongoURI)
 const authRoutes = require("./routes/auth");
 const testRoutes = require("./routes/tests");
 const paymentRoutes = require("./routes/payment");
+const backupRoutes = require("./routes/backup");
 const settingsRoutes = require("./routes/settings");
 
 app.use("/api/auth", authRoutes);
 app.use("/api/tests", testRoutes);
 app.use("/api/payment", paymentRoutes);
+app.use("/api/backup", backupRoutes);
 app.use("/api/admin", require("./routes/admin"));
 app.use("/api/settings", settingsRoutes);
 

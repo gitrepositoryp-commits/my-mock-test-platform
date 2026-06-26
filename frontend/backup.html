@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Backup Manager | RRB EDU</title>
+
+<link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="backup.css">
+</head>
+
+<body>
+
+<header class="topbar">
+    <h2>💾 Backup & Export</h2>
+
+    <div>
+        <a href="admin.html" class="btn">← Admin Dashboard</a>
+
+        <button id="logoutBtn" class="logout-btn">
+            Logout
+        </button>
+    </div>
+</header>
+
+<div class="container">
+
+<h1>Database Backup Manager</h1>
+
+<p>
+Download complete backups of your website data.
+</p>
+
+<div class="backup-grid">
+
+<div class="backup-card">
+
+<h2>👨 Students</h2>
+
+<p>Export all registered students.</p>
+
+<button id="usersBtn">
+Download Users JSON
+</button>
+
+</div>
+
+<div class="backup-card">
+
+<h2>📚 Questions</h2>
+
+<p>Export all questions.</p>
+
+<button id="questionsBtn">
+Download Questions JSON
+</button>
+
+</div>
+
+<div class="backup-card">
+
+<h2>📊 Results</h2>
+
+<p>Export all results.</p>
+
+<button id="resultsBtn">
+Download Results JSON
+</button>
+
+</div>
+
+<div class="backup-card">
+
+<h2>💳 Payments</h2>
+
+<p>Export payment history.</p>
+
+<button id="paymentsBtn">
+Download Payments JSON
+</button>
+
+</div>
+
+</div>
+
+</div>
+
+<script src="backup.js"></script>
+
+</body>
+</html>
