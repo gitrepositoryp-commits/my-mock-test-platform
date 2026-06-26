@@ -17,7 +17,7 @@ const QuestionSchema = new mongoose.Schema({
   options: {
     type: [String],
     required: true,
-    validate: [arrayLimit, 'A mock exam question must have exactly 4 selectable options.']
+    validate: [arrayLimit, 'A RRB EDU question must have exactly 4 selectable options.']
   },
 
   correctAnswer: {

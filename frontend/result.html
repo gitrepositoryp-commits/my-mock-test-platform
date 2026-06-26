@@ -13,7 +13,7 @@
 
 <nav>
   <div class="container nav-container">
-    <a href="dashboard.html" class="logo">MockExam Pro</a>
+    <a href="dashboard.html" class="logo">RRB EDU</a>
   </div>
 </nav>
 
@@ -221,7 +221,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const certificateId = "CERT-" + Date.now();
 
     doc.setFontSize(22);
-    doc.text("MockExam Pro", 105, 30, { align: "center" });
+    doc.text("RRB EDU", 105, 30, { align: "center" });
 
     doc.setFontSize(18);
     doc.text("Certificate of Completion", 105, 50, { align: "center" });
@@ -241,7 +241,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     doc.text(`Date: ${new Date().toLocaleDateString()}`, 105, 156, { align: "center" });
     doc.text(`Certificate ID: ${certificateId}`, 105, 168, { align: "center" });
 
-    doc.save("MockExam_Certificate.pdf");
+    doc.save("RRB EDU_Certificate.pdf");
   });
 });
 </script>
