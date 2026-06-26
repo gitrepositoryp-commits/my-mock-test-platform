@@ -67,7 +67,7 @@ async function adminProtect(req, res, next) {
 router.post("/create-order", protect, async (req, res) => {
   try {
     const options = {
-      amount: 100,
+      amount: 79 * 100, // Amount in paise (₹79)
       currency: "INR",
       receipt: `prem_${Date.now()}`
     };
