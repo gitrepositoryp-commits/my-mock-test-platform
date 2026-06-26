@@ -153,7 +153,6 @@ if (!user.isActive) {
     });
   }
 });
-
 /* FORGOT PASSWORD - SEND OTP */
 router.post("/forgot-password", async (req, res) => {
   try {
@@ -183,34 +182,44 @@ router.post("/forgot-password", async (req, res) => {
 
     await user.save();
 
-    await transporter.sendMail({
-      from: `"RRB EDU Mock Test" <${process.env.BREVO_FROM_EMAIL}>`,
-      to: user.email,
-      subject: "RRB EDU Password Reset OTP",
-      html: `
-        <div style="font-family:Arial;padding:20px;">
-          <h2>RRB EDU Password Reset</h2>
-          <p>Your OTP is:</p>
-          <h1 style="letter-spacing:4px;color:#2563eb;">${otp}</h1>
-          <p>This OTP is valid for 10 minutes.</p>
-          <p>If you did not request this, please ignore this email.</p>
-        </div>
-      `
-    });
+    try {
+      await transporter.sendMail({
+        from: `"RRB EDU Mock Test" <${process.env.BREVO_FROM_EMAIL}>`,
+        to: user.email,
+        subject: "RRB EDU Password Reset OTP",
+        html: `
+          <div style="font-family:Arial;padding:20px;">
+            <h2>RRB EDU Password Reset</h2>
+            <p>Your OTP is:</p>
+            <h1 style="letter-spacing:4px;color:#2563eb;">${otp}</h1>
+            <p>This OTP is valid for 10 minutes.</p>
+            <p>If you did not request this, please ignore this email.</p>
+          </div>
+        `
+      });
 
-    res.json({
-      success: true,
-      message: "OTP sent to your email."
-    });
+      return res.json({
+        success: true,
+        message: "OTP sent to your email."
+      });
+
+    } catch (mailErr) {
+      console.error("OTP EMAIL SEND ERROR:", mailErr.message);
+      console.log("DEV OTP FOR", user.email, ":", otp);
+
+      return res.json({
+        success: true,
+        message: "OTP generated. Email service delayed. Check Render logs for DEV OTP."
+      });
+    }
 
   } catch (err) {
     console.error("FORGOT PASSWORD ERROR:", err.message);
-    res.status(500).json({
-      error: "Failed to send OTP. Check email configuration."
+    return res.status(500).json({
+      error: "Failed to generate OTP."
     });
   }
 });
-
 /* VERIFY OTP */
 router.post("/verify-reset-otp", async (req, res) => {
   try {
