@@ -458,7 +458,21 @@ alert("No valid questions found.");
 return;
 }
 
-questionsArray = questionsArray.map(q => ({ ...q, examType }));
+questionsArray = questionsArray
+  .map(q => ({ ...q, examType }))
+  .filter(q =>
+    q.question &&
+    Array.isArray(q.options) &&
+    q.options.length === 4 &&
+    q.options.every(opt => opt && opt.trim()) &&
+    q.correctAnswer &&
+    q.correctAnswer.trim()
+  );
+
+if (questionsArray.length === 0) {
+  alert("No valid questions found. Some questions are missing options or correct answer.");
+  return;
+}
 
 try {
 const response = await fetch(`${LIVE_BACKEND_URL}/tests/bulk-questions`, {

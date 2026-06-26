@@ -292,38 +292,68 @@ router.get("/leaderboard", protect, async (req, res) => {
     res.status(500).json({ error: "Leaderboard load failed." });
   }
 });
-
-/* ADMIN: BULK UPLOAD QUESTIONS (NOW RETAINING CATEGORIES) */
+/* ADMIN: BULK UPLOAD QUESTIONS */
 router.post("/bulk-questions", adminProtect, async (req, res) => {
   try {
     const { questionsArray, examType } = req.body;
+
     if (!questionsArray || !Array.isArray(questionsArray) || questionsArray.length === 0) {
-      return res.status(400).json({ error: "Payload must be a non-empty questions array." });
+      return res.status(400).json({
+        error: "Payload must be a non-empty questions array."
+      });
     }
-    for (const q of questionsArray) {
-      if (!q.question || !q.options || !Array.isArray(q.options) || q.options.length !== 4 || !q.correctAnswer) {
+
+    for (let i = 0; i < questionsArray.length; i++) {
+      const q = questionsArray[i];
+
+      if (!q.question || !String(q.question).trim()) {
         return res.status(400).json({
-          error: "Each question must have text, 4 options, and correct answer."
+          error: `Question ${i + 1}: Missing question text`
+        });
+      }
+
+      if (!Array.isArray(q.options) || q.options.length !== 4) {
+        return res.status(400).json({
+          error: `Question ${i + 1}: Must contain exactly 4 options`
+        });
+      }
+
+      if (q.options.some(opt => !opt || !String(opt).trim())) {
+        return res.status(400).json({
+          error: `Question ${i + 1}: One or more options are empty`
+        });
+      }
+
+      if (!q.correctAnswer || !String(q.correctAnswer).trim()) {
+        return res.status(400).json({
+          error: `Question ${i + 1}: Missing correct answer`
         });
       }
     }
 
     const finalQuestions = questionsArray.map((q) => ({
-      question: q.question,
-      options: q.options,
-      correctAnswer: q.correctAnswer,
+      question: String(q.question).trim(),
+      options: q.options.map(opt => String(opt).trim()),
+      correctAnswer: String(q.correctAnswer).trim(),
       examType: examType || q.examType || "NTPC",
-      category: q.category || "General Awareness" // THIS RETAINS THE NEW CATEGORY FIELD!
+      category: q.category || "General Awareness"
     }));
 
     const insertedQuestions = await Question.insertMany(finalQuestions);
+
     res.status(201).json({
+      success: true,
       message: `Successfully bulk-uploaded ${insertedQuestions.length} questions.`,
       count: insertedQuestions.length
     });
+
   } catch (err) {
     console.error("BULK UPLOAD ERROR:", err.message);
-    res.status(500).json({ error: "Bulk upload failed." });
+
+    res.status(500).json({
+      success: false,
+      error: "Bulk upload failed."
+    });
   }
 });
 
