@@ -19,18 +19,43 @@ const createToken = (user) => {
 };
 
 /* EMAIL TRANSPORTER */
-const transporter = nodemailer.createTransport({
-  host: "smtp-relay.brevo.com",
-  port: 587,
-  secure: false,
-  auth: {
-    user: process.env.BREVO_SMTP_USER,
-    pass: process.env.BREVO_SMTP_KEY
-  },
-  tls: {
-    rejectUnauthorized: false
+async function sendOtpEmail(toEmail, otp) {
+  const response = await fetch("https://api.brevo.com/v3/smtp/email", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "api-key": process.env.BREVO_API_KEY
+    },
+    body: JSON.stringify({
+      sender: {
+        name: "RRB EDU Mock Test",
+        email: process.env.BREVO_FROM_EMAIL
+      },
+      to: [
+        {
+          email: toEmail
+        }
+      ],
+      subject: "RRB EDU Password Reset OTP",
+      htmlContent: `
+        <div style="font-family:Arial;padding:20px;">
+          <h2>RRB EDU Password Reset</h2>
+          <p>Your OTP is:</p>
+          <h1 style="letter-spacing:4px;color:#2563eb;">${otp}</h1>
+          <p>This OTP is valid for 10 minutes.</p>
+          <p>If you did not request this, please ignore this email.</p>
+        </div>
+      `
+    })
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(errorText);
   }
-});
+
+  return response.json();
+}
 
 /* REGISTER - STUDENTS ONLY */
 router.post("/register", async (req, res) => {
@@ -153,7 +178,7 @@ if (!user.isActive) {
     });
   }
 });
-/* FORGOT PASSWORD - SEND OTP */
+/* FORGOT PASSWORD - SEND OTP USING BREVO API */
 router.post("/forgot-password", async (req, res) => {
   try {
     const { email } = req.body;
@@ -182,12 +207,24 @@ router.post("/forgot-password", async (req, res) => {
 
     await user.save();
 
-    try {
-      await transporter.sendMail({
-        from: `"RRB EDU Mock Test" <${process.env.BREVO_FROM_EMAIL}>`,
-        to: user.email,
+    const brevoResponse = await fetch("https://api.brevo.com/v3/smtp/email", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "api-key": process.env.BREVO_API_KEY
+      },
+      body: JSON.stringify({
+        sender: {
+          name: "RRB EDU Mock Test",
+          email: process.env.BREVO_FROM_EMAIL
+        },
+        to: [
+          {
+            email: user.email
+          }
+        ],
         subject: "RRB EDU Password Reset OTP",
-        html: `
+        htmlContent: `
           <div style="font-family:Arial;padding:20px;">
             <h2>RRB EDU Password Reset</h2>
             <p>Your OTP is:</p>
@@ -196,27 +233,30 @@ router.post("/forgot-password", async (req, res) => {
             <p>If you did not request this, please ignore this email.</p>
           </div>
         `
-      });
+      })
+    });
 
-      return res.json({
-        success: true,
-        message: "OTP sent to your email."
-      });
+    if (!brevoResponse.ok) {
+      const errorText = await brevoResponse.text();
+      console.error("BREVO API ERROR:", errorText);
 
-    } catch (mailErr) {
-      console.error("OTP EMAIL SEND ERROR:", mailErr.message);
-      console.log("DEV OTP FOR", user.email, ":", otp);
-
-      return res.json({
-        success: true,
-        message: "OTP generated. Email service delayed. Check Render logs for DEV OTP."
+      return res.status(500).json({
+        success: false,
+        error: "Failed to send OTP email. Check Brevo API key or sender email."
       });
     }
 
+    return res.json({
+      success: true,
+      message: "OTP sent to your email."
+    });
+
   } catch (err) {
     console.error("FORGOT PASSWORD ERROR:", err.message);
+
     return res.status(500).json({
-      error: "Failed to generate OTP."
+      success: false,
+      error: "Failed to send OTP."
     });
   }
 });
