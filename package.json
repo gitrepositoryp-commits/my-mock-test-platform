@@ -2,5 +2,12 @@
   "dependencies": {
     "express-rate-limit": "^8.5.2",
     "helmet": "^8.2.0"
+  },
+  "devDependencies": {
+    "wrangler": "^4.105.0"
+  },
+  "scripts": {
+    "deploy": "wrangler deploy",
+    "preview": "wrangler dev"
   }
 }
